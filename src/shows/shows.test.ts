@@ -378,7 +378,7 @@ describe('A Tutorial (issues 57, 158, 243)', () => {
     expect(now(s).playing).toBeNull();
   });
 
-  it('starts the next Tutorial from its last card, giving back what the first changed', () => {
+  it('starts another Tutorial over the one running, on its first card', () => {
     const s = setup();
     const next: Tutorial = TUTORIALS[1];
     s.shows.startTutorial(sub);

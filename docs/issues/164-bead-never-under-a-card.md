@@ -12,7 +12,7 @@
 
 1. **Bead is never hidden by a card.** Decided by the owner, 2026-10-31.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **Bead moves, the card stays:** Bead stays drawn under the cards (so it never covers a card's words or buttons), and never stands where a card, a tip or an open panel covers it. When one comes over its spot, it goes, by its usual moves, to the nearest stretch of an edge in view and clear of them; when every edge in view is covered, it hops up onto the card's top edge and stands there until it can go back.
 3. **Its room counts the cards:** the stretch of an edge Bead may roam leaves out what a card or a tip covers, as it already leaves out the controls, so a stroll never takes it under one.
@@ -50,7 +50,7 @@ Claude's call, open to the owner:
 - **The rest:** thrown, it lands only on a clear spot; it surfs an LFO's plot only while nothing covers the plot. Its layer is unchanged, under the header and every card, tip and panel, so it never covers their words or buttons.
 - **The words:** a line in bead.md's "Where it lives", and CONTEXT.md's Mascot.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **What counts as a cover:** the cards, the tips, the panels and menus listed above, and the Preset's description. The bubble over a dragged knob and the About window do not: the bubble is small and brief, and About covers the whole page.
 2. **The card's top only when an edge in view is covered.** With no edge in view at all, Bead hangs under the header as before (since 2026-11-01, issue 142's decision 3: it hovers there on its tail instead); it goes onto the card's top only when the edges in view are all covered. So on a phone, scrolling, it may drop onto the card's top as an edge comes in under the card, then fly up to that edge once it clears the card.
    **Since then (2026-11-02, issue [192](./192-beads-cover-checks-complete.md)):** Bead stands on the topmost card, and with its hover line covered too it waits out of sight until somewhere is clear. Decided by the owner (192).

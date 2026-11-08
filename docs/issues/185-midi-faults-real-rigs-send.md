@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 ## Agent Brief
 
@@ -25,9 +25,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The clock follower and the tempo store
 
 **Acceptance criteria:**
-- [ ] Unit tests for each: CC 120, 121 and 123; two ports of one C16; a lost and a doubled tick; a 120 → 90 jump
-- [ ] An engine or unit test that a clock's beat is placed by the output timestamp
-- [ ] The midiKeyboard, midiLearn and midiClock specs pass; every test passes in Linux's fonts too
+- [ ] ~~Unit tests for each: CC 120, 121 and 123; two ports of one C16; a lost and a doubled tick; a 120 → 90 jump~~ (not checked at the time)
+- [ ] ~~An engine or unit test that a clock's beat is placed by the output timestamp~~ (not checked at the time)
+- [ ] ~~The midiKeyboard, midiLearn and midiClock specs pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Song Position Pointer (issue 187)
@@ -44,7 +44,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - **Tests:** unit tests for CC 120, 121 and 123, the two ports, a lost and a doubled tick, the 120 → 90 jump, a Bluetooth-bunched clock and a ramp; an engine test of All Sound Off; unit tests of the output-timestamp mapping and of the store placing a beat by it; a `useMidi` test of the two ports; end-to-end tests of a panic (midiKeyboard) and of the two ports with the panel's line (c16Card). The end-to-end stand-in Controller can now sit on several ports.
 - **The record:** issue 136's build notes say what its clock follower does since.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.23.0:**
 1. **Every channel is one instrument:** a panic on any channel acts on the Notes of all of them, since Limpide plays every channel alike.
 2. **Reset All Controllers leaves the mod wheel's knob** (LFO 1's Depth) where it is: MIDI's recommendation zeroes the mod wheel, but here it turns a knob of the Patch, and a panic should not change the sound's settings.
 3. **All Sound Off under the pedal:** the sound stops, but the piano keeps the pedal's Notes lit until the pedal lifts, as the pedal is still down.

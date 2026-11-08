@@ -2,7 +2,7 @@
 
 **What to build:** The owner's question (2026-10-31): "what is a good increment to move the faders and knobs with the arrow keys", grilled the same evening. Today an arrow key moves a knob or fader 2 % of its travel (Shift 0.2 %, Page Up and Down 10 %, Home and End to its ends), so on a log-scaled control a press lands on odd values (Cutoff 2.00 → 2.23 → 2.49 kHz; Attack 10 → 11.6 ms), a press after a drag never lands on a round value, and the wheel and a C16 knob each move by steps of their own. Polish of v1's controls ([131](./131-v1.md)).
 
-**Blocked by:** none. Relative encoders and the C16's tuning live in the MIDI code that issues 112 and 147 changed on night/2026-10-31; build it on `main` once that night is merged (Claude's call, open to the owner).
+**Blocked by:** none. Relative encoders and the C16's tuning live in the MIDI code that issues 112 and 147 changed on night/2026-10-31; build it on `main` once that night is merged (Claude's call, let stand by the owner in 1.20.0).
 
 **Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "I trust you." Its Mixer steps went to [201](./201-the-mixer-steps-in-what-it-shows.md)
 
@@ -54,7 +54,7 @@ Claude's calls, accepted by the owner with the summary ("It matches what I had i
 - [x] Detune from MIDI CC 64 is exactly 0 cents; CC 0 and 127 its ends
 - [x] A C16 tick (65) moves one grid step; a fast 66 a third of one; a wheel notch one step
 - [x] Each knob's and fader's tip names its steps on a computer, not on a phone
-- [ ] Unit tests for each grid and for snapping; the knob, fader, keyboard-access and MIDI specs updated; every test passes in Linux's fonts too (all but the last part: Linux's fonts are GitHub's run, after a push; the fader spec needed no change, the faders' steps are in the keyboard-access spec)
+- [ ] ~~Unit tests for each grid and for snapping; the knob, fader, keyboard-access and MIDI specs updated; every test passes in Linux's fonts too (all but the last part: Linux's fonts are GitHub's run, after a push; the fader spec needed no change, the faders' steps are in the keyboard-access spec)~~ (not checked at the time)
 
 **Out of scope:**
 - Any change to a Parameter's range
@@ -69,7 +69,7 @@ Claude's calls, accepted by the owner with the summary ("It matches what I had i
 - **Found on the way:** issue 176's Synth Geek Layer sizers were kept with the layer off (its context holds null, not undefined), which the smoke spec caught; fixed in its own commit, with a line in 176. Issues 51, 53 and 145 get dated lines for the new steps.
 - **Tests:** `src/patch/grid.test.ts` (every Grid, snapping from a drag, the ends, −∞); the control surface's tests (a tick a step, the C16's thirds, a turn back, CC 64 on Detune and the Amount, thirds kept apart when Sync switches); the tips' unit test (every Parameter's steps line); in the browser, the keyboard-access spec (the Cutoff, Attack and Sustain criteria; the Mixer in dB down to −∞ and back), the knob spec (a notch a step, a trackpad's scrolls adding up; the width sweep by Page), the tooltip and touch-tip specs (the line on a computer, none on a phone), the MIDI Learn spec (ten ticks, ten semitones). Specs that counted 2 % presses (LFO, Maths, Tutorial, Tour, Envelopes, pitch marker) now press Page or count the new steps.
 - **Tests run:** `npx tsc`, `npm run lint`; `npx vitest run` 1311 of 1314, the three others (cycle lock, readout box, edge Patches) timing out at 5 s under the full run's load and passing alone; all 574 Chromium specs (12 timed out while unit tests ran beside them, all passing on their rerun); in WebKit the knob, fader, keyboard-access, MIDI Learn, Quick Setup, C16 card, LFO, tooltip, Maths, Envelopes, smoke, Tour, pitch marker and Tutorial specs, all passing but issue 176's synced Rate test, which times out under the parallel load and passes alone (7.9 s). Then the code review (standards and spec): its bug (a C16's thirds on the free Rate jumping the note value once Sync is on) fixed with a test, and its smaller points.
-- **Claude's calls, open to the owner:**
+- **Claude's calls, let stand by the owner in 1.20.0:**
   1. **The Mixer's faders step in dB whatever they show.** They read % unless the Synth Geek Layer is on, so outside it a press from 100 % reads 94 %, 89 %, 84 %…, and the dozen steps from −40 to −34 dB all read "1 %". Ring steps in dB too, as a Mixer fader, though the Synth Geek Layer does not show it in dB. The other way would be 1 % steps outside the Synth Geek Layer and dB inside it, or the Mixer reading dB always.
      **Since then (2026-11-02, issue [201](./201-the-mixer-steps-in-what-it-shows.md)):** answered by the owner, the Mixer's faders step in % outside the Synth Geek Layer and in dB inside it, the fader's position the same in both.
   2. **The lowest dB step is −40 dB** (1 %, about one MIDI step up a fader's travel, decision 7): Page from 0 dB goes −6, −12 … −36, −40, then −∞.

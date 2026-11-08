@@ -155,7 +155,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
 - **Bead** is the last feature that is not essential.
 
-**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Synth Geek Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
+**In v1, still to do:** what [issue 131](./issues/131-v1.md)'s checklist leaves unticked, the one list kept up to date: the polish issues, the owner's own steps and the inbox's findings; then one last full review round, finding only nitpicks.
 
 **v2,** a list and not a commitment ("It will only depend on what the reaction is in the synth world", the owner): recording to a WAV file (120), the additive oscillator (121), Match the sound (122) and granular synthesis (135). A new idea after the frame goes there, unless it is a bug or polish of something in v1. Each v2 issue is blocked by issue 131.
 
@@ -176,12 +176,12 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 
 ### Modules (deep modules, small interfaces)
 
-- **Patch model.** The Parameter definitions (id, unit, range, Taper, default), the Patch type, validation and migration, and serialising to JSON and to the URL format. Interface: `defaultPatch()`, `setParam(patch, id, value)`, `toJSON` / `fromJSON`, `toURL` / `fromURL`. Unknown or missing fields migrate to defaults.
+- **Patch model.** The Parameter definitions (id, unit, range, Taper, default), the Patch type, validation and migration, and serialising to JSON and to the URL format. Interface: `defaultPatch()`, `setParam(patch, id, value)`, `patchToJSON` / `patchFromJSON`, `patchToShare` / `patchFromShare` (the URL's form). Unknown or missing fields migrate to defaults.
 - **Tapers.** Pure mapping between a control position (0–1) and a Parameter value, in both directions, for each Taper.
 - **Note input.** Merges keyboard, on-screen piano and MIDI note events into one Note stream and applies last-note priority. It emits the Gate and the current Note. Hold is part of this module.
 - **Modulation model.** Pure: given a Patch, the Gate history, Velocity and time, it returns envelope levels and the Effective Cutoff, and produces the automation schedule.
 - **Modulation record.** What the engine scheduled, kept outside it: the Gate history, each LFO's clock and the Glide, which the Viewers and the Modulation model read back at any time (issue 244).
-- **Synth engine.** Owns the `AudioContext` graph. Interface: `start()`, `noteOn(note, velocity)`, `noteOff()`, `applyPatch(patch)`, `taps` (an analyser per Tap), `filterResponse(frequencies)` (delegating to the real biquads at the Effective Cutoff), `now()`.
+- **Synth engine.** Owns the `AudioContext` graph. Interface: `noteOn(note, velocity)`, `release(note)` (one Voice) and `noteOff()` (every Voice), `applyPatch(patch)`, `taps` (an analyser per Tap), `filterResponse(frequencies)` (delegating to the real biquads at the Effective Cutoff), `now()`.
 - **Spectrum analysis.** Pure: turns raw analyser data into display data: Harmonic positions and labels for a fundamental, the Ideal Reference per Waveform and Pulse Width, nearest-note naming, and Cycle Lock alignment (the fundamental's rising zeros in a time-domain buffer, along the pitch the engine plays; a Scope's lock keeps its last trace, to choose the start most like it, issue 180).
 - **Viewer renderers.** Draw Scope, Spectrum and Envelope Timeline onto canvases from display data. They hold the viewer state: Freeze, axes, Snapshot, hover, and Glow's kept traces of the last quarter of a second.
 - **MIDI.** Parses raw MIDI bytes into typed messages. It also holds the Mapping store, the MIDI Learn state machine, Encoder Mode detection, Pickup, and the Quick Setup sequence. Its input is a `MIDIAccess`-like interface, so a fake can be injected.

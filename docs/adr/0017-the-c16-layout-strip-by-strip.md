@@ -1,6 +1,6 @@
 # The C16 layout strip by strip, its knobs Relative, answering the C16 alone
 
-**Status:** accepted; its "two steps when turned fast" corrected by issue 145, decision 17: a fast turn sends a burst of eight 66s, which reach the page split and merged, each now counted a third of a step · **Date:** 2026-10-31 · **Decided by:** the owner
+**Status:** accepted; its "two steps when turned fast" corrected by issue 145, decision 17: a fast turn sends a burst of eight 66s, which reach the page split and merged, each now counted a third of a step; its "Mappings made by MIDI Learn … answer any Controller" narrowed by issue 255: one learned from another input on a control the layout had answers every Controller but the C16, so the C16's knob it took drives nothing (Claude's call, open to the owner) · **Date:** 2026-10-31 · **Decided by:** the owner
 
 Supersedes two parts of [ADR-0009](./0009-a-built-in-layout-for-the-c16.md): its layout, and its knobs finding their Encoder Mode on their first turn. A built-in layout for the C16, beside MIDI Learn, stands.
 

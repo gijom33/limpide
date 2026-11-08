@@ -41,7 +41,7 @@ test('no marker unless something moves the pitch; with Glide on, a Note puts it 
   await listening(page);
   await expect(marker(page)).toBeHidden();
   await page.keyboard.down('KeyD'); // E4, with nothing moving its pitch
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: the Note sounding, a marker would show by now
   await expect(marker(page)).toBeHidden();
   await page.keyboard.up('KeyD');
   await turnUp(page, 'Amp', 'Glide', 60);
@@ -84,14 +84,14 @@ test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
   await listening(page);
   await aimAtPitch(page);
   await page.keyboard.down('KeyD');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: the Note sounding, a marker would show by now
   await expect(marker(page)).toBeHidden(); // aimed at Pitch, but at Depth 0
   await turnUp(page, 'LFO 1', 'Depth', 100);
   await expect(marker(page)).toBeVisible();
   const xs: number[] = [];
   for (let i = 0; i < 20; i++) {
     xs.push(await markerX(page));
-    await page.waitForTimeout(40);
+    await page.waitForTimeout(40); // a time: twenty reads 40 ms apart span the wobble
   }
   expect(new Set(xs.map(Math.round)).size).toBeGreaterThan(2);
   // At full Depth (a semitone each way) it swings across a black key's width, centred on the key.
@@ -147,7 +147,7 @@ test('with reduced motion asked for, the marker sits on the Note: no wobble', as
   const e4 = await centre(page, 'E4');
   for (let i = 0; i < 6; i++) {
     expect(await markerX(page)).toBeCloseTo(e4, 0);
-    await page.waitForTimeout(60);
+    await page.waitForTimeout(60); // a time: six reads 60 ms apart, where a wobble would show
   }
 });
 

@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
 
 1. **Rendered before and after** with the ear stand-in's method, on the Presets named and every Preset's top Notes.
 
@@ -47,7 +47,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - Snare, Piano, Honky-Tonk, Pick Pluck, Poly Pluck, Harp, Vibes, Marimba, House Organ: differences of −24 to −49 dB, on the strikes whose Envelope takes the Cutoff into the top half octave.
 - Growl: on every Note, by its retune. At 97, 120 and 128 BPM, no Note from A1 to C7 reaches 0.8 (it was 1.20 at 120 BPM and 1.48 at 128 on F5 before); the test plays all three.
 
-### Calls made (Claude's call, open to the owner)
+### Calls made (Claude's call, let stand by the owner in 1.23.0)
 
 - **Half an octave for the Resonance's fade:** wide enough that the fade is smooth as a Cutoff sweeps through it, narrow enough that a resonant Cutoff under 14 kHz rings as it always has.
 - **A semitone for a high-pass's fall to silence**, not the half octave: at first both faded together, and Ride on C7 (its high-pass at 17.4 kHz) lost 11 dB; above 18.9 kHz a high-pass passes little anyone hears.

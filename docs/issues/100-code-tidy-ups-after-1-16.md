@@ -45,13 +45,13 @@ Acceptance, added:
 
 ## Added in triage (2026-10-30, the 1.16.1 code review)
 
-From the release review's standards axis, judgement calls, behaviour unchanged (Claude's call, open to the owner):
+From the release review's standards axis, judgement calls, behaviour unchanged (Claude's call, let stand by the owner in 1.16.1):
 
 - **One place each:** the Patch's keyboard octave is left out by hand in three places (the choices, the sanitizer, the differences); the 860 px breakpoint is written in the styles and the App; the Demo card's keys are listed again in the stop rule.
 - **Caches:** the Oscillators' waves, the LFO waves and the Ideal keep three caches with three eviction policies; one small cache shape for all three.
 - **Names and shapes:** the wave cache's size named `CUT_WAVES`; the wheel hook taking three of a control's fields rather than the control; the step buttons choosing their glyph from their label's words; a Preset group's shared fields overriding each Preset's own, for one field; the Patch file format importing from the keyboard's layout; "No effect while the Sub is silent" written inline twice.
 
-From the 1.17.0 release review (2026-10-30), its standards axis, behaviour unchanged (Claude's call, open to the owner):
+From the 1.17.0 release review (2026-10-30), its standards axis, behaviour unchanged (Claude's call, let stand by the owner in 1.17.0):
 
 - **One place each:** the right-column test (`rightmost - right < 4`) and the in-view test (`top - HEIGHT - HEADROOM >= 0`) each written twice in Bead's component; `WAVE_NAMES` in the Synth Geek Layer a third copy of the Waveforms' names (the picker's labels, the Tutorials').
 - **Shapes:** `choosePerch` takes seven positional arguments (an options object, as the standards ask); Bead's component, over 800 lines, does its line, visits, throwing, surfing, leaving and drawing in one render loop (split by what changes together); it reaches into the LFO plot's private `PAD` and `SPAN` to find the plot's line (the plot could give "the line's y at x").
@@ -72,7 +72,7 @@ Nothing visible or audible changes; every existing test checks what it checked.
 - **The hooks' tests:** `useMidi` and `usePlayers` are rendered in the browser test project (`renderHook` and `testSession` in `src/test`), through a fake Controller and a session that writes down what it plays.
 - **Names and shapes:** `choosePerch` and `lineAt` take options objects; the step buttons take their step; the App names the Bead's presence (away, up, leaving) apart from its switch; Patches are compared field by field, not by `JSON.stringify`; a Preset group's shared fields no longer override a Preset's own; the stale Tutorials comment moved back.
 
-Calls (Claude's call, open to the owner):
+Calls (Claude's call, let stand by the owner in 1.18.0):
 
 1. **The Bead's component is not split.** Its render loop still does its line, visits, throwing, surfing, leaving and drawing in one place. The split is large, and done without the owner watching the Bead it risks changing how it moves; it deserves its own issue.
 2. `idealReference()` is kept although only the engine's tests read it: it is the reference they hold the sound to, Harmonic by Harmonic.

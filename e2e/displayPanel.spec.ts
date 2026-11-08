@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 test('the display controls hide behind a Display button, leaving the space to the synth', async ({ page }) => {
   await page.goto('/');
@@ -95,11 +95,11 @@ test('the theme is chosen in the Display panel, and remembered', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('every Display setting is remembered across a reload, Freeze and the Snapshot aside (issue 85)', async ({ page }) => {
+test('the View’s and the Axes’ settings are remembered across a reload, Freeze and the Snapshot aside (issue 85)', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const choose = (group: string, option: string) => page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: option, exact: true });
-  const settings = [['Frequency axis', 'Lin'], ['Level axis', 'Lin'], ['Scope cycles', '4'], ['Env Timeline length', '3s'], ['Viewers follow', 'Newest'], ['Glow', 'Scopes']] as const;
+  const settings = [['Frequency axis', 'Lin'], ['Level axis', 'Lin'], ['Scope cycles', '4'], ['Env Timeline length', '3s'], ['Viewers follow', 'Newest'], ['Glow', 'All']] as const;
   for (const [group, option] of settings) await choose(group, option).click();
   await page.getByRole('button', { name: 'Freeze' }).click();
   await page.reload();
@@ -118,12 +118,12 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await tooltips.getByRole('radio', { name: 'Off', exact: true }).click();
   await page.keyboard.press('Escape');
   await cutoff.hover();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(700); // a time: twice the hover's 350 ms, so a tip on would be open
   await expect(open).toHaveCount(0);
   await page.keyboard.press('Shift'); // the keyboard in use, so focus shows as it would from Tab
   for (const control of [cutoff, page.getByRole('button', { name: 'Demo', exact: true })]) {
     await control.focus();
-    await page.waitForTimeout(200);
+    await frames(page); // a focus's tip opens at once, were it on
     await expect(open).toHaveCount(0);
   }
   await expect(cutoff).toHaveAccessibleDescription(/Cutoff/);
@@ -189,6 +189,6 @@ test('switching Tooltips off with the arrow keys leaves no tooltip open, the swi
   await on.focus();
   await page.keyboard.press('ArrowRight'); // to Off
   await expect(page.getByRole('radiogroup', { name: 'Tooltips' }).getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
-  await page.waitForTimeout(200);
+  await frames(page); // a focus's tip opens at once, were it on
   await expect(page.getByRole('tooltip')).toHaveCount(0);
 });

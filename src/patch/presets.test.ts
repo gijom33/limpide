@@ -115,7 +115,7 @@ describe('Presets', () => {
   });
 
   // Issue 53: a chord on a Pad played one Note. Sounds made to be played as chords have Voices for them; a drone,
-  // a pluck and the teaching Presets stay on one Voice.
+  // a pluck and most teaching Presets stay on one Voice (Breathing Bell plays on four).
   it('give chords their Voices: every Pad (but the drone), Piano, key and mallet', () => {
     const chordal = PRESETS.filter((p) => (p.group === 'Pads' && p.name !== 'Dark Drone') || ['Pianos', 'Keys & Organs', 'Plucks & Mallets'].includes(p.group));
     expect(chordal.length).toBeGreaterThan(15);

@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-06, triage):
+Claude's calls, let stand by the owner in 1.26.0 (2026-11-06, triage):
 
 1. **The repeating browser specs (item 9) are one pass for both:** 243 left the Shows' specs as they were (its call 1), and 245 left five of Bead's (its call 3), each for a later pass. A spec goes only where a unit test covers the same rule; a check that the page is wired to the rule stays.
 2. **MIDI Learn skips a Bank Select (item 10):** a CC 0 or 32 that a Program Change follows within the same moment is a Program button's bank, not a knob, so Learn waits for the next control instead. A Controller that sends CC 0 from a knob can still be learned when no Program Change follows it.
@@ -55,7 +55,7 @@ Built at night (2026-11-06, on `night/2026-11-06`, on top of 248), all eleven it
 
 Tested: `npx tsc`, `npm run lint`, the unit tests of the files touched (`vitest`: the control surface, the record, the engine's browser tests, Bead's frame, the Shows, the Tutorials, the level meter, Cycle Lock), and the specs touched in Chromium (the Demo, the Tour, the Tutorials, the MIDI keyboard, MIDI Learn, Bead, the Patches, the header) and in WebKit, all passing. The header and Patches specs also passed in the image.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.26.1:
 
 1. **Learn hands the bank on** when it passes over a Bank Select, so the Program button loads what it would have with Learn off.
 2. **Which specs went (item 9):** a browser check was kept wherever it was the only one wiring the page to the rule; the Tutorial's knob found within reach stayed, as no unit test covers the Shows' side of it.

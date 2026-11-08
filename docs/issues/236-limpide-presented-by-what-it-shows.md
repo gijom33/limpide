@@ -20,7 +20,7 @@ Decided by the owner, 2026-11-05: "Line a for Limpide's description works better
 
 1. **The line:** "A synthesizer you can see through: the wave and its Harmonics after every stage, as you play." (*Limpide* is French for clear, see-through.)
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 2. **The sounds said plainly:** the README's paragraph on the Presets says they are the classic subtractive sounds, chosen to teach, each pointing at what to watch.
 3. **The screenshot kept:** the Demo playing with every Viewer drawn already says it.
@@ -46,7 +46,7 @@ Claude's calls, open to the owner:
 
 The owner's line, "A synthesizer you can see through: the wave and its Harmonics after every stage, as you play.", is now the README's tagline and About's, and so the welcome card's, which is About's at a first visit. The page's title stays "Limpide"; the page now has a description with the line, and a shared link's preview carries the same line under the title "Limpide" (Open Graph). The README's first paragraphs lead with what the Viewers show: *limpide* is French for clear, then a Scope and a Spectrum under the Oscillators, the Filter and the Amp, the wave in time and its Harmonics in frequency, live. Next, the sounds said plainly: a classic subtractive synth, laid out as its own signal-flow diagram. The Presets line says they are the classic subtractive sounds, chosen to teach, each saying what to watch. The repository's description on GitHub is untouched, as the brief says: it is changed by hand at the release.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **The welcome's own sentences and the Tour's first card are unchanged.** Neither says what Limpide is for: the welcome says what to do ("Hear what it can do, or start playing…"), and the Tour's first card starts with the Oscillators. The welcome card shows the new line above them. The first card's last paragraph already says what its two pictures show, so it agrees with the line.
 2. **The preview text has no image.** The screenshot is kept and stays out of scope, so a shared link shows the title and the line only. An `og:image` with the screenshot could follow.

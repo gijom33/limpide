@@ -12,7 +12,7 @@
 **Summary:** One button records what Limpide plays and, when stopped, saves it as a WAV file named after the Patch.
 
 **Desired behavior:**
-- A Record button in the Patch panel, beside Share (Claude's call, open to the owner): pressed, it records the synth's output, everything heard (played Notes, the Demo, the Song); pressed again, or after 5 minutes, it stops and the browser saves a 16-bit stereo WAV at the page's sample rate, named "Limpide – <Patch name> – <date>.wav".
+- A Record button in the Patch panel, beside Share (Claude's call, let stand by the owner in 1.16.1): pressed, it records the synth's output, everything heard (played Notes, the Demo, the Song); pressed again, or after 5 minutes, it stops and the browser saves a 16-bit stereo WAV at the page's sample rate, named "Limpide – <Patch name> – <date>.wav".
 - While recording, the button shows it (a red dot and the elapsed time), and the Patch panel can be closed without stopping it.
 - The recording is taken from the output the speakers get, after the limiter, through the browser's own nodes ([ADR-0001](../adr/0001-native-web-audio-nodes-over-custom-dsp.md)); nothing in the audio path changes, and nothing is sent anywhere.
 - A browser that cannot record hides the button.

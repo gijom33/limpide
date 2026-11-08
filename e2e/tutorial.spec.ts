@@ -232,7 +232,7 @@ test('Wobble’s Sync Step passes when Sync is switched on by hand, then the Rat
   await rate.focus();
   await page.keyboard.press('ArrowUp'); // 1/8 D, the next note value: within 5 % of the travel, but not the one asked
   await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D/);
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(600); // a time: longer than a Step takes to count
   await expect(action(page, 'Next')).toBeDisabled();
   await page.keyboard.press('ArrowUp');
   await expect(rate).toHaveAttribute('aria-valuetext', '1/4 T, 3.00 Hz');
@@ -274,12 +274,10 @@ test('Wobble’s 3 Hz Step, with Sync switched on early, switches it off so the 
 // Issue 190 (review 16, finding 1): the end card named the next Tutorial with no way there, and on a phone that line was
 // folded away.
 for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659]] as const) {
-  test(`on a ${layout}, an end card's "Next: …" starts the next Tutorial; the last has only Done (issue 190)`, async ({ page, browserName }) => {
+  test(`on a ${layout}, an end card's "Next: …" starts the next Tutorial; the last has only Done (issue 190)`, async ({ page }) => {
     // Two Tutorials, 14 Steps, each made by "Do it for me" and left by Next: about 2.3 s a Step on a page as slow as
     // GitHub's Linux WebKit, past the usual 30 s (issue 224).
     test.slow();
-    // Safari leaves the focus off a clicked button, so Finish gone hands it on in Chromium alone (issue 104's test goes by keys).
-    const clickFocuses = browserName !== 'webkit';
     await page.setViewportSize({ width, height });
     await open(page, 'FM Ladder'); // six Steps
     await action(page, 'Start').click();
@@ -288,7 +286,7 @@ for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659
     const next = action(page, 'Next: Ring Bell');
     await expect(next).toBeInViewport({ ratio: 1 });
     await expect(next).toHaveClass(/tool-primary/);
-    if (clickFocuses) await expect(next).toBeFocused(); // the way forward, as Start and Next are
+    await expect(next).toBeFocused(); // the way forward, as Start and Next are
     await expect(action(page, 'Done')).toBeVisible();
     await next.click();
     await expect(card(page)).toHaveAccessibleName('Tutorial: Ring Bell');
@@ -301,7 +299,7 @@ for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659
     await doEverything(page);
     await expect(card(page)).toContainText('That was the last Tutorial.');
     await expect(card(page).getByRole('button', { name: /^Next/ })).toHaveCount(0);
-    if (clickFocuses) await expect(action(page, 'Done')).toBeFocused();
+    await expect(action(page, 'Done')).toBeFocused();
   });
 }
 
@@ -320,7 +318,7 @@ test('Next before a Step is made says what to do, the first time only (issue 190
   await action(page, 'Next').click();
   await expect(progress(page)).toHaveText('Step 2 of 15');
   await action(page, 'Next').click({ force: true });
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: a second hint would show by now
   await expect(hint).toHaveCount(0); // once is enough
   await expect(progress(page)).toHaveText('Step 2 of 15');
 });
@@ -371,7 +369,7 @@ const standing = (page: Page, selector: string) =>
 for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830]] as const) {
   for (const preset of ['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'PWM Bass', 'FM Ladder', 'Ring Bell', 'Deep Breath']) {
     test(`on a ${layout}, each Step of ${preset} brings its control, then the Viewer its note names, clear of the header and the card`, async ({ page }) => {
-      test.setTimeout(90000); // fifteen Steps, each made and checked twice
+      test.setTimeout(90000); // up to nineteen Steps (PWM Bass), each made and checked twice
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width, height });
       await open(page, preset);
@@ -413,6 +411,31 @@ test('on a phone the card shows two lines; a tap on the text, or on +, shows it 
   await more.click();
   await expect.poll(height).toBeGreaterThan(folded);
 });
+
+// Issue 260 (review 16, finding 2): on a phone the row of buttons wrapped Next alone to the left of a second row while
+// the Step was not made, then took it to the first row's end once "Do it for me" went: a thumb that learnt where it was
+// met empty space. It keeps one place, the row's right end, before and after.
+for (const [width, height] of [[390, 844], [375, 812], [320, 568]] as const) {
+  test(`at ${width} × ${height} Next keeps one place before and after each Step is made (issue 260)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page, 'Bass');
+    await action(page, 'Start').click();
+    const next = action(page, 'Next');
+    const place = async () => {
+      const box = (await next.boundingBox())!;
+      return { x: Math.round(box.x), y: Math.round(box.y) };
+    };
+    for (let i = 1; i <= 3; i++) {
+      await expect(progress(page)).toHaveText(`Step ${i} of 15`);
+      await expect(action(page, 'Do it for me')).toBeVisible();
+      const before = await place();
+      await doIt(page);
+      await expect(action(page, 'Do it for me')).toBeHidden();
+      expect(await place(), `Step ${i}`).toEqual(before);
+      await next.click();
+    }
+  });
+}
 
 test('the header’s Tutorial button lists the Tutorials, ticks the finished, and starts the one picked (issue 59)', async ({ page }) => {
   await page.goto('/');
@@ -477,7 +500,8 @@ test('picking a Tutorial puts the focus on its card, and its Next keeps it there
   await expect(next).toBeDisabled(); // until the Step is made
   await page.keyboard.press('Enter');
   await expect(progress(page)).toHaveText('Step 1 of 15');
-  await action(page, 'Do it for me').focus(); // Safari tabs to buttons only when its settings ask it to
+  await page.keyboard.press('Shift+Tab'); // Do it for me, before the way forward
+  await expect(action(page, 'Do it for me')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(next).toBeEnabled();
   await expect(next).toBeFocused(); // the button pressed has gone: the way forward has the focus
@@ -498,8 +522,7 @@ test('picking a Tutorial puts the focus on its card, and its Next keeps it there
   await expect(action(page, 'Start')).toBeFocused();
 });
 
-test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear of the card (issue 104)', async ({ page, browserName }) => {
-  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear of the card (issue 104)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, 'Bass');
   await page.locator('header button').first().focus(); // from the top of the page
@@ -531,7 +554,7 @@ test('a knob already within reach when its Step comes waits for a touch, then co
   await expect(progress(page)).toHaveText('Step 10 of 15');
   const decay = ringed(page).getByRole('slider');
   await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(800); // a time: longer than a Step takes to count
   await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
   await expect(action(page, 'Next')).toBeDisabled();
   await decay.focus();
@@ -554,6 +577,49 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await snapshot.click();
   await expect(snapshot).toHaveAttribute('aria-pressed', 'true');
   await expect(card(page)).toContainText('a faint trace of this bright saw');
+});
+
+// Issue 260 (review 16, finding 3): on a phone the Display panel covers the page, so a Display Step made by hand left
+// it over the circles or the trace its note speaks of, until Next. Made, the Step closes it, and its Viewer is in view.
+for (const [preset, before, option, note] of [
+  ['Sub Ladder', 3, 'Ideal', 'A circle sits on each Harmonic'],
+  ['Bass', 3, 'Ideal', 'Circles mark where'],
+  ['Acid', 1, 'Snapshot', 'a faint trace'],
+] as const) {
+  test(`on a phone, ${option} turned on by hand in ${preset} closes Display, the Step's Viewer in view (issue 260)`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, preset);
+    await action(page, 'Start').click();
+    for (let i = 0; i < before; i++) await makeStep(page);
+    const display = page.getByRole('button', { name: 'Display', exact: true });
+    await display.click();
+    await expect(display).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', { name: option, exact: true }).click();
+    await expect(card(page)).toContainText(note);
+    await expect(display).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('.display-panel')).toHaveCount(0);
+    // Its Viewer between the header and the card, and nothing over it.
+    await expect.poll(() => standing(page, '[data-tutorial-viewer]')).toBe('clear');
+    const viewer = page.locator('[data-tutorial-viewer]');
+    expect(await viewer.evaluate((v) => {
+      const box = v.getBoundingClientRect();
+      return v.contains(document.elementFromPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2));
+    })).toBe(true);
+    await expect(action(page, 'Next')).toBeEnabled();
+  });
+}
+
+test('on a laptop, a Display Step made by hand leaves the panel open beside the Viewers (issue 260)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, 'Acid');
+  await action(page, 'Start').click();
+  await makeStep(page);
+  const display = page.getByRole('button', { name: 'Display', exact: true });
+  await display.click();
+  await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+  await expect(card(page)).toContainText('a faint trace');
+  await expect(display).toHaveAttribute('aria-expanded', 'true');
 });
 
 // Issue 158 (profile 16's review of 1.19.0): Acid's Snapshot stayed on the Viewers through Pluck, Wobble and FM Ladder.

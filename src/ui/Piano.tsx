@@ -17,10 +17,10 @@ interface Props {
 }
 
 /**
- * The on-screen piano: the computer keyboard's range, and from 861 px the keys beyond it the header has room for
- * (issue 154), played by pointer, touch or MIDI; each C named with its octave (C3, C4…), lit while a Note
- * sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note
- * to Note. Each finger on a touch screen plays its own Note, as each key of the computer keyboard does (issue 39).
+ * The on-screen piano: the computer keyboard's range (one octave, C to C, on a phone), and from 861 px the keys
+ * beyond it the header has room for (issue 154), played by pointer, touch or MIDI; each C named with its octave (C3,
+ * C4…), lit while a Note sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to
+ * slide from Note to Note. Each finger on a touch screen plays its own Note, as each key of the computer keyboard does (issue 39).
  */
 export function Piano({ octave, whites = LETTER_WHITES, held, input, invite }: Props) {
   // The Note each pointer plays. Two fingers on one key both hold it: the Note input counts its holders.

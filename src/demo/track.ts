@@ -66,7 +66,8 @@ const acidA = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 C2! A1 A2 - G1 A1');
 const acidB = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 E2! A1 A2 - G2! A1');
 const acidEnd = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 E2! A1 A2 - - -');
 
-// Every part after the first plays over Am–F–C–G, a bar each: the four chords of a great deal of modern dance music.
+// The parts after the first play over Am–F–C–G, the four chords of a great deal of modern dance music: a bar each,
+// two for Sweep Pad and Cathedral; Acid holds to an A, and Self-Oscillation is one A2.
 export const TRACK: Track = {
   bpm: BPM,
   parts: [

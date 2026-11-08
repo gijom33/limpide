@@ -2,12 +2,13 @@ import { useEffect, useRef } from 'react';
 import { describeControl, describeTargetShort } from '../midi/describe';
 import type { Mapping } from '../midi/mappings';
 import type { QuickSetupState } from '../midi/quickSetup';
+import { describeTaken } from '../midi/taken';
 import { useFocusBack } from './focusBack';
 
 interface Props {
   state: QuickSetupState;
-  /** The step learned last, to confirm it. */
-  last: { step: number; mapping: Mapping } | null;
+  /** The step learned last, to confirm it, and what it took (issue 255). */
+  last: { step: number; mapping: Mapping; took: readonly Mapping[] } | null;
   onBack(): void;
   onSkip(): void;
   onFinish(): void;
@@ -51,6 +52,7 @@ export function QuickSetupPanel({ state, last, onBack, onSkip, onFinish, onCance
           {last && (
             <p className="quick-setup-last">
               {[steps[last.step].group, describeTargetShort(last.mapping.target)].filter(Boolean).join(' · ')} ← {describeControl(last.mapping.control)}
+              {last.took.length ? `; ${describeTaken(last.took)}` : null}
             </p>
           )}
           <div className="quick-setup-actions">

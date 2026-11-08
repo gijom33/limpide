@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **A button to the next Tutorial** on an end card ("Next: Acid"), as the Tour's "Build a Bass", shown on a phone too.
 2. **Next before the Step is made says so,** the first time: "Turn the ringed control first, or press Do it for me."
@@ -33,7 +33,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **Acceptance criteria:**
 - [x] An e2e test: an end card's Next button starts the next Tutorial, on a phone too
 - [x] An e2e test: Next before a Step shows its line once
-- [ ] The word tests pass; each Tutorial's end Patch still equals its Preset; every test passes in Linux's fonts too
+- [ ] ~~The word tests pass; each Tutorial's end Patch still equals its Preset; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - New Tutorials
@@ -48,7 +48,7 @@ Built on 2026-11-02, at night, test-first.
 - **The drill shortened** (decision 3): a new kind of Step sets several faders at once. Bass keeps its four Filter Envelope Steps; Acid and Pluck each set the Envelope's four faders in one Step (Acid 12 Steps now, Pluck 11). All four are ringed, each with its target above it ("150 ms", without the arrow a single control's has, so the four stay apart: measured at 375, 393, 690 and 1440 px, 3 px between the closest at 690; every target label is 2 px narrower each side for it), and the Step counts once all four rest within reach; "Do it for me" sets them all. Each Preset is still rebuilt exactly.
 - **The words** (decision 4): Ring Bell 5 and Deep Breath 2 now say what the small numbers along the Oscillator Spectrum's top are ("where each Harmonic belongs: 2 at twice the Note's pitch, 3 at three times"), and the word tests ask for that wherever "place" or those numbers are first used. The Tour's frozen line names the stage first: "Frozen: Decay, the fall to a steady level" (Attack, the rise; Sustain, that level held), and after the Release all four by name. The Amp card no longer has its Amp Scope sentence. CONTEXT.md's Step, and issues 129 and 130, say what changed.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 1. "The first time" for the Next line is once per Tutorial started, not once ever: a learner who left Bass yesterday hears it again in Acid.
 2. The drill is shortened by the menu's order (Bass first), not by which Tutorials the learner has finished: someone who starts at Acid gets the one Step too, its words still saying what each fader does.

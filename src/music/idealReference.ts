@@ -180,7 +180,7 @@ function ringProduct(patch: Patch, n1: number, n2: number, harmonics: number): F
   });
 }
 
-/** How much the engine scales a saw less its delayed copy, so the pulse it makes has the pulse series' level. */
+/** How much the engine scales a saw's delayed copy less the saw, so the pulse it makes has the pulse series' level. */
 function pulseScale(width: number): number {
   const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];
   return harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak);
@@ -267,7 +267,7 @@ function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, ind
       const ratio = Math.abs(frequency);
       if (ratio < 1e-6 || ratio >= count) continue;
       let level = levels[n] * Math.abs(j[Math.abs(k)]);
-      // A pulse: the swung saw less its copy one width of Osc 1's cycle behind.
+      // A pulse: the swung saw's copy one width of Osc 1's cycle behind, less the saw.
       if (pulse) level *= 2 * scale * Math.abs(Math.sin((Math.PI * frequency * patch.pulseWidth) / osc1));
       if (level > 1e-7) sum.add(ratio, level);
     }
@@ -317,8 +317,8 @@ const cycles = createCache<string, Float64Array>(KEPT_CYCLES);
 /**
  * The level of each Harmonic (index m, of the lower pitch) of Osc 1 swung by Osc 2 at whole-number pitches n1 and n2
  * of it, both starting their cycles together, up to `harmonics` (issue 96): Osc 1's phase is its own plus the integral
- * of Osc 2's wave times the index, one cycle sampled as the engine plays it (a pulse a swung saw less its copy one
- * width of Osc 1's cycle behind), and Fourier-transformed. Kept by its arguments.
+ * of Osc 2's wave times the index, one cycle sampled as the engine plays it (a pulse a swung saw's copy one
+ * width of Osc 1's cycle behind, less the saw), and Fourier-transformed. Kept by its arguments.
  */
 function fmCycle(patch: Patch, n1: number, n2: number, harmonics: number, index: number): Float64Array {
   const samples = 2 ** Math.ceil(Math.log2(Math.max(2048, SAMPLES_PER_HARMONIC * harmonics * (1 + index))));
@@ -346,7 +346,7 @@ function fmCycle(patch: Patch, n1: number, n2: number, harmonics: number, index:
     const lag = (patch.pulseWidth * samples) / n1; // one width of Osc 1's cycle, in samples
     const re = new Float64Array(samples);
     const im = new Float64Array(samples);
-    for (let i = 0; i < samples; i++) re[i] = pulse ? scale * (wave(phase(i)) - wave(phase(i - lag))) : wave(phase(i));
+    for (let i = 0; i < samples; i++) re[i] = pulse ? scale * (wave(phase(i - lag)) - wave(phase(i))) : wave(phase(i));
     fft(re, im);
     const levels = new Float64Array(Math.min(harmonics, samples / 2));
     for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
@@ -356,7 +356,7 @@ function fmCycle(patch: Patch, n1: number, n2: number, harmonics: number, index:
 
 /**
  * An Oscillator's wave at a phase, as the engine plays it: each Waveform its unending series' shape at the engine's
- * scale, and a pulse built the engine's way, a saw less a copy of it one width behind.
+ * scale, and a pulse built the engine's way, a saw's copy one width behind less the saw: high for the width.
  */
 function engineWave(waveform: Patch['waveform'], width: number): (phase: number) => number {
   const scaled = (w: Exclude<Patch['waveform'], 'pulse'>, firstHarmonic: number, shape: (phase: number) => number) => {
@@ -377,7 +377,7 @@ function engineWave(waveform: Patch['waveform'], width: number): (phase: number)
     case 'pulse': {
       const scale = pulseScale(width);
       const lag = 2 * Math.PI * width;
-      return (phase) => scale * (saw(phase) - saw(phase - lag));
+      return (phase) => scale * (saw(phase - lag) - saw(phase));
     }
   }
 }

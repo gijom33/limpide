@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 
 const db = (page: import('@playwright/test').Page) =>
   page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
@@ -26,12 +26,12 @@ test('the Envelope Timeline draws the Envelopes as they happen', async ({ page }
   await ready(page);
   const timeline = page.getByLabel('Envelope Timeline', { exact: true }); // the plot's canvas
   await page.keyboard.down('KeyA');
-  await page.waitForTimeout(400);
-  const inked = await timeline.evaluate((c: HTMLCanvasElement) => {
-    const { data } = c.getContext('2d')!.getImageData(Math.floor(c.width * 0.9), 0, Math.floor(c.width * 0.1), c.height);
-    return data.filter((v, i) => i % 4 === 3 && v > 0).length;
-  });
-  expect(inked).toBeGreaterThan(100);
+  const inked = () =>
+    timeline.evaluate((c: HTMLCanvasElement) => {
+      const { data } = c.getContext('2d')!.getImageData(Math.floor(c.width * 0.9), 0, Math.floor(c.width * 0.1), c.height);
+      return data.filter((v, i) => i % 4 === 3 && v > 0).length;
+    });
+  await expect.poll(inked).toBeGreaterThan(100); // drawn as the Note plays
   await page.keyboard.up('KeyA');
 });
 
@@ -80,7 +80,7 @@ test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, rev
   const seen: number[] = [];
   for (let i = 0; i < 12; i++) {
     seen.push(await level());
-    await page.waitForTimeout(60);
+    await page.waitForTimeout(60); // a time: twelve reads 60 ms apart span the LFO's dips
   }
   await page.keyboard.up('KeyA');
   // At full Depth the LFO (2 Hz) dips the sound to silence and back, twice a second; the Envelope drawn stays at its
@@ -107,7 +107,7 @@ test('a moved knob’s line alone, without a line for its own setting, its LFO 1
       seen.push({ alpha: g.globalAlpha, dash: g.getLineDash() });
       stroke(...args);
     };
-    await new Promise((done) => setTimeout(done, 300));
+    for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame);
     return seen;
   });
   // Issue 71's faint line for the knob's own setting is gone: every stroke is drawn at full strength.
@@ -130,5 +130,21 @@ for (const [width, height] of [[360, 800], [390, 844], [760, 1000], [1100, 800],
         return { beside: name.right <= first.left && name.bottom > first.top, faderWidth: Math.round(fader.width) };
       });
     expect(await layout('Amp')).toEqual(await layout('Filter'));
+  });
+}
+
+// Issue 252: each Envelope row ends its Section's controls, so the Filter's and the Amp's lie on one line wherever the
+// two Sections share a row.
+for (const width of [861, 1100, 1440, 2560]) {
+  test(`the Filter and Amp Envelope rows line up side by side at ${width} px (issue 252)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const top = async (locator: Locator) => (await locator.boundingBox())!.y;
+    const section = (stage: string) => page.getByRole('region', { name: stage, exact: true });
+    expect(await top(section('Amp')), 'side by side').toBe(await top(section('Filter')));
+    const row = (stage: string) => section(stage).locator('.knobs-envelope');
+    expect(Math.abs((await top(row('Filter'))) - (await top(row('Amp'))))).toBeLessThanOrEqual(1);
+    const fader = (stage: string) => row(stage).locator('.knob[data-kind="fader"]').first();
+    expect(Math.abs((await top(fader('Filter'))) - (await top(fader('Amp'))))).toBeLessThanOrEqual(1);
   });
 }

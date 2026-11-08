@@ -1,6 +1,6 @@
 # MIDI Learn reads a fader leaving an end by any small rise
 
-**Status:** accepted · **Date:** 2026-11-03 · **Decided by:** Claude's call, open to the owner ([issue 227](../issues/227-small-slips-in-the-new-features.md))
+**Status:** accepted · **Date:** 2026-11-03 · **Decided by:** Claude's call, let stand by the owner in 1.24.0 ([issue 227](../issues/227-small-slips-in-the-new-features.md))
 
 Supersedes, in [ADR-0020](./0020-midi-learn-reads-a-knobs-mode-from-its-whole-turn.md), "a lone 1 or 126 (a fader nudged off an end), is Absolute". The 1.23.0 code review found a fader nudged from 0 learned as Absolute only on exact single steps: a lone 2, or 1, 3, 6, 10, learned as Relative, and the fader then moved its knob by steps.
 

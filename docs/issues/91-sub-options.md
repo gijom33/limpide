@@ -32,7 +32,7 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. Choices, not knobs, since each has two values, in the Mixer's name column under LEVELS with the Noise's colour (a row under the faders took their height): Claude's call, open to the owner. Superseded by decision 3.
+2. Choices, not knobs, since each has two values, in the Mixer's name column under LEVELS with the Noise's colour (a row under the faders took their height): Claude's call, let stand by the owner in 1.16.0. Superseded by decision 3.
 3. The Sub's and the Noise's choices on a Sub & Noise tab of their own, between Osc 2 and the Mixer, so no tab is taller than two rows and the Mixer is its faders alone: decided by the owner (layout B of three; the others were a Mod tab for FM and Env Amount, or both new tabs).
 
 ## How it was built

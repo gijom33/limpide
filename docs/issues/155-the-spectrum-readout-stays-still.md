@@ -10,7 +10,7 @@ Why it moves: the readout is drawn on the canvas in the page's proportional font
 
 ## Decisions
 
-Claude's call, open to the owner, 2026-10-31, taking up the owner's "maybe stack values?":
+Claude's call, let stand by the owner in 1.20.0, 2026-10-31, taking up the owner's "maybe stack values?":
 
 1. **Stacked:** three lines, one value each: the frequency, the nearest Note with its cents, the level. Each line keeps its own place, so a value changing moves nothing else.
 2. **A box of fixed size:** as wide as the widest each line can be ("20.00 kHz", "C#10 −50¢", "silent" or "−100 dB"), measured once per font, so it never grows or shrinks as the cursor moves.
@@ -35,7 +35,7 @@ Claude's call, open to the owner, 2026-10-31, taking up the owner's "maybe stack
 - [x] Moving the cursor along the Harmonics, the box keeps its size and each line's units stay put (a unit test on the layout: the widest and narrowest values give the same box)
 - [x] Near the right edge the box flips left once, and does not jump as values change
 - [x] The readout data a test reads is as before; the Spectrum e2e specs pass unchanged, or are updated only for the box's new place
-- [ ] Every Spectrum (the Oscillators', the Filter's, the Amp's) behaves the same; every test passes in Linux's fonts too
+- [ ] ~~Every Spectrum (the Oscillators', the Filter's, the Amp's) behaves the same; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - What the readout says, or how it snaps to a peak
@@ -48,7 +48,7 @@ Claude's call, open to the owner, 2026-10-31, taking up the owner's "maybe stack
 - **The drawing** (`src/viewers/spectrum.ts`): the columns are measured once per font and kept; the box is drawn where the old one line was (20 px from the top), 37 px tall. Every Spectrum (the Oscillators', the Filter's, the Amp's) draws through it.
 - **Tests:** `src/viewers/readoutBox.test.ts`: across 400 frequencies (3 Hz to 24 kHz) and levels (above 0 dB to below the floor) the box keeps one size and place, and holds every value; the widest and narrowest values give the same box and the same text places; the box flips left once as the cursor crosses the Viewer, and never jumps otherwise; the lines split value from unit.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **The Note line's "unit" is its cents** ("C#4 +23¢"): the Note's name right-aligned with the numbers above it, its cents where the units are. A Note on its pitch shows no cents, as before.
 2. **"silent" sits in the values' column**, right-aligned like a number, with nothing after it.
 3. **The box is 37 px tall** (it was 15) and stays at the top, below the Harmonic Markers' labels: on the shortest Viewer (78 px) it ends about 10 px above the frequency axis's labels. Near the right edge it covers more of the Response Curve's dB labels than the one line did.

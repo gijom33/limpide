@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { firstChange } from './helpers';
+import { cycleLength, TOUR } from '../src/tutorial/tour';
+import { firstChange, steady } from './helpers';
 import { FIRST_VISIT } from './startState';
 
 // Issue 128: the Tour, a card for each Section while the synth turns its controls itself, on a Patch of its own.
@@ -34,7 +35,8 @@ const playing = (page: Page) => expect(page.getByRole('group', { name: 'Piano' }
 
 /**
  * Where an element stands: "clear" between the header (and the phone's strip) and the card, as a Tutorial's control
- * must (tutorial.spec.ts).
+ * must (tutorial.spec.ts); or, where the card does not cover it side to side, beside the card, down to the window's
+ * foot (issue 254).
  */
 const standing = (page: Page, name: string) => standingOf(page.locator(`[aria-label="${name}"]`).first());
 /** Where the element `locator` finds stands, as `standing` says. */
@@ -45,7 +47,8 @@ const standingOf = (locator: Locator) =>
     const header = document.querySelector('header')!.getBoundingClientRect();
     const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
     const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
-    return box.bottom <= card.top + 1 && box.top >= top - 1 ? 'clear' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} between ${Math.round(top)} and ${Math.round(card.top)}`;
+    const floor = box.left < card.right && box.right > card.left ? card.top : innerHeight;
+    return box.bottom <= floor + 1 && box.top >= top - 1 ? 'clear' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} between ${Math.round(top)} and ${Math.round(floor)}`;
   });
 
 test.describe('a first visit', () => {
@@ -68,7 +71,7 @@ test('About offers the Tour every time; the Patches panel lists no Tour (issue 1
   await expect(page.getByRole('dialog', { name: 'Patches' })).not.toContainText(/\bTour\b/);
   await page.keyboard.press('Escape');
   await startFromAbout(page);
-  await expect(progress(page)).toHaveText('1 of 6');
+  await expect(progress(page)).toHaveText('1 of 7');
 });
 
 test('the Tour stops the Demo and the Song when it starts (issue 128)', async ({ page }) => {
@@ -110,7 +113,7 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   expect((await valuesOver(() => waveform(page).getAttribute('aria-label'), 5500)).size).toBeGreaterThan(1);
 
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('2 of 6');
+  await expect(progress(page)).toHaveText('2 of 7');
   await expect(card(page)).toContainText('The Filter takes what the Oscillators make');
   expect((await valuesOver(() => slider(page, 'Cutoff').getAttribute('aria-valuetext'), 1500)).size).toBeGreaterThan(2);
   await expect(waveform(page)).toHaveAttribute('aria-label', 'Saw'); // each card starts on the Tour's own Patch
@@ -124,10 +127,10 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   await expect(card(page)).toContainText('The LFOs send no sound down the chain');
   expect((await valuesOver(() => slider(page, 'LFO 1 Depth').getAttribute('aria-valuetext'), 1500)).size).toBeGreaterThan(2);
   await playing(page);
-  await expect(progress(page)).toHaveText('4 of 6'); // what else there is to find comes after (issue 210)
+  await expect(progress(page)).toHaveText('4 of 7'); // what else there is to find comes after (issue 210)
 
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('3 of 6');
+  await expect(progress(page)).toHaveText('3 of 7');
 });
 
 test('grabbing the control being turned takes it over: it stops moving for that card (issue 128)', async ({ page }) => {
@@ -147,11 +150,12 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
   await startFromAbout(page);
   await expect(action(page, 'Next')).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(progress(page)).toHaveText('2 of 6');
+  await expect(progress(page)).toHaveText('2 of 7');
   await expect(action(page, 'Next')).toBeFocused();
-  await action(page, 'Back').focus(); // Safari tabs to buttons only when its settings ask it to
+  await page.keyboard.press('Shift+Tab'); // Back, before the way forward
+  await expect(action(page, 'Back')).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(progress(page)).toHaveText('1 of 6');
+  await expect(progress(page)).toHaveText('1 of 7');
   await expect(action(page, 'Next')).toBeFocused(); // Back went with the second card: the way forward has the focus
   await card(page).getByRole('button', { name: 'Close the Tour' }).focus();
   await page.keyboard.press('Enter');
@@ -159,7 +163,7 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
 });
 
 // The first card, closed, and the last, done: the give-back itself is the Shows' unit tests' at any card (issue 250).
-for (const at of [1, 6]) {
+for (const at of [1, 7]) {
   test(`closed at card ${at}, the Tour gives back the Patch the person had, value for value (issue 128)`, async ({ page }) => {
     await page.goto('/');
     await patchName(page).click();
@@ -178,7 +182,7 @@ for (const at of [1, 6]) {
     await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
     for (let i = 1; i < at; i++) await action(page, 'Next').click();
     await page.waitForTimeout(500); // the synth turning its controls
-    await card(page).getByRole('button', { name: at === 6 ? 'Done' : 'Close the Tour' }).click();
+    await card(page).getByRole('button', { name: at === 7 ? 'Done' : 'Close the Tour' }).click();
     await expect(card(page)).toBeHidden();
     await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
     await expect(patchName(page)).toHaveAttribute('data-changed');
@@ -188,7 +192,7 @@ for (const at of [1, 6]) {
   });
 }
 
-test('the last card’s button starts the first Tutorial, Sub Ladder (issues 128, 233)', async ({ page }) => {
+test('the Tutorials’ card’s button starts the first Tutorial, Sub Ladder (issues 128, 233, 260)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 6; i++) await action(page, 'Next').click();
@@ -198,7 +202,7 @@ test('the last card’s button starts the first Tutorial, Sub Ladder (issues 128
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
-test('the last card’s button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
+test('the Tutorials’ card’s button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 6; i++) await action(page, 'Next').click();
@@ -293,7 +297,7 @@ test('folded, the Amp card still says what the frozen picture shows to a screen 
 });
 
 // Issue 129: on a phone a card shows two lines until opened, and they say what to watch, whole, not where the Section sits.
-test('on a phone, each card’s two lines say what to watch (issue 129)', async ({ page }) => {
+test('on a phone, the first four cards’ two lines say what to watch, the stages’ and the LFOs’ (issue 129)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await startFromAbout(page);
@@ -366,7 +370,7 @@ test('the person’s own scroll stops the Tour’s scrolling for that card (issu
   await page.mouse.move(187, 300);
   await page.mouse.wheel(0, 120);
   await expect.poll(() => scrollTop(page)).not.toBe(0);
-  await page.waitForTimeout(300);
+  await steady(page); // the wheel's scroll ended
   const mine = await scrollTop(page);
   await expect(frozen(page)).toHaveCount(1, { timeout: 6000 }); // where the Tour would have gone to the Timeline
   expect(await scrollTop(page)).toBe(mine);
@@ -424,7 +428,7 @@ test('the Tour’s page glides to what it shows, and jumps with reduced motion (
   }
 });
 
-test('from 2 × 2 up, where a card’s controls and Viewers all fit, the page holds still through the card (issue 206)', async ({ page }) => {
+test('in the sections 2 × 2, where a card’s controls and Viewers all fit, the page holds still through the card (issue 206)', async ({ page }) => {
   test.setTimeout(60000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 860, height: 1100 });
@@ -455,7 +459,7 @@ test('after the Sections, a card for the Synth Geek Layer and its History, then 
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 5; i++) await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('5 of 6');
+  await expect(progress(page)).toHaveText('5 of 7');
   await expect(card(page)).toContainText('Geek toggle');
   await expect(card(page)).toContainText('History');
   const display = page.getByRole('button', { name: 'Display', exact: true });
@@ -471,20 +475,32 @@ test('after the Sections, a card for the Synth Geek Layer and its History, then 
   await expect(page.getByRole('group', { name: 'Piano' }).locator('[aria-pressed="true"]')).toHaveCount(0, { timeout: 8000 });
 
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('6 of 6');
+  await expect(progress(page)).toHaveText('6 of 7');
   await expect(card(page)).toContainText('rebuild one of the Presets yourself');
   await expect(page.getByRole('button', { name: 'Tutorial', exact: true })).toHaveAttribute('data-tutorial', '');
   await expect(page.locator('[data-tutorial]')).toHaveCount(1); // Display's ring gone with its card
-  await expect(action(page, 'Next')).toBeHidden();
+  // The first Tutorial offered beside Next, not as the way out (issue 260).
   await expect(action(page, 'Build a Sub Ladder')).toBeVisible();
+  await expect(action(page, 'Done')).toBeHidden();
+
+  // The last card, something to play: the Song ringed, its button the way out (issue 260).
+  await action(page, 'Next').click();
+  await expect(progress(page)).toHaveText('7 of 7');
+  await expect(card(page)).toContainText('Now play the piano’s keys');
+  await expect(page.getByRole('button', { name: 'Song', exact: true })).toHaveAttribute('data-tutorial', '');
+  await expect(page.locator('[data-tutorial]')).toHaveCount(1);
+  await expect(action(page, 'Next')).toBeHidden();
+  await expect(action(page, 'Play the Song')).toBeVisible();
+  await expect(action(page, 'Build a Sub Ladder')).toBeHidden();
 
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('5 of 6');
+  await expect(progress(page)).toHaveText('6 of 7');
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('4 of 6');
+  await expect(progress(page)).toHaveText('5 of 7');
+  await action(page, 'Back').click();
+  await expect(progress(page)).toHaveText('4 of 7');
   await playing(page); // the LFO card plays again
-  await action(page, 'Next').click();
-  await action(page, 'Next').click();
+  for (let i = 0; i < 3; i++) await action(page, 'Next').click();
   await action(page, 'Done').click();
   await expect(card(page)).toBeHidden();
   await expect(geekOn(page)).toHaveCount(0); // off after the Tour, as before it
@@ -500,6 +516,96 @@ for (const [layout, width, height] of [['small phone', 320, 568], ['phone', 375,
     for (let i = 1; i < 4; i++) await action(page, 'Next').click();
     await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear'); // the page down at the LFO card's Viewer
     await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Song', exact: true }))).toBe('shown');
+  });
+}
+
+// Issue 260 (review 1, finding 2): the Tour ended on the geek extras, a newcomer leaving by Done with nothing to play.
+// Its last card's way out is the Song, on the person's own Patch, given back.
+test('the last card’s button ends the Tour and plays the Song on the person’s Patch (issue 260)', async ({ page }) => {
+  await page.goto('/');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Acid', exact: true }).first().click();
+  await page.keyboard.press('Escape');
+  await startFromAbout(page);
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
+  for (let i = 1; i < 7; i++) await action(page, 'Next').click();
+  await action(page, 'Play the Song').click();
+  await expect(card(page)).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Song', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
+  await playing(page);
+  await expect(page.locator('[data-tutorial]')).toHaveCount(0);
+  await expect(page.locator('.song-invite')).toBeVisible(); // the Patch given back is the one it invites to change
+});
+
+// Issue 254: on every card, at every size, the control the Tour turns stays in view, clear of the card, the whole time
+// it moves; on wide windows its Viewers with it, the card moving aside where it would cover them.
+
+/**
+ * What went out of view over `ms`, read in the page every tenth of a second: the ringed control (the one the synth
+ * turns) and, on a wide window, the card's Viewers, each "clear" in the window, below the header and the phone's strip,
+ * and not under the card, as `standing` says. A control out of view is missed only if it moved meanwhile: on a phone
+ * the Amp's faders hold still while the Timeline has the page (issue 206). What is out of view is read again a moment
+ * later, since the card's clock may have turned before the page followed.
+ */
+const missedOver = (page: Page, { viewers, ms, wide }: { viewers: string[]; ms: number; wide: boolean }) =>
+  page.evaluate(
+    async ({ viewers, ms, wide }) => {
+      const where = (element: Element | null) => {
+        if (!element) return 'missing';
+        const card = document.querySelector('.docked')!.getBoundingClientRect();
+        const header = document.querySelector('header')!.getBoundingClientRect();
+        const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
+        const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
+        const box = element.getBoundingClientRect();
+        const floor = box.left < card.right && box.right > card.left ? card.top : innerHeight;
+        if (box.top >= top - 1 && box.bottom <= floor + 1) return 'clear';
+        return `${Math.round(box.left)}–${Math.round(box.right)} × ${Math.round(box.top)}–${Math.round(box.bottom)}, card ${Math.round(card.left)}–${Math.round(card.right)} from ${Math.round(card.top)}`;
+      };
+      const look = () => {
+        const control = document.querySelector('[data-learn][data-tutorial]');
+        // What the control shows: a knob's or fader's value, the Waveform picked.
+        const shows = control && [control, ...control.querySelectorAll('[aria-valuetext], [aria-checked="true"]')].map((e) => e.getAttribute('aria-valuetext') ?? e.getAttribute('aria-label'));
+        const out = viewers.map((name) => [name, where(document.querySelector(`[aria-label="${name}"]`))]).filter(([, w]) => w !== 'clear');
+        return { control: where(control), shows: JSON.stringify(shows), viewers: wide ? out : [] };
+      };
+      const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const missed: string[] = [];
+      for (const start = performance.now(); performance.now() - start < ms; await wait(100)) {
+        const now = look();
+        if (now.control === 'clear' && now.viewers.length === 0) continue;
+        await wait(150);
+        const then = look();
+        const at = Math.round(performance.now() - start);
+        if (then.control !== 'clear' && (wide || then.shows !== now.shows)) missed.push(`at ${at} ms, the control: ${then.control}`);
+        for (const [name, w] of then.viewers) missed.push(`at ${at} ms, ${name}: ${w}`);
+      }
+      return missed;
+    },
+    { viewers, ms, wide },
+  );
+
+for (const [layout, width, height] of [['three across', 1440, 900], ['four across', 1920, 1080], ['phone', 390, 844]] as const) {
+  test(`in ${layout}, every card keeps the control it turns in view and clear of the card (issue 254)`, async ({ page }) => {
+    test.setTimeout(150000);
+    // A wide window shows the control and the card's Viewers at once, through every card.
+    const wide = width > 600;
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await startFromAbout(page);
+    for (const [i, section] of TOUR.entries()) {
+      await expect(page.locator('[data-learn][data-tutorial]')).toHaveCount(1);
+      // Each card's moves once through: the Amp's four stages, the Filter's Cutoff and Resonance.
+      expect(await missedOver(page, { viewers: section.viewers, ms: cycleLength(section) * 1000, wide }), `card ${i + 1}, ${section.title}`).toEqual([]);
+      await action(page, 'Next').click();
+    }
+    // The last two cards ring a button of the header, which they bring into view.
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
     await action(page, 'Next').click();
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');

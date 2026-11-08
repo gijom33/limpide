@@ -78,11 +78,11 @@ Water drop gags, among the funny turns when nothing is played:
 17. Drinking, the glass's rim is really over its mouth (issue 115's glass, moved again), then a bit higher. Decided by the owner.
 18. Its tail is the Limpide logo whenever no special animation is on: Resonance's straight tail and wide eyes come for a moment as it is turned past three quarters, not for as long as it stays there (amends decision 4). Decided by the owner.
 19. Fishing, the line does not turn with Bead: it hangs straight down from the rod's tip, the hook going down, and coming back up with the ♪, properly animated. Decided by the owner.
-20. A funny turn plays to its end before any big movement: Bead had jumped while fishing. Decided by the owner. Which moves wait (a visit to another section, the dance step and hop on each Note, a control's walk or other answer, the Demo's surfing) and which do not (a tickle, a click, being picked up, a word, being sent away, the ice): Claude's call, open to the owner.
+20. A funny turn plays to its end before any big movement: Bead had jumped while fishing. Decided by the owner. Which moves wait (a visit to another section, the dance step and hop on each Note, a control's walk or other answer, the Demo's surfing) and which do not (a tickle, a click, being picked up, a word, being sent away, the ice): Claude's call, let stand by the owner in 1.17.0.
 21. Bead surfs an LFO's plot only while that LFO is on, its Depth above 0; with neither on, the part is conducting or air guitar instead. Decided by the owner.
-22. Once Bead starts fishing, the whole sequence plays until it gets its ♪ (it still stopped short after decision 20). Decided by the owner. So nothing ends a funny turn now but being picked up or sent away: a tickle or a click is not felt, a word or the theme's reaction comes once the turn ends, the Filter closed freezes it only then, and it does not doze off in the middle (Claude's call, open to the owner; amends decision 20's list).
+22. Once Bead starts fishing, the whole sequence plays until it gets its ♪ (it still stopped short after decision 20). Decided by the owner. So nothing ends a funny turn now but being picked up or sent away: a tickle or a click is not felt, a word or the theme's reaction comes once the turn ends, the Filter closed freezes it only then, and it does not doze off in the middle (Claude's call, let stand by the owner in 1.17.0; amends decision 20's list).
 
-Claude's calls, open to the owner: "a few seconds" for the tail is 3 s; the words get the same 4 s from first Note to last as B, E, A, D, BAGGAGE's seven Notes included; the air guitar is for the Demo only; where the Scope is out of view (a phone scrolled away from it), a surfing part becomes conducting or air guitar.
+Claude's calls, let stand by the owner in 1.17.0: "a few seconds" for the tail is 3 s; the words get the same 4 s from first Note to last as B, E, A, D, BAGGAGE's seven Notes included; the air guitar is for the Demo only; where the Scope is out of view (a phone scrolled away from it), a surfing part becomes conducting or air guitar.
 
 ## Agent Brief
 
@@ -99,17 +99,17 @@ Claude's calls, open to the owner: "a few seconds" for the tail is 3 s; the word
 - **Unchanged:** it makes no sound, takes no focus, is heard by no screen reader, is left out of the tips and the README; with reduced motion it only changes pose. (Since [150](./150-bead-shown-by-default.md), 2026-10-31: Bead itself is named in the README and Display's tip, its tricks still left out.)
 
 **Acceptance criteria:**
-- [ ] Changing the Waveform shows the tail as that wave, back to the logo 3 s later
-- [ ] Detune up splits Bead in two, Detune at 0 merges it
-- [ ] The Cutoff fully closed freezes it, opening it melts it
-- [ ] Resonance past three quarters, and the Noise heard, change its pose
-- [ ] Each of the five words does its trick while Bead is out and nothing while it is not; B, E, A, D still sends it away
-- [ ] Dragging and letting go throws it; a click still sprays; enough throws run it off
-- [ ] Its eyes follow a nearby pointer
-- [ ] A theme switch, and each of the three dates (with the date injected), dress it as decided
-- [ ] During the Demo each part has one of the three acts, surfing only where an LFO plot is in view
-- [ ] The four new funny turns come up in the deck
-- [ ] An offline render with all of it matches one without (no sound changed); the page's frame work stays within budget
+- [ ] ~~Changing the Waveform shows the tail as that wave, back to the logo 3 s later~~ (not checked at the time)
+- [ ] ~~Detune up splits Bead in two, Detune at 0 merges it~~ (not checked at the time)
+- [ ] ~~The Cutoff fully closed freezes it, opening it melts it~~ (not checked at the time)
+- [ ] ~~Resonance past three quarters, and the Noise heard, change its pose~~ (not checked at the time)
+- [ ] ~~Each of the five words does its trick while Bead is out and nothing while it is not; B, E, A, D still sends it away~~ (not checked at the time)
+- [ ] ~~Dragging and letting go throws it; a click still sprays; enough throws run it off~~ (not checked at the time)
+- [ ] ~~Its eyes follow a nearby pointer~~ (not checked at the time)
+- [ ] ~~A theme switch, and each of the three dates (with the date injected), dress it as decided~~ (not checked at the time)
+- [ ] ~~During the Demo each part has one of the three acts, surfing only where an LFO plot is in view~~ (not checked at the time)
+- [ ] ~~The four new funny turns come up in the deck~~ (not checked at the time)
+- [ ] ~~An offline render with all of it matches one without (no sound changed); the page's frame work stays within budget~~ (not checked at the time)
 
 **Out of scope:**
 - Turning a knob itself (decision 12)

@@ -13,7 +13,7 @@ Decided by the owner, 2026-10-31:
 1. **About names Bead.**
 2. **Bead stands beside About's logo, bigger than on the synth;** a click on it gives its tricks and the rest: "I thought of having Bead next to the logo, bigger than on the synth. If we click on it, you can indeed have info on its tricks, etc."
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 3. **Beside the logo:** Bead drawn at twice its size on the page, standing on the logo's baseline to its right, idle as it is on the synth (blinks, its tail, now and then a small trick), with reduced motion still.
    **Since then (2026-11-01, issue 178):** Bead stands at its size on the page, its foot level with the bottom of the logo's mark, the mark and Bead centred together; decided by the owner (the size and place), the centring Claude's call.
@@ -42,7 +42,7 @@ Claude's call, open to the owner:
 - [x] With Bead Off, no Bead in About
 - [x] Reduced motion: Bead still in About
 - [x] On a 393 × 659 phone the Demo and Tour buttons are still on the first screen
-- [ ] The About and mascot specs cover it; the design audit passes; every test passes in Linux's fonts too
+- [ ] ~~The About and mascot specs cover it; the design audit passes; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Bead's behaviour on the page
@@ -51,7 +51,7 @@ Claude's call, open to the owner:
 
 - **Beside the logo:** while Display's switch is on, Bead stands on the logo's baseline to its right, 88 × 52 px (twice its 44 × 26 on the page), the logo still in the middle over the name. It is drawn from the page's own pixels and lives in the stylesheet alone, so it costs no frame of the render loop: it blinks, glances left and right, and now and then jiggles, wags its tail or hops; with reduced motion it stands still. It sits outside the flow, so About's height, and its first screen on a phone, are as before.
 - **The card:** Bead is a button named "Bead, Limpide’s water drop: its tricks". A click, Enter or a tap shows its card in the credits' place, scrolling there as the credits do: its name and Back, who it is, what it answers, four funny turns, how to send it away (Display's switch for good; B, E, A, D for the visit), and "All its secrets", linking to bead.md on GitHub. Back or Escape return to the credits, the focus back on Bead; a second Escape closes About, which opens on the credits next time. With the switch off, About is as before.
-- **Claude's calls, open to the owner:**
+- **Claude's calls, let stand by the owner in 1.20.0:**
   1. **Its idle life is a loop in the stylesheet, not the page's Bead:** the blink, the glances and three small tricks (a jiggle, a tail wag, a hop) come round on cycles of 7 to 13 seconds, rather than its whole life from the page (its strolls, its props, dozing). Cheap, and it never wanders off the logo.
   2. **Bead again closes its card too** (the button says it is expanded while the card shows), besides Back and Escape. A phone's back gesture, which comes to the dialog as a close request, goes back to the credits first, as Escape does.
   3. **In About whenever the switch is on**, even after B, E, A, D sent it away for the visit: decision 5 ties it to the switch alone.

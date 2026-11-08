@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-03, triage):
+Claude's calls, let stand by the owner in 1.24.0 (2026-11-03, triage):
 
 1. **Nothing anyone sees changes;** every test passes unchanged.
 2. **The glossary's words in the code:** issue 195's fades at the top of the range are named Fade, not Dip (the glossary's Dip is the 3 ms drop before a Note).
@@ -65,7 +65,7 @@ Built at night (2026-11-05) on night/2026-11-05, on top of 241 and 242, test-fir
 - **About found without exact:** mended in every test that looks the button up.
 - **Glow's old traces at a new width after a cycles or Note change:** mended and tested. After a change of the cycles shown, the traces of the old count are passed over rather than drawn across the new width, as the Spectrum already did on a change of its axis or width (issue 199). Another Note over the same cycles keeps them, as each trace spans its cycles across the width; a low Note that shows fewer cycles passes them over.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.26.0:
 
 1. **The Glow after a cycles change** is the one thing that can be seen: for a quarter of a second after a cycles change, the old count's traces no longer show stretched under the new ones. Decision 1 said nothing seen changes; the Spectrum's rule since 199 was taken as the intent, and the old traces were a glitch.
 2. **Renames in the tests:** the Filter's test imports the renamed curves, Glow's test helper gives a key, and the About lookups are exact; no test's expectations changed.

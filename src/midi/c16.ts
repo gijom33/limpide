@@ -1,5 +1,5 @@
 import { CHOICES } from '../patch/patch';
-import type { KnownController } from './controller';
+import type { KnownController, PlaceKind } from './controller';
 import { targetKey } from './describe';
 import { type ButtonMode, type Control, clash, type Mapping, type Target } from './mappings';
 
@@ -150,6 +150,21 @@ export function c16Bank(control: Control): number | undefined {
   return undefined;
 }
 
+/**
+ * A C16 control's place, by its bank (0 for A … 3 for D), its kind and its name on the panel ("K1", "F4", "M4");
+ * undefined off the C16.
+ */
+export function c16Place(control: Control): { bank: number; kind: PlaceKind; name: string } | undefined {
+  const bank = c16Bank(control);
+  if (bank === undefined) return undefined;
+  const k = control.number - knobCc(bank, 0);
+  if (k >= 0 && k < KNOBS.perBank) return { bank, kind: 'knob', name: `K${k + 1}` };
+  const f = control.number - faderCc(bank, 0);
+  if (f >= 0 && f < FADERS.perBank) return { bank, kind: 'fader', name: `F${f + 1}` };
+  const b = control.number - buttonCc(bank, 'M', 0);
+  return { bank, kind: 'button', name: `${BUTTON_ROWS[b % BUTTON_ROWS.length]}${Math.floor(b / BUTTON_ROWS.length) + 1}` };
+}
+
 /** Whether a MIDI device is a TempoPAD C16, by the name it gives (over USB, or Bluetooth: "… C16 BT Bluetooth"). */
 export const isC16 = (name: string) => /tempopad\s*c16/i.test(name);
 
@@ -240,5 +255,10 @@ export const C16: KnownController = {
     return mappings === stored ? null : mappings;
   },
   section: c16Bank,
+  place(control) {
+    const place = c16Place(control);
+    return place && { ...place, bank: bankLetter(place.bank) };
+  },
+  banks: C16_BANKS.length,
   fastTurnStep: FAST_TURN_STEP,
 };

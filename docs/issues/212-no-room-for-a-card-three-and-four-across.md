@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-03:
 
 1. **In three and four across, a docked card never makes the page scroll** (narrowed to the Demo's card by decision 6). It sits over the page's bottom edge instead, as it already does on a window the page fits.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 2. **Every docked card, not the Demo's alone** (superseded by decision 6): a Tutorial's and the Tour's keep room at every width today, so they make three and four across scroll too.
 3. **A phone and 2 × 2 keep the room as now:** those pages scroll anyway, and the room lets the last section come out from under the card.
@@ -73,7 +73,7 @@ Folding or moving the card uncovers them (decision 4), but the Tour is the newco
 - **The Tour's and a Tutorial's cards** keep room at every width, as before (decision 6), so the page still scrolls what they point at clear of them.
 - **Tests** (dockedCards): in three across (1440 × 900) and four across (1920 × 1080), on a window the page fits, the Demo leaves the page unscrollable; at 1440 × 800, a window a little shorter than the page, the Demo adds nothing to the scroll (this one failed before the fix); in three and four across the page still keeps room for the Tutorial's and the Tour's cards; on a 375 px phone and in 2 × 2 it keeps room for all three cards. A Tutorial's Steps brought clear of the card (issues 104, 105) are unchanged and their tests pass.
 
-## Claude's calls, open to the owner
+## Claude's calls, let stand by the owner in 1.24.0
 
 1. **The line is the 2 × 2 layout's own breakpoint:** from the first width that shows three across, the Demo keeps no room; up to it, as before. A window resized across the line takes the new rule at once.
 2. **A tall tablet in 2 × 2 that the page fits** still gets no room for the Demo, as before: the card then sits over the bottom edge there too.

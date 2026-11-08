@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-31). The test, not Bead: WebKit's clock cannot measure a fraction of a millisecond, so Bead's frame cost is measured in Chromium only. Claude's call, open to the owner.
+**Status:** done (2026-10-31). The test, not Bead: WebKit's clock cannot measure a fraction of a millisecond, so Bead's frame cost is measured in Chromium only. Claude's call, let stand by the owner in 1.19.0.
 
 ## How it was diagnosed
 

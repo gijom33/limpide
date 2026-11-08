@@ -33,8 +33,8 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. The Filter Envelope, not a third one, on Osc 2 alone, in semitones up to two octaves each way: Claude's call, open to the owner.
-3. No ring and no Timeline line for now: the ring and the Timeline show the LFOs' and the Filter's movement; whether the Envelope's pitch sweep belongs there is the owner's call later: Claude's call, open to the owner.
+2. The Filter Envelope, not a third one, on Osc 2 alone, in semitones up to two octaves each way: Claude's call, let stand by the owner in 1.16.0.
+3. No ring and no Timeline line for now: the ring and the Timeline show the LFOs' and the Filter's movement; whether the Envelope's pitch sweep belongs there is the owner's call later: Claude's call, let stand by the owner in 1.16.0.
 
 ## How it was built
 

@@ -51,9 +51,9 @@ Where should a retriggered LFO start its wave?
 
 **The LFO's plot** draws the Modulation model's recent history (`engine.lfoSwingAt`), so it follows with no change of its own. Not checked in the browser: this lane ran no Playwright.
 
-**Square's upper half** (Claude's call, open to the owner): the classic start of a Square is the start of its high half, so a retriggered square LFO on Pitch starts up, on the Cutoff starts open (Stutter's words). That is where the browser's square already started, so a Square, like a Sine and a Triangle, starts where it did.
+**Square's upper half** (Claude's call, let stand by the owner in 1.16.1): the classic start of a Square is the start of its high half, so a retriggered square LFO on Pitch starts up, on the Cutoff starts open (Stutter's words). That is where the browser's square already started, so a Square, like a Sine and a Triangle, starts where it did.
 
-**A Waveform changed mid-Note** (Claude's call, open to the owner): the LFO keeps the phase its last restart gave it until the next Note. A retriggered Saw switched to a Sine during a Note runs on as a Sine half a cycle along, in the sound and the model alike; the next Note starts it at the Sine's own start.
+**A Waveform changed mid-Note** (Claude's call, let stand by the owner in 1.16.1): the LFO keeps the phase its last restart gave it until the next Note. A retriggered Saw switched to a Sine during a Note runs on as a Sine half a cycle along, in the sound and the model alike; the next Note starts it at the Sine's own start.
 
 **The Presets, rendered** (A4, A3 and A2, a Note at 0.3 s on a fresh engine):
 

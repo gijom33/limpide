@@ -42,7 +42,7 @@
 1. The goal is the piano centred in three across, buttons stacked two high only where it frees width without a taller row; the owner judges the look once built (the issue then goes to ready-for-human to verify).
 2. The logo may stack over the Patch picker (2026-10-29), changing ticket 15's name on the header line in three across; the tests of issue 44's one order and ticket 15's name follow.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.1:
 
 3. Below about 1200 px the logo and the Patch picker alone are wider than what a centred piano leaves them: centring there would shrink the piano's keys (to 10 px at 861 px), which wastes the row ("when it does not waste real estate"). There the piano keeps its size and sits as near the centre as the row allows, 60 to 65 px right of it at 880 to 1000 px.
 4. What stacks: the logo over the Patch picker, and Demo and Tutorial over Song, in all of three across. Between 861 and about 1000 px the larger piano makes the top row 64 px tall where it was 52.

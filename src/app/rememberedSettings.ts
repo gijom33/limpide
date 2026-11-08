@@ -52,10 +52,11 @@ const REMEMBERED = {
       levelScale: choice(['db', 'linear'], INITIAL_VIEWER_STATE.levelScale),
       tapSource: choice(['all', 'newest'], INITIAL_VIEWER_STATE.tapSource),
       /**
-       * The Glow (issues 180, 199, 229): Off by default, so the Viewers show only now unless asked. A true or false
-       * saved by an older page, when Glow was On or Off, is read as All (what On drew) or Off.
+       * The Glow (issues 180, 199, 229): on the Scopes by default (issue 264), so a moving sound leaves its trail
+       * there and the Spectrums show only now; a choice stored before, Off among them, is kept. A true or false saved
+       * by an older page, when Glow was On or Off, is read as All (what On drew) or Off.
        */
-      glow: choice(GLOWS, 'off', new Map([[true, 'all'], [false, 'off']])),
+      glow: choice(GLOWS, 'scopes', new Map([[true, 'all'], [false, 'off']])),
     },
   },
   overlays: {

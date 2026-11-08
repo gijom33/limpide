@@ -62,6 +62,8 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
     });
     observer.observe(box.current!);
     const y = (value: number) => yOf(value, h).toFixed(1);
+    /** What the plot shows now, as last written. */
+    let shown = { line: '', cy: '', beats: '', count: '' };
     const stop = addToRenderLoop(() => {
       if (!w || !h) return;
       // The clock shown: through the page's pause the plot goes on moving (issue 216, the owner).
@@ -74,12 +76,15 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
       const cy = y(engine.lfoSwingAt(now, lfo));
       const marks = markedBeats(engine.patchAt(now), [lfo], engine.tempo(), timeAt(0, now), now);
       const xOf = (t: number) => (PAD + ((t - timeAt(0, now)) / SPAN) * (w - 2 * PAD)).toFixed(1);
-      // Written once every draw of the frame has read the page (issue 221).
+      const drawn = { line: `M${points.join(' L')}`, cy, beats: marks.map((t) => `M${xOf(t)} 0 V${h}`).join(' '), count: String(marks.length) };
+      // Written once every draw of the frame has read the page (issue 221), and only what changed: a flat plot at
+      // Depth 0, still moving by the clock, draws the same line every frame and writes nothing (issue 257).
       return () => {
-        line.current?.setAttribute('d', `M${points.join(' L')}`);
-        dot.current?.setAttribute('cy', cy);
-        beats.current?.setAttribute('d', marks.map((t) => `M${xOf(t)} 0 V${h}`).join(' '));
-        if (box.current) box.current.dataset.beats = String(marks.length);
+        if (drawn.line !== shown.line) line.current?.setAttribute('d', drawn.line);
+        if (drawn.cy !== shown.cy) dot.current?.setAttribute('cy', drawn.cy);
+        if (drawn.beats !== shown.beats) beats.current?.setAttribute('d', drawn.beats);
+        if (drawn.count !== shown.count && box.current) box.current.dataset.beats = drawn.count;
+        shown = drawn;
       };
     });
     return () => {

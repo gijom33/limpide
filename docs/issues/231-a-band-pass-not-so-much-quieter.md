@@ -14,7 +14,7 @@ Decided by the owner (2026-11-05, "Yes to all three"), each the recommendation b
 2. **A fixed make-up plus a part that follows the Resonance, with a ceiling.** The fixed part is about +9 dB at 12 dB and +12 dB at 24 dB, bringing Init's A3 at 3.5 kHz near the low-pass; above Init's Resonance the band narrows and the make-up rises with it, as a classic constant-skirt band-pass does (research, [231-band-pass-level](../research/231-band-pass-level.md)), but never past the ceiling.
 3. **The 7 band-pass Presets' Volume is taken down by as much as their make-up,** so each sounds as now.
 
-Claude's calls, open to the owner (2026-11-05):
+Claude's calls, let stand by the owner in 1.26.0 (2026-11-05):
 
 4. **The ceiling is 12 dB above the fixed part,** so the make-up is at most +21 dB at 12 dB and +24 dB at 24 dB; the limiter and the ear check keep a loud Patch under the knee.
 5. **The make-up follows the Resonance as it is modulated,** not only the knob, so an LFO or envelope on Resonance does not pump the level.
@@ -83,12 +83,12 @@ So switching Init from low-pass to band-pass costs 10 to 15 dB at its Cutoff, mo
 - The Presets' Volume.
 
 **Acceptance criteria:**
-- [ ] On Init at A3 and Cutoff 3.5 kHz, the band-pass is within 3 dB of the low-pass, at 12 and at 24 dB.
-- [ ] From 5 % to the Resonance where the ceiling is reached, that band-pass level stays within 3 dB of its level at 5 %; past it, the make-up stays at the ceiling.
-- [ ] Each of the 7 band-pass Presets' output level is within 0.5 dB of before, measured as the engine tests measure Presets.
-- [ ] The other three Modes measure as before.
-- [ ] The Viewers' ideal for a band-pass includes the make-up, so its level matches the sound's.
-- [ ] Switching Mode and sweeping Resonance while a Note holds gives no click.
+- [ ] ~~On Init at A3 and Cutoff 3.5 kHz, the band-pass is within 3 dB of the low-pass, at 12 and at 24 dB.~~ (not checked at the time)
+- [ ] ~~From 5 % to the Resonance where the ceiling is reached, that band-pass level stays within 3 dB of its level at 5 %; past it, the make-up stays at the ceiling.~~ (not checked at the time)
+- [ ] ~~Each of the 7 band-pass Presets' output level is within 0.5 dB of before, measured as the engine tests measure Presets.~~ (not checked at the time)
+- [ ] ~~The other three Modes measure as before.~~ (not checked at the time)
+- [ ] ~~The Viewers' ideal for a band-pass includes the make-up, so its level matches the sound's.~~ (not checked at the time)
+- [ ] ~~Switching Mode and sweeping Resonance while a Note holds gives no click.~~ (not checked at the time)
 
 **Out of scope:**
 - A make-up for the high-pass or the notch (decision 1).
@@ -109,7 +109,7 @@ Built at night (2026-11-05), test-first.
 
 **Measured** (Init, the Cutoff at 3.5 kHz, A3): the band-pass is now within about 1.5 dB of the low-pass at both Slopes (it was 12.8 dB under at 12 dB and 15.8 dB under at 24 dB). From 5 % to 80 % Resonance its level stays within 3 dB of its level at 5 %.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.26.0:**
 
 1. **The rise follows the square root of the Q, which departs from decision 2:** the decision says it rises as a classic constant-skirt band-pass does, that is with the Q itself; it rises half as many dB. Measured on a saw, what a narrowing band lets through falls as √Q, at both Slopes and at every Cutoff and Note tried, so √Q keeps the level flat. Following the Q itself made it up to 6 to 9 dB louder at 20 to 40 % Resonance, which breaks the level criterion. So the ceiling is reached at 80 % Resonance, not about 40 %. The decision and the criterion disagree, and this keeps the criterion: the owner's to confirm.
 2. **Init's Resonance is 20 %, not 5 %,** and its Cutoff is 2 kHz (the issue's table took 5 % for Init). The make-up starts rising at 5 % as the decisions say; at Init's real 20 % it is +11.3 dB at 12 dB. The acceptance checks were run on Init with its Cutoff set to 3.5 kHz, so at 20 %.
@@ -140,3 +140,5 @@ Built at night (2026-11-05), test-first.
 4. **The Response Curve past +20 dB** runs off the top of the Spectrum from about 70 % Resonance, as a low-pass's peak already does at full Resonance. Recommended: leave the scale as it is.
 
 **Since then (2026-11-06, the 1.26.0 ear check):** the six other band-pass Presets play within 0.2 dB of 1.25.0. Talking Filter, matched on its loudest moment on C4, is 2.9 dB louder on C6 and 0.9 dB softer on C2; Init switched to band-pass is within 2 dB of its low-pass on C4 but rises with the Note, 3.9 dB under it on C2 and about 7 dB over it on C6, a high Note's fundamental near the Cutoff, short of the limiter. For the owner's ear.
+
+2026-11-07: [258](./258-preset-levels-across-the-keyboard.md) raised two of the band-pass Presets to their group's level, so they no longer play as before: Vowel (Volume 0.45, Key Track 0.7) and Cowbell (Volume 0.42, Key Track 0.6). Wah and Talking Filter gained Key Track, which leaves their C4 as it was; the 0.5 dB check now holds the other five.

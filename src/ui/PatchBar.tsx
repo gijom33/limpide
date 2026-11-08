@@ -8,6 +8,7 @@ import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { usePatchWords } from './hooks/usePatchWords';
 import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';
+import { useOneLine } from './oneLine';
 import { PatchSearch } from './PatchSearch';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
@@ -33,13 +34,39 @@ interface Props {
   /** The Presets that have a Tutorial, and whether it has been played to the end. */
   tutorials: readonly { preset: string; finished: boolean }[];
   onTutorial(preset: string): void;
+  /** While the Song plays, a line invites changing the sound under it (issue 260). */
+  songInvite: boolean;
+}
+
+/**
+ * The Song's line (issue 260): in the about line's place, under the sound's name and its ›, it invites flipping the
+ * Presets or turning a knob as the Song plays. One line at every width (issue 156's rule): where the longest words do
+ * not fit, shorter ones, measured. Its forms are written here, not in `shortForms`' table of names: they are a
+ * sentence's. Seen, not said: the Song's tip says as much to a screen reader.
+ */
+function SongInvite() {
+  const line = useOneLine<HTMLParagraphElement>('song');
+  return (
+    <p ref={line} className="patch-about song-invite" aria-hidden="true">
+      <b>Song</b> ·{' '}
+      <span>
+        <span data-form={0}>Flip the Presets with ›, or turn a knob as it plays</span>
+        <span data-form={1} hidden>
+          Flip the Presets with ›, or turn a knob
+        </span>
+        <span data-form={2} hidden>
+          Try ›, or turn a knob
+        </span>
+      </span>
+    </p>
+  );
 }
 
 /**
  * The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. The panel's
  * search and category (`PatchSearch`) narrow what it lists, and stay until the page reloads (issue 69).
  */
-export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, about, onCloseAbout, tutorials, onTutorial }: Props) {
+export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, about, onCloseAbout, tutorials, onTutorial, songInvite }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [link, setLink] = useState('');
@@ -52,9 +79,9 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
   const learnNext = useLearnable({ kind: 'action', id: 'nextPreset' });
   const fileInput = useRef<HTMLInputElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
-  // The Patch in plain words (issue 123), where a Preset's own about line is not showing.
+  // The Patch in plain words (issue 123), where a Preset's own about line is not showing, nor the Song's (issue 260).
   const patchWords = usePatchWords(name, patch, bpm);
-  const words = about.shown ? '' : patchWords;
+  const words = about.shown || songInvite ? '' : patchWords;
   // The header panels' closing (issue 189): Escape, a press elsewhere, Tab out of it. Escape clears the search first,
   // wherever the focus is in the panel, then closes it back to its button.
   const { wrapper, button: opener } = useHeaderPanel(open, setOpen, () => {
@@ -73,10 +100,10 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
   if (stepping.current.from !== name) stepping.current = { name, from: name };
 
   // Escape takes the about line away while it shows, unless it is closing something else: a panel or menu open (the
-  // Patches panel over the line, Display, MIDI, Tempo, the Tutorials, About; a card's own unfolded text is not one) or
-  // a field being typed in.
+  // Patches panel over the line, Display, MIDI, Tempo, the Tutorials, About; a card's own unfolded text is not one), a
+  // field being typed in, or a key taken already (a docked card closing, issue 253).
   const closeAbout = useEffectEvent((e: KeyboardEvent) => {
-    if (e.key !== 'Escape' || (e.target as Element).closest?.('input, textarea')) return;
+    if (e.key !== 'Escape' || e.defaultPrevented || (e.target as Element).closest?.('input, textarea')) return;
     if (!document.querySelector(OPEN_ELSEWHERE)) onCloseAbout();
   });
   useEffect(() => {
@@ -213,6 +240,7 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
           </span>
         </p>
       )}
+      {songInvite && !about.shown && <SongInvite />}
 
       {open && (
         <div className="patch-panel" data-panel role="dialog" aria-label="Patches">

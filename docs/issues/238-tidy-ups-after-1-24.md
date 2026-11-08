@@ -2,7 +2,7 @@
 
 **What to build:** What the 1.24.0 code review (standards and spec, since v1.23.0) and its word checks left, none holding the release (inbox, 2026-11-04). Polish for v1 ([131](./131-v1.md)).
 
-**Blocked by:** [228](./228-tidy-ups-after-1-23.md) (the same code; build after it is merged; Claude's call, open to the owner)
+**Blocked by:** [228](./228-tidy-ups-after-1-23.md) (the same code; build after it is merged; Claude's call, let stand by the owner in 1.24.0)
 
 **Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06, approved by the owner: "All issues seem tobe implemeted fine", then "Merge the night"; released in 1.26.0
 
@@ -17,7 +17,7 @@ From the code review:
 5. **227's `SOUND_KEYS` alias and its "step around 0" test** reading "within 15 of the top": the alias gone, the test named for what it checks.
 6. **223's Switches listed in the MIDI code:** beside the choices they belong to, so a new Switch cannot be missed.
 7. **Two boxes overstating:** 224's "no timing step … in round trips with waits" (four fixed waits are left in the mascot spec) and 214's "Viewer tests pass unchanged" (one was edited): the four waits made waits for what they read, and 214's box worded as it was.
-8. **216's first Note after the pause** is on time on the audio clock only (1.5 ms late in Chromium, 7 to 17 ms in WebKit), and a Controller's Note has no early wake: the engine wakes on any MIDI message, not only on a Note it plays (Claude's call, open to the owner).
+8. **216's first Note after the pause** is on time on the audio clock only (1.5 ms late in Chromium, 7 to 17 ms in WebKit), and a Controller's Note has no early wake: the engine wakes on any MIDI message, not only on a Note it plays (Claude's call, let stand by the owner in 1.24.0).
 9. **A paused Viewer rests without comparing the Harmonics and Ideal settings** (214, 216): turning either redraws a resting Viewer.
 10. **217's test renders the hook, not the app:** a test through the app that a MIDI message redraws only the MIDI panel.
 11. **221's Demo with Bead off,** 6.79 to 7.77 style recalculations a frame, untraced: traced once, the cause written here, fixed if it is ours.
@@ -58,7 +58,7 @@ Built at night (2026-11-05) on night/2026-11-05, on top of 228, 241 and 242, tes
 12. **Riser's words:** mended: "from 200 Hz past 5 kHz on C4", the test's name with it.
 13. **The Status lines:** mended. The release steps' version step brings each shipped issue's "merged into main, not yet released" to "released in X.Y.Z"; the 45 stale lines are, each with the first tag that carries it (128 in 1.18.0, the rest in 1.23.0, 1.24.0 and 1.25.0, checked against the release log).
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.26.0:
 
 1. **Item 3's one silence is the Viewers' millionth,** not Cycle Lock's 1e-6/√2: the other way, a Tap at 0.8 of a millionth would stop resting. Nothing seen changes either way.
 2. **Item 8 wakes on any message from a Controller,** clock and active sensing aside, which the parser hands elsewhere or drops.

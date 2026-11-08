@@ -40,7 +40,7 @@ Built test-first on `night/2026-11-05`, on top of 241:
 - **Starting the Song** clears the Demo's "you are playing now" card at once, as a Tutorial or the Tour starting does.
 - The glossary's Demo, Song and Show entries say so, and so do 52 and 128, with a dated line each.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.26.0:
 
 1. A Program Change past the last Preset still does nothing at all: it loads nothing, so it does not stop the Demo either.
 2. The Program Change shows the Demo's "you are playing now" card, as a Note or a pick in the Patches panel does, not a silent stop like the Demo's Stop button.

@@ -8,12 +8,12 @@
 
 ## Decisions
 
-From 184 (Claude's calls, open to the owner, 2026-11-02):
+From 184 (Claude's calls, let stand by the owner in 1.23.0, 2026-11-02):
 
 1. **Nothing Bead does changes:** a refactor, its behaviour held by the mascot spec as it is.
 2. **The choices as pure functions** with unit tests, beside Bead's place, cling and motion modules that already are.
 
-Claude's call, open to the owner (2026-11-03):
+Claude's call, let stand by the owner in 1.23.0 (2026-11-03):
 
 3. **Not built the same night as [204](./204-baggage-air-guitar-and-surfing-seen.md)'s surfboard and acts,** which change the same frame: one after the other, 204 first.
 
@@ -55,7 +55,7 @@ The phone's perch, the visit's choice and end, the drop onto a plot and the plac
 
 Tests: `tsc` and the lint are clean, and Bead's unit tests pass (30 new). The mascot spec passed in WebKit, and in Chromium but for one test that is green alone (a load flake). The frame-cost test, which runs in Chromium only, passed.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 1. **A new module for the new choices**, rather than adding to Bead's place module (already near 580 lines). The choices that were already functions stay in the place module, so their tests did not move.
 2. **The frame still makes a few small calls inline**: which Section's edge serves a control, whether that edge has room, and whether a landing after a throw starts a visit. Each is a line or two that reads the page or sets the frame's own state. Moving them would add arguments without adding a test worth having.

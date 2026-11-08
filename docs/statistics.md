@@ -6,7 +6,7 @@ A — is a number not measured for that release yet. The releases before the com
 
 ## Where it was measured
 
-The page loads and the running app are measured in Chromium through Playwright, headless, in a 1440 × 900 window at twice the pixels (a Retina screen), on the built site served from this computer. A page load is the median of 3, each a first visit with an empty cache. Each state of the running app starts in a fresh page, settles for 2 s, then is measured for 10 s, the same each time. Other work on the machine skews the timings: measure on a quiet one.
+The page loads and the running app are measured in Chromium through Playwright, headless, in a 1440 × 900 window at twice the pixels (a Retina screen), on the built site served from this computer. A page load is the median of 3, each a first visit with an empty cache. Each state of the running app starts in a fresh page, settles for 2 s, then is measured for 10 s, the same each time; the Demo’s numbers are the median of 3 runs, measured after 60 s of nothing once the suites and the build are done. Other work on the machine skews the timings: measure on a quiet one.
 
 | Version | Date | Machine | Browser |
 | --- | --- | --- | --- |
@@ -223,13 +223,14 @@ Counted in the files git tracks.
 
 ## The running app
 
-Three states, each with the same five numbers:
+Three states, each with the same five numbers, and the Demo with the machine’s load beside them:
 
 - **Frames a second:** how many frames Chromium drew each second, counted by `requestAnimationFrame` (60 at most, headless).
 - **Slowest frame:** the longest gap between two frames: a stutter shows here even when the average is smooth.
 - **Main thread busy:** the share of the time the page’s main thread spent running tasks (DevTools’ `TaskDuration`): what is left is room to spare.
 - **CPU:** the processor time all of Chromium’s processes used, the audio’s included, as a share of one core (above 100% means more than one).
 - **Memory:** the JavaScript heap in use at the end, after a garbage collection (DevTools’ `JSHeapUsedSize`).
+- **Load:** the machine’s load average over the minute before the Demo’s runs began, after the cool-down (`uptime`’s first number): from about its number of cores up, other work was sharing the processor, and the Demo’s numbers read high.
 
 ### Idle
 
@@ -281,51 +282,51 @@ The page open on Init, nothing playing.
 
 ### Playing the Demo
 
-The Demo playing from its start.
+The Demo playing from its start: each number the median of 3 runs, after a 60 s cool-down, the machine’s load beside them (a row with no load is one run).
 
-| Version | Frames a second | Slowest frame | Main thread busy | CPU | Memory |
-| --- | --- | --- | --- | --- | --- |
-| 1.26.2 | 55.9 (−0.2) | 67 ms | 56.8% (+2.9 pt) | 107.8% (+4.6 pt) | 14.6 MB (−1.2 MB) |
-| 1.26.1 | 56.1 (+0.1) | 50 ms | 53.9% (−4.6 pt) | 103.2% (−9.1 pt) | 15.7 MB (+1.4 MB) |
-| 1.26.0 | 56.0 (−0.1) | 67 ms | 58.5% (+3.1 pt) | 112.3% (+8.9 pt) | 14.4 MB (−1.6 MB) |
-| 1.25.0 | 56.1 (+0.2) | 50 ms | 55.4% (−1.1 pt) | 103.4% (−4.1 pt) | 16.0 MB (+2.3 MB) |
-| 1.24.0 | 55.9 (+0.8) | 67 ms | 56.5% (−8.9 pt) | 107.5% (−13.3 pt) | 13.7 MB |
-| 1.23.0 | 55.1 (−0.8) | 67 ms | 65.4% (+3.9 pt) | 120.8% (+8.8 pt) | 13.7 MB (+0.1 MB) |
-| 1.22.0 | 55.9 (+0.3) | 50 ms | 61.6% (−2.9 pt) | 112.0% (−2.8 pt) | 13.5 MB (+0.4 MB) |
-| 1.21.1 | 55.6 | 67 ms | 64.4% | 114.8% | 13.2 MB |
-| 1.21.0 | — | — | — | — | — |
-| 1.20.0 | — | — | — | — | — |
-| 1.19.0 | — | — | — | — | — |
-| 1.18.0 | — | — | — | — | — |
-| 1.17.0 | 58.8 | 33 ms | 53.4% | 104.2% | 10.8 MB |
-| 1.16.1 | — | — | — | — | — |
-| 1.16.0 | — | — | — | — | — |
-| 1.15.1 | — | — | — | — | — |
-| 1.15.0 | — | — | — | — | — |
-| 1.14.1 | — | — | — | — | — |
-| 1.14.0 | — | — | — | — | — |
-| 1.13.0 | — | — | — | — | — |
-| 1.12.4 | — | — | — | — | — |
-| 1.12.3 | — | — | — | — | — |
-| 1.12.2 | — | — | — | — | — |
-| 1.12.1 | — | — | — | — | — |
-| 1.12.0 | — | — | — | — | — |
-| 1.11.1 | — | — | — | — | — |
-| 1.11.0 | — | — | — | — | — |
-| 1.10.0 | — | — | — | — | — |
-| 1.9.0 | — | — | — | — | — |
-| 1.8.1 | — | — | — | — | — |
-| 1.8.0 | — | — | — | — | — |
-| 1.7.0 | — | — | — | — | — |
-| 1.6.0 | — | — | — | — | — |
-| 1.5.0 | — | — | — | — | — |
-| 1.4.1 | — | — | — | — | — |
-| 1.4.0 | — | — | — | — | — |
-| 1.3.1 | — | — | — | — | — |
-| 1.3.0 | — | — | — | — | — |
-| 1.2.0 | — | — | — | — | — |
-| 1.1.0 | — | — | — | — | — |
-| 1.0.0 | — | — | — | — | — |
+| Version | Frames a second | Slowest frame | Main thread busy | CPU | Memory | Load |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1.26.2 | 55.9 (−0.2) | 67 ms | 56.8% (+2.9 pt) | 107.8% (+4.6 pt) | 14.6 MB (−1.2 MB) | — |
+| 1.26.1 | 56.1 (+0.1) | 50 ms | 53.9% (−4.6 pt) | 103.2% (−9.1 pt) | 15.7 MB (+1.4 MB) | — |
+| 1.26.0 | 56.0 (−0.1) | 67 ms | 58.5% (+3.1 pt) | 112.3% (+8.9 pt) | 14.4 MB (−1.6 MB) | — |
+| 1.25.0 | 56.1 (+0.2) | 50 ms | 55.4% (−1.1 pt) | 103.4% (−4.1 pt) | 16.0 MB (+2.3 MB) | — |
+| 1.24.0 | 55.9 (+0.8) | 67 ms | 56.5% (−8.9 pt) | 107.5% (−13.3 pt) | 13.7 MB | — |
+| 1.23.0 | 55.1 (−0.8) | 67 ms | 65.4% (+3.9 pt) | 120.8% (+8.8 pt) | 13.7 MB (+0.1 MB) | — |
+| 1.22.0 | 55.9 (+0.3) | 50 ms | 61.6% (−2.9 pt) | 112.0% (−2.8 pt) | 13.5 MB (+0.4 MB) | — |
+| 1.21.1 | 55.6 | 67 ms | 64.4% | 114.8% | 13.2 MB | — |
+| 1.21.0 | — | — | — | — | — | — |
+| 1.20.0 | — | — | — | — | — | — |
+| 1.19.0 | — | — | — | — | — | — |
+| 1.18.0 | — | — | — | — | — | — |
+| 1.17.0 | 58.8 | 33 ms | 53.4% | 104.2% | 10.8 MB | — |
+| 1.16.1 | — | — | — | — | — | — |
+| 1.16.0 | — | — | — | — | — | — |
+| 1.15.1 | — | — | — | — | — | — |
+| 1.15.0 | — | — | — | — | — | — |
+| 1.14.1 | — | — | — | — | — | — |
+| 1.14.0 | — | — | — | — | — | — |
+| 1.13.0 | — | — | — | — | — | — |
+| 1.12.4 | — | — | — | — | — | — |
+| 1.12.3 | — | — | — | — | — | — |
+| 1.12.2 | — | — | — | — | — | — |
+| 1.12.1 | — | — | — | — | — | — |
+| 1.12.0 | — | — | — | — | — | — |
+| 1.11.1 | — | — | — | — | — | — |
+| 1.11.0 | — | — | — | — | — | — |
+| 1.10.0 | — | — | — | — | — | — |
+| 1.9.0 | — | — | — | — | — | — |
+| 1.8.1 | — | — | — | — | — | — |
+| 1.8.0 | — | — | — | — | — | — |
+| 1.7.0 | — | — | — | — | — | — |
+| 1.6.0 | — | — | — | — | — | — |
+| 1.5.0 | — | — | — | — | — | — |
+| 1.4.1 | — | — | — | — | — | — |
+| 1.4.0 | — | — | — | — | — | — |
+| 1.3.1 | — | — | — | — | — | — |
+| 1.3.0 | — | — | — | — | — | — |
+| 1.2.0 | — | — | — | — | — | — |
+| 1.1.0 | — | — | — | — | — | — |
+| 1.0.0 | — | — | — | — | — | — |
 
 ### An 8-Voice chord
 

@@ -12,8 +12,8 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
       'limpide.theme': 'light',
       'limpide.bead': 'off',
     });
-    // Saved before Glow was a setting (issue 180): it starts Off.
-    expect(recall(storage, 'viewer')).toEqual({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', glow: 'off' });
+    // Saved before Glow was a setting (issue 180): nothing chosen, it starts at its default, Scopes (issue 264).
+    expect(recall(storage, 'viewer')).toEqual({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', glow: 'scopes' });
     expect(recall(storage, 'overlays')).toEqual({ harmonics: false, ideal: true, curve: false, guides: true, geek: true });
     expect(recall(storage, 'letterKeys')).toBe('off');
     expect(recall(storage, 'tooltips')).toBe('off');
@@ -23,7 +23,7 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
 
   it('starts a missing, garbled or unknown setting at its default, keeping the others', () => {
     const nothing = memoryStorage();
-    expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all', glow: 'off' });
+    expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all', glow: 'scopes' });
     expect(recall(nothing, 'overlays')).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, geek: false });
     expect([recall(nothing, 'letterKeys'), recall(nothing, 'tooltips'), recall(nothing, 'theme'), recall(nothing, 'bead')]).toEqual(['on', 'on', 'dark', 'on']);
 
@@ -49,7 +49,13 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
 
   it('reads the Glow of three choices; one remembered as On, from before, comes back as All, Off as Off (issue 229)', () => {
     const glowOf = (glow: unknown) => recall(memoryStorage({ 'limpide.viewSettings': JSON.stringify({ glow }) }), 'viewer').glow;
-    expect([glowOf(true), glowOf(false), glowOf('off'), glowOf('scopes'), glowOf('all'), glowOf('bright')]).toEqual(['all', 'off', 'off', 'scopes', 'all', 'off']);
+    expect([glowOf(true), glowOf(false), glowOf('off'), glowOf('scopes'), glowOf('all')]).toEqual(['all', 'off', 'off', 'scopes', 'all']);
+  });
+
+  it('starts the Glow on Scopes with nothing stored, or nothing it knows; a stored Off stays Off (issue 264)', () => {
+    expect(recall(memoryStorage(), 'viewer').glow).toBe('scopes');
+    expect(recall(memoryStorage({ 'limpide.viewSettings': JSON.stringify({ glow: 'bright' }) }), 'viewer').glow).toBe('scopes');
+    expect(recall(memoryStorage({ 'limpide.viewSettings': JSON.stringify({ glow: 'off' }) }), 'viewer').glow).toBe('off');
   });
 
   it('treats a browser that never met Bead, under its old "unmet", as on: Bead is out by default (issue 150)', () => {

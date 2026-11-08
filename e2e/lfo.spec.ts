@@ -114,7 +114,7 @@ test('the LFO plot shows the Depth as well as the Rate: flat at 0, half as tall 
   await page.waitForTimeout(1100); // a whole second at that Depth
   const half = await swing(page);
   await turnUp(page, 'Depth', 5); // 100 %
-  await page.waitForTimeout(1100);
+  await page.waitForTimeout(1100); // a time: a whole second at that Depth
   const full = await swing(page);
   expect(half / full).toBeCloseTo(0.5, 1);
   await page.keyboard.up('KeyA');

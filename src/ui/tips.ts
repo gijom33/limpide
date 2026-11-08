@@ -23,7 +23,7 @@ const LFO_DESTINATION_WORDS: Record<LfoDestination, string> = {
   pulseWidth: 'each Oscillator’s (PWM; only heard on a Pulse).',
   fm: 'up to its whole range, but only as far each way as the FM knob leaves room: none at 0, so raise FM first (its partials growing and fading).',
   cutoff: 'two octaves each way (wah).',
-  resonance: 'across its range (a vocal, whistling sweep).',
+  resonance: 'up to its whole range, but only as far each way as its knob leaves room (a vocal, whistling sweep).',
   volume: 'down from the Amp Envelope’s level to silence (tremolo).',
 };
 
@@ -94,7 +94,7 @@ export const TIPS = {
   glow: {
     title: 'Glow',
     body: 'Past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope: a sound that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord, a Filter Envelope’s sweep) leaves a soft glow, fading by half every 70 ms or so. Off: the Scopes and Spectrums show only now. Scopes: the Scopes’ traces glow. All: the Scopes’ traces and the Spectrums’ outlines. Your choice is remembered.',
-    how: 'Choose Scopes or All with some Noise in the Mixer: the flicker softens into a cloud.',
+    how: 'With Scopes or All, add some Noise in the Mixer: the flicker softens into a cloud.',
   },
   voices: {
     title: 'Voices',
@@ -140,7 +140,7 @@ export const TIPS = {
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',
-    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, the last tap starting it over; with several Voices, the rhythm plays once as single Notes in turn, then once as the chord.',
+    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, resting a beat after the last tap before starting over; with several Voices, the rhythm plays once as single Notes in turn, then once as the chord.',
     history: HISTORY.hold,
   },
   envAmount: {
@@ -173,7 +173,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted. While an LFO is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
+    body: 'What changes the sound over time: the two LFOs, and the Envelope Timeline beside them. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope, an LFO or a keyboard’s aftertouch moves: the Cutoff dotted, what LFO 1 or aftertouch moves dashed, what LFO 2 alone moves dash-dotted. While an LFO is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -189,7 +189,7 @@ export const TIPS = {
   },
   lfoWaveform: {
     title: 'LFO',
-    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down drops and ramps down. Its height is the Depth. While it is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
+    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down jumps up and ramps down. Its height is the Depth. While it is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
   },
   lfoDestination: {
     title: 'LFO Destination',
@@ -419,18 +419,24 @@ export const TIPS = {
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last two seconds (1 to 4 in Display), the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO moves (dashed for LFO 1’s, dash-dotted for LFO 2’s, in its section’s colour).',
+    body: 'The last two seconds (1 to 4 in Display), the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO or aftertouch moves (in its section’s colour, dashed for what LFO 1 or aftertouch moves, dash-dotted for what LFO 2 alone moves).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;
 
 const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
 /**
- * Each known Controller's tips in the MIDI panel, its layout's and its card's, by its id: a Controller added to the
- * list without them does not compile (issue 196, rather than finding them by name).
+ * Each known Controller's tips in the MIDI panel, its layout's and its card's, by its id, and its notice when its knobs
+ * send positions where its layout expects Relative steps (issue 255): a Controller added to the list without them
+ * does not compile (issue 196, rather than finding them by name).
  */
-export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: TipContent }> = {
-  c16: { layout: TIPS.c16Layout, card: TIPS.c16Card },
+export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: TipContent; positions: string }> = {
+  c16: {
+    layout: TIPS.c16Layout,
+    card: TIPS.c16Card,
+    positions:
+      'The C16’s knobs are sending positions, so they turn the wrong way below the middle: in the C16’s companion editor, set every knob to Relative #1. Print C16 card shows how to set each button too.',
+  },
 };
 
 /** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
@@ -591,6 +597,6 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   geek: {
     title: 'Synth Geek Layer',
-    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them; the Waveform’s, FM’s (on Osc 1’s Pitch), Ring’s and the Filter’s for the settings picked) and, for one with a musical past, its History: where it comes from.',
+    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels (Ring’s aside), the Sustain and the Volume in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them; the Waveform’s, FM’s (on Osc 1’s Pitch), Ring’s and the Filter’s for the settings picked) and, for one with a musical past, its History: where it comes from.',
   },
 };

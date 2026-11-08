@@ -84,3 +84,31 @@ test.describe('on a short phone', () => {
     });
   }
 });
+
+// Issue 252: the focus the welcome gives the Demo button as it closes opens no tip there, over the Amp: only hover or
+// the keyboard's own move (Tab) opens one, not a press, Enter or Escape.
+test.describe('the welcome closed leaves no tip open on the Demo button (issue 252)', () => {
+  const demoTip = (page: Page) => page.getByRole('tooltip').filter({ hasText: 'Turn a knob or flip a switch while it plays' });
+  const settled = (page: Page) => page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
+  for (const close of ['Play the Demo', 'Enter on Play the Demo', 'Escape'] as const) {
+    test(`closed by ${close}`, async ({ page }) => {
+      await page.goto('/');
+      await expect(about(page)).toBeVisible();
+      if (close === 'Escape') await page.keyboard.press('Escape');
+      else if (close === 'Enter on Play the Demo') {
+        await about(page).getByRole('button', { name: 'Play the Demo', exact: true }).focus();
+        await page.keyboard.press('Enter');
+      } else await about(page).getByRole('button', { name: 'Play the Demo', exact: true }).click();
+      await expect(about(page)).toBeHidden();
+      await expect(demo(page)).toBeFocused();
+      await settled(page);
+      // None on the Demo button (WebKit may show a hover tip under the pointer where the welcome was).
+      await expect(demoTip(page)).toHaveCount(0);
+      // The keyboard's own move still shows it: Tab on, and Shift+Tab back.
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      await expect(demo(page)).toBeFocused();
+      await expect(demoTip(page)).toBeVisible();
+    });
+  }
+});

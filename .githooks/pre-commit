@@ -1,3 +1,4 @@
 #!/bin/sh
-# Before every commit (ADR-0012): the inbox rules, then the type check and the lint. The tests stay out: see CLAUDE.md.
-node --experimental-strip-types --no-warnings scripts/commitChecks.ts inbox && npx tsc && npm run lint --silent
+# Before every commit (ADR-0012): the inbox rules, the issues' record (issue 261: its index and open calls fresh, a done
+# issue's boxes ticked or struck), then the type check and the lint. The tests stay out: see CLAUDE.md.
+node --experimental-strip-types --no-warnings scripts/commitChecks.ts inbox && node --experimental-strip-types --no-warnings scripts/issueRecord.ts check --staged && npx tsc && npm run lint --silent

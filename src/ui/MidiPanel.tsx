@@ -1,6 +1,6 @@
 import { Fragment, useState, useSyncExternalStore } from 'react';
 import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
-import { answeredBy, doubledPorts, knownAmong } from '../midi/controller';
+import { answeredBy, doubledPorts, knownAmong, knownById } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type KnobMode, knobModeOf, type Mapping } from '../midi/mappings';
 import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
@@ -24,6 +24,8 @@ interface Props {
   /** The Activity Monitor: the last message received, described, read by its line alone (issue 217). */
   activity: MidiActivity;
   mappings: readonly Mapping[];
+  /** The known Controllers seen sending positions from knobs their layout has Relative (issue 255): the panel says how to set them. */
+  sendingPositions: readonly ControllerId[];
   /** MIDI Learn (or Quick Setup) is on: the button says so, and the panel offers Done where Learn was started. */
   learning: boolean;
   onLearn(): void;
@@ -43,10 +45,14 @@ interface Props {
   onAftertouch(destination: LfoDestination): void;
 }
 
-/** " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; nothing for any other. */
+/**
+ * " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; " · not the C16" for one learned
+ * away from it (issue 255); nothing for any other.
+ */
 const onlyFor = (mapping: Mapping) => {
   const known = answeredBy(mapping);
-  return known ? ` · ${known.label} only` : null;
+  const except = mapping.except && knownById(mapping.except);
+  return known ? ` · ${known.label} only` : except ? ` · not the ${except.label}` : null;
 };
 
 /** A known Controller connected on two ports at once (issue 185): which one Limpide follows, and why. */
@@ -55,7 +61,14 @@ const doubledPortsText = (devices: readonly string[]) =>
     .map(({ known, followed }) => ` The ${known.label} is connected twice (by USB and Bluetooth, say): Limpide follows ${followed} alone, so each press counts once.`)
     .join('');
 
-const statusText = (state: MidiState) => {
+/** A connected known Controller whose knobs send positions where its layout expects Relative steps: how to set them (issue 255). */
+const positionsText = (devices: readonly string[], sendingPositions: readonly ControllerId[]) =>
+  knownAmong(devices)
+    .filter(({ id }) => sendingPositions.includes(id))
+    .map(({ id }) => ` ${CONTROLLER_TIPS[id].positions}`)
+    .join('');
+
+const statusText = (state: MidiState, sendingPositions: readonly ControllerId[]) => {
   const devices = state.kind === 'ready' ? state.devices : [];
   return state.kind === 'unsupported' && state.ios
     ? 'No browser on iPhone or iPad supports Web MIDI, Chrome included: Apple makes them all run on Safari’s engine. Play from a MIDI Controller on a computer or an Android device; everything else works here.'
@@ -64,7 +77,7 @@ const statusText = (state: MidiState) => {
       : state.kind === 'denied'
         ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
         : devices.length
-          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.${doubledPortsText(devices)}`
+          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.${doubledPortsText(devices)}${positionsText(devices, sendingPositions)}`
           : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
             'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once the system pairs it as a MIDI device (on a Mac, in Audio MIDI Setup; on Windows and Linux, untried), as a TempoPAD C16 does on a Mac.';
 };
@@ -80,12 +93,12 @@ function ActivityLine({ activity }: { activity: MidiActivity }) {
 }
 
 /**
- * The MIDI button: a dot and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
+ * The MIDI button: a socket icon and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings. Escape from
  * anywhere in it, MIDI Learn, Done and a layout close it back to the button; Quick Setup, to its card (issue 189).
  */
 export function MidiPanel({
-  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
+  state, onOpen, activity, mappings, sendingPositions, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
   aftertouch, onAftertouch,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -98,11 +111,13 @@ export function MidiPanel({
   const panel = useUnderHeader<HTMLDivElement>();
   const devices = state.kind === 'ready' ? state.devices : [];
   const available = state.kind === 'ready' || state.kind === 'pending';
+  // Why MIDI Learn and Quick Setup, disabled, do nothing (issue 252); the panel's first line says it at length.
+  const why = state.kind === 'unsupported' ? 'This browser gives no MIDI' : state.kind === 'denied' ? 'MIDI is blocked for this site' : undefined;
   const learningWord = useOneLine<HTMLSpanElement>(learning ? 'learning' : '');
 
   return (
     <div className="midi-menu" ref={wrapper}>
-      <Tooltip content={{ ...TIPS.midi, body: statusText(state) }}>
+      <Tooltip content={{ ...TIPS.midi, body: statusText(state, sendingPositions) }}>
         <button
           ref={button}
           type="button"
@@ -135,7 +150,7 @@ export function MidiPanel({
       </Tooltip>
       {open && (
         <div ref={panel} className="midi-panel" data-panel role="dialog" aria-label="MIDI">
-          <p className="midi-connection">{statusText(state)}</p>
+          <p className="midi-connection">{statusText(state, sendingPositions)}</p>
           <div className="midi-activity">
             <span className="midi-heading">Last message</span>
             <ActivityLine activity={activity} />
@@ -153,7 +168,7 @@ export function MidiPanel({
             </button>
           ) : (
             <>
-              <Tooltip content={TIPS.midiLearn}>
+              <Tooltip content={{ ...TIPS.midiLearn, why }}>
                 <button
                   type="button"
                   className="tool"
@@ -167,7 +182,7 @@ export function MidiPanel({
                 </button>
               </Tooltip>
               {/* Quick Setup's card takes the focus, as a Tutorial picked from its list does. */}
-              <Tooltip content={TIPS.quickSetup}>
+              <Tooltip content={{ ...TIPS.quickSetup, why }}>
                 <button
                   type="button"
                   className="tool"

@@ -5,7 +5,7 @@ import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
 import { filterTips } from './tips';
 
-// Each Mode's response shape, drawn in a 24×14 box: what it keeps, at a glance.
+// Each Mode's response shape, drawn in a 24×16 box: what it keeps, at a glance.
 const MODES: { mode: FilterMode; label: string; path: string }[] = [
   { mode: 'lowpass', label: 'Low-pass', path: 'M2 5 H11 C15 5 16 12 22 12' },
   { mode: 'highpass', label: 'High-pass', path: 'M2 12 C8 12 9 5 13 5 H22' },
@@ -19,7 +19,7 @@ interface Props {
   onChange(change: { mode?: FilterMode; slope?: FilterSlope }): void;
 }
 
-/** Filter Mode (icon picker) and Slope, on the Filter heading line. */
+/** Filter Mode (icon picker) and Slope, the Filter's Mode row under its heading. */
 export function FilterShape({ mode, slope, onChange }: Props) {
   const learnMode = useLearnable({ kind: 'choice', id: 'filterMode' });
   // Under the hood, the response for the Mode and Slope picked (issue 235).

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { midiPermission, play, withFakeController } from './fakeMidi';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 const ready = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
@@ -12,7 +12,7 @@ test('the on-screen piano plays, and lights the key while it sounds', async ({ p
   // The letter keys' 17, C4 to E5, and from 861 px any the header has room for beyond them (issue 154).
   await expect(piano.getByRole('button').nth(16)).toHaveAccessibleName('E5');
   const c4 = piano.getByRole('button', { name: 'C4' });
-  await c4.scrollIntoViewIfNeeded(); // the piano sits at the bottom, below the fold of a small test window
+  await c4.scrollIntoViewIfNeeded(); // in the header, so in view: nothing to do unless the page has scrolled
   const box = (await c4.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.8);
   await page.mouse.down();
@@ -380,7 +380,7 @@ test.describe('on a touch screen', () => {
     await fingers({ 1: 'C4', 2: "C4'" });
     await expect.poll(() => lit(page)).toEqual(['C4']);
     await fingers({ 2: "C4'" });
-    await page.waitForTimeout(100);
+    await frames(page); // the lift handled, and drawn, as it comes
     expect(await lit(page)).toEqual(['C4']);
     await fingers({});
     await expect.poll(() => lit(page)).toEqual([]);
@@ -402,6 +402,43 @@ for (const theme of ['Dark', 'Light'] as const) {
     for (const k of lightness) {
       if (k.black) expect(k.l).toBeLessThan(0.12);
       else expect(k.l).toBeGreaterThan(0.85);
+    }
+  });
+}
+
+// Issue 252: with no Web MIDI, MIDI Learn and Quick Setup are disabled and look it, greyed and still on hover, and their
+// tip says why first.
+for (const [what, why, noMidi] of [
+  ['missing (Safari)', 'This browser gives no MIDI', undefined],
+  ['blocked for the site', 'MIDI is blocked for this site', 'denied'],
+] as const) {
+  test(`with Web MIDI ${what}, MIDI Learn and Quick Setup look disabled and their tip says why (issue 252)`, async ({ page }) => {
+    if (noMidi) {
+      await midiPermission(page, noMidi);
+      await page.addInitScript(() =>
+        Object.defineProperty(navigator, 'requestMIDIAccess', {
+          value: () => Promise.reject(new DOMException('Permission to use Web MIDI API was not granted.', 'NotAllowedError')),
+          configurable: true,
+        }),
+      );
+    } else await page.addInitScript(() => Object.defineProperty(navigator, 'requestMIDIAccess', { value: undefined, configurable: true }));
+    await page.goto('/');
+    await page.getByRole('button', { name: 'MIDI', exact: true }).click();
+    const panel = page.getByRole('dialog', { name: 'MIDI' });
+    for (const name of ['MIDI Learn', 'Quick Setup']) {
+      const button = panel.getByRole('button', { name, exact: true });
+      await expect(button, name).toBeDisabled();
+      const look = () => button.evaluate((b) => ({ opacity: Number(getComputedStyle(b).opacity), color: getComputedStyle(b).color, background: getComputedStyle(b).backgroundColor, cursor: getComputedStyle(b).cursor }));
+      const resting = await look();
+      expect(resting.opacity, name).toBeLessThan(0.6);
+      expect(resting.cursor, name).toBe('default');
+      await button.hover();
+      const tip = page.getByRole('tooltip').filter({ hasText: name });
+      await expect(tip, name).toBeVisible();
+      await expect(tip, name).toContainText(`${name}${why}.`); // under the title, first
+      expect(await look(), name).toEqual(resting); // no hover change
+      await page.mouse.move(0, 0);
+      await expect(tip, name).toBeHidden();
     }
   });
 }

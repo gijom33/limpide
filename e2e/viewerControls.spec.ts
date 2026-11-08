@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 // A missing reading (the Tap hasn't drawn yet) must not count as loud: Number(null) would be 0 dB.
 const level = (page: import('@playwright/test').Page) =>
@@ -19,7 +19,7 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
   await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true'); // the Viewers show it too
 
   await page.keyboard.up('KeyA'); // the Note ends, but the frozen Viewers still show it
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(800); // a time: past the Note's 400 ms Release, live it would have faded
   expect(await level(page)).toBeGreaterThan(-40);
 
   await page.keyboard.press('Space');
@@ -75,13 +75,17 @@ test('hovering a Spectrum reads out frequency, note and level', async ({ page })
   await expect(spectrum).not.toHaveAttribute('data-readout');
 });
 
-test('controls are grouped under View, Axes and Show', async ({ page }) => {
+test('controls are grouped under View, Axes and Show, then the page’s own Keys, Tips, Bead and Theme', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.getByRole('group', { name: 'View' }).getByRole('button', { name: 'Freeze' })).toBeVisible();
   await expect(toolbar.getByRole('group', { name: 'Axes' }).getByRole('radiogroup', { name: 'Scope cycles' })).toBeVisible();
   await expect(toolbar.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Filter’s Response Curve' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Keys' }).getByRole('radiogroup', { name: 'Letter keys' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Tips' }).getByRole('radiogroup', { name: 'Tooltips' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Bead' }).getByRole('radiogroup', { name: 'Bead' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Theme' }).getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-keyshortcuts', 'Space');
 });
 
@@ -101,7 +105,8 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
         return hash;
       }),
     );
-  await page.waitForTimeout(200);
+  await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
+  await frames(page); // the frozen frame drawn
   const frozen = await pixels();
 
   await page.keyboard.up('KeyA');
@@ -110,7 +115,7 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
   await cutoff.focus();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(400); // a time: the new Note and Cutoff reach the sound; frozen, nothing is drawn
 
   expect(await pixels()).toEqual(frozen);
   await page.keyboard.up('KeyG');
@@ -130,24 +135,29 @@ test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', a
   for (const scope of await scopes.all()) await expect(scope).not.toHaveAttribute('data-snapshot', 'true');
 });
 
-test('Glow is Off at first; Scopes, every Scope draws its last traces fading under the newest, and it is remembered (issues 180, 229)', async ({ page }) => {
+test('Glow is Scopes at first: every Scope draws its last traces fading under the newest, no Spectrum; Off is remembered (issues 180, 229, 264)', async ({ page }) => {
+  // Nothing stored for the Display, as on a first visit.
   await page.goto('/');
-  await openDisplay(page);
+  await openDisplay(page); // a click: the sound starts
   const glow = page.getByRole('group', { name: 'View', exact: true }).getByRole('radiogroup', { name: 'Glow' });
   const scopes = page.locator('canvas.scope');
+  const spectrums = page.locator('canvas.spectrum');
   await expect(scopes).toHaveCount(3);
+  await expect(spectrums).toHaveCount(3);
   await expect(glow.getByRole('radio')).toHaveText(['Off', 'Scopes', 'All']);
-  await expect(glow.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
-  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
-  // A quarter of a second of traces, one per 60th of a second at most: 15, fewer on a loaded machine.
-  await glow.getByRole('radio', { name: 'Scopes', exact: true }).click();
-  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
-  await page.reload();
-  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
-  await openDisplay(page);
   await expect(glow.getByRole('radio', { name: 'Scopes', exact: true })).toHaveAttribute('aria-checked', 'true');
+  // A quarter of a second of traces, one per 60th of a second at most: 15, fewer on a loaded machine.
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
+  for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', '0');
+  // Off, chosen, is kept: a reload comes back to it, not to Scopes.
   await glow.getByRole('radio', { name: 'Off', exact: true }).click();
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
+  await page.reload();
+  await openDisplay(page);
+  await expect(glow.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
+  await glow.getByRole('radio', { name: 'Scopes', exact: true }).click();
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
 });
 
 test('Glow reaches the Spectrums under All, not Scopes: a Filter swept by its Envelope leaves its past outlines, and frozen they stay (issues 199, 229)', async ({ page }) => {
@@ -179,7 +189,7 @@ test('Glow reaches the Spectrums under All, not Scopes: a Filter swept by its En
   for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
   await page.keyboard.press('Space');
   await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
-  await page.waitForTimeout(100); // the first frozen frame drawn
+  await frames(page); // the first frozen frame drawn
   const frozen = await filter.getAttribute('data-glow');
   await page.keyboard.up('KeyA');
   await page.waitForTimeout(500); // twice the Glow's length: frozen, nothing fades or goes

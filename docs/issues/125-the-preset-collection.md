@@ -45,9 +45,9 @@
 **Acceptance criteria:**
 - [x] The Preset tests list the new categories and every Preset in one of them; no two Presets closer than the report's near-copy distance (0.3) unless the test names why
 - [x] Each added Preset is rendered on C2, C4 and C6 within its family's level, and its words fact-checked
-- [ ] Loading a Bass puts the keyboard at C2; loading Init brings back the default; the octave buttons work after either
-- [ ] Every Tutorial and the Demo still pass their tests
-- [ ] The owner listens to the added Presets before the release
+- [ ] ~~Loading a Bass puts the keyboard at C2; loading Init brings back the default; the octave buttons work after either~~ (not checked at the time)
+- [ ] ~~Every Tutorial and the Demo still pass their tests~~ (not checked at the time)
+- [ ] ~~The owner listens to the added Presets before the release~~ (not checked at the time)
 
 **Out of scope:**
 - The Preset reworks of 108 (built first, on the same list)
@@ -84,7 +84,7 @@ Each word was checked by rendering (`src/patch/presets.browser.test.ts`, "the te
 
 **Tests:** unit: `src/patch/presets.test.ts` (families, eight Voices in the words, the Basses' octave, the distance), `src/input/keyboardLayout.test.ts`, `src/patch/serialize.test.ts`, `src/tutorial/tutorial.test.ts`, `src/tutorial/tutorials.test.ts`; engine: `src/patch/presets.browser.test.ts`. The whole Vitest suite passes (962 tests; two engine tests in `src/engine/synthEngine.browser.test.ts` failed once under a load average of 35 and pass alone). Playwright was not run in this lane; to run at the merge: `e2e/piano.spec.ts` (new: a Bass starts on C2, Init on C4, the buttons after), `e2e/patches.spec.ts` (the families, the last Preset now Machine Chatter, the panel fitting without a scrollbar from 840 px with 15 groups), `e2e/patchSearch.spec.ts` ("bell" now finds five), `e2e/tutorial.spec.ts` (Bass, Acid and Wobble load at the end, moving the keyboard to C2), `e2e/demo.spec.ts` (Cathedral quieter; the piano's octave on each part) and `e2e/designPrinciples.spec.ts` (the panel’s new pills and rows).
 
-**Judgement calls** (Claude's call, open to the owner):
+**Judgement calls** (Claude's call, let stand by the owner in 1.16.1):
 
 1. **Pluck sits in the Envelope lesson**, after Pluck Shape, at one Voice: its words teach the Filter Envelope's snap, its Tutorial needs one Voice, and in Plucks & Mallets it would have been the one Preset whose chord cuts its own Notes off (review 15).
 2. **Drums keeps its name**: the decision names the three new families; review 15's table called it "Drums & Percussion".

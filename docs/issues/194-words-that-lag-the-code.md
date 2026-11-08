@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
 
 1. **Each claim rendered or checked** as the fact-checker does, and a test where one holds the words.
 
@@ -34,8 +34,8 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The issue files' "Since then" lines
 
 **Acceptance criteria:**
-- [ ] Each item fixed, rendered where it is about sound, with the fact-checker's method
-- [ ] The tips', Presets' and word tests pass; every test passes in Linux's fonts too
+- [ ] ~~Each item fixed, rendered where it is about sound, with the fact-checker's method~~ (not checked at the time)
+- [ ] ~~The tips', Presets' and word tests pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - New words beyond what the items need
@@ -46,9 +46,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - **The Guides' tip** (and CONTEXT.md's Guides): where one Note peaks; Resonance takes a trace beyond them, and so do several Notes at once and the Noise, and the Filter alone a little. Issue 159's tip test now holds that, and no longer "boosted by Resonance". The figures are the check's (a triad at 1.28 against 0.50, the Filter Tap about 5 % over at Resonance 0); not rendered again tonight.
 - **The Tempo:** the narrow layout's BPM button has a tip of its own ("Press it to set it: the BPM and Tap open below it"); the BPM in the field it opens has the drag-and-arrows tip, which it lacked. An e2e test hovers both.
 - **Retrigger and Sync:** Wobble's says Sync keeps the speed to the beat and Retrigger starts it at the Cutoff on every Note; Stutter's is "Sync, so at any tempo", its stutter starting open "wherever it falls"; Key Sync's names it key sync, not the LFO's Sync, its Rate in Hz.
-- **Bluetooth:** "once the system pairs it as a MIDI device (on a Mac, in Audio MIDI Setup; on Windows and Linux, untried)". Claude's call, open to the owner: no Windows steps, since none was tried here.
+- **Bluetooth:** "once the system pairs it as a MIDI device (on a Mac, in Audio MIDI Setup; on Windows and Linux, untried)". Claude's call, let stand by the owner in 1.23.0: no Windows steps, since none was tried here.
 - **The LFO Rate's History:** the manual's credit goes to the slow sine: "its manual makes a smoother vibrato with a slow sine".
-- **FM and the DX7:** Yamaha's own Hub article (*Discovering Digital FM: John Chowning Remembers*) gives the DX7's 1983 and Chowning's "The DX7 used my underlying principles and research": recorded in the research as S33, graded B (the maker's own page), and added to FM's sources; the line is unchanged. Yamaha's corporate history pages refused the fetch. Claude's call, open to the owner: B rather than A, as a maker's page.
+- **FM and the DX7:** Yamaha's own Hub article (*Discovering Digital FM: John Chowning Remembers*) gives the DX7's 1983 and Chowning's "The DX7 used my underlying principles and research": recorded in the research as S33, graded B (the maker's own page), and added to FM's sources; the line is unchanged. Yamaha's corporate history pages refused the fetch. Claude's call, let stand by the owner in 1.23.0: B rather than A, as a maker's page.
 - **The README:** a "Play in time" line (the tempo, Tap, a MIDI clock, LFO Sync, Legato, aftertouch), and the screenshot retaken as issue 111 took it (the Demo on Acid, 1920 × 1080, Dark, its card closed), today's header with the BPM and Tap.
 - **Issue texts:** "Since then" lines in 112 (the readout and decision 11), 157 (the phone rule's padding), 136 and 169 (each waiting on 191's questions 3 and 5), and 131's 146 line marked dropped by 172.
 - **Tests:** tsc, the lint, the word, tips, History, Presets and Demo unit tests; tooltips, piano, header and keyboard-access specs in Chromium. Linux's fonts not tried here (nothing measures a width).

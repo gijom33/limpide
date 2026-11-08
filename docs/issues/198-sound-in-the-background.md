@@ -13,7 +13,7 @@ Decided by the owner, 2026-11-02:
 1. **Sound is not skipped** when the page loses focus or goes to the background ("Can we force this not to happen?").
 2. **Heard with the Demo or the Song playing** (the owner, asked what was playing: "Demo or Song"), which fits the cause below: both are players on the Transport.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 3. **The likely cause, to confirm first:** the players (the Demo, the Song, Hold's rhythm) hand their Notes to the engine from the page's main thread, 100 to 150 ms ahead of the audio clock, on a timer every few tens of milliseconds. A browser slows a background page's timers to about once a second (Safari also an unfocused or covered window), so Notes come late, bunched, or are lost. The sound itself runs on the audio thread and is not slowed; Notes played by hand or from MIDI should not be touched, which the reproduction checks.
 4. **The fix keeps the look-ahead short in front:** the players' tick comes from a clock the browser does not slow (a timer in a worker, or the audio thread's own), and while the page is hidden the look-ahead widens (to about 2 s) so a slowed tick still finds its Notes handed over. In front again, it narrows, so a Stop or a change of Preset is still heard at once.
@@ -38,11 +38,11 @@ Claude's calls, open to the owner:
 - The audio clock
 
 **Acceptance criteria:**
-- [ ] The reproduction recorded in this issue, per browser and per player, with and without the fix
-- [ ] A unit test: with ticks slowed to once a second, every Note of a phrase is handed over before its start, none twice, none after it
-- [ ] A unit test: a Note whose start has passed is dropped, not played late
-- [ ] An e2e test in both browsers: the Demo with the page hidden for 5 seconds starts every Note of those seconds on time (as the engine records them)
-- [ ] Stop, a Preset change and a tempo change in front are as quick as before; every test passes in Linux's fonts too
+- [ ] ~~The reproduction recorded in this issue, per browser and per player, with and without the fix~~ (not checked at the time)
+- [ ] ~~A unit test: with ticks slowed to once a second, every Note of a phrase is handed over before its start, none twice, none after it~~ (not checked at the time)
+- [ ] ~~A unit test: a Note whose start has passed is dropped, not played late~~ (not checked at the time)
+- [ ] ~~An e2e test in both browsers: the Demo with the page hidden for 5 seconds starts every Note of those seconds on time (as the engine records them)~~ (not checked at the time)
+- [ ] ~~Stop, a Preset change and a tempo change in front are as quick as before; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - A page the browser freezes or suspends (decision 5)
@@ -77,7 +77,7 @@ Without the fix, the late Notes came in bursts on each slowed tick, and the firs
 - **The tests' build** writes down every Note the engine is asked to start (`src/app/notesInTests.ts`, like `silentInTests`, absent from the published site), for the e2e test.
 - **Tests:** in `transport.test.ts`, ticks slowed to once a second with the page hidden hand every Note over before its start, once; a Note past its start is dropped; back in front the look-ahead narrows. `player.test.ts` and `song.test.ts` pin which players widen. `e2e/background.spec.ts`, in Chromium and WebKit: the Demo with the page hidden and its timers slowed for 5 s starts every Note of the track due in those seconds, on its beat, none handed over late.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 6. **Only the Song and Listen widen** their look-ahead to 2 s while the page is hidden, the hedge of decision 4, in case a browser slows even a worker. The Demo and Hold's rhythm keep their short one and rely on the worker's ticks: the Demo turns its knobs at once and a Note takes its Envelopes and Glide when handed over, so Notes handed 2 s ahead would miss the moves before them (its Decay and Glide moves heard late, or its Cutoff moves early); Hold's rhythm follows the Notes held, which a MIDI keyboard may change while the page is hidden, and would play 2 s of the old ones. Should a browser slow the worker too, those two would drop Notes in the background rather than play them late.
 7. **The reproduction is simulated** (above): a real background tab could not be had headless, and the night opens no browser window. Whether a real Safari slows a worker's timers in the background is not measured.

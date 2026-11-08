@@ -44,7 +44,7 @@ function nearestTop(box: DOMRect): number {
 }
 
 /**
- * Phones only (CSS hides it elsewhere, where every section is on screen at once): a strip of the sections, sticky
+ * Phones only, up to 600 px (CSS hides it from 601 px, where the sections sit side by side): a strip of the sections, sticky
  * under the header. It shows which section is in view (the one a third of the way down what the header and strip
  * leave visible) and jumps to a section when tapped, landing its top just under the strip.
  *

@@ -11,5 +11,5 @@
 - [x] A shifted octave button shows how far, signed: +1, +2 on the up button, −1, −2 on the down button; the other keeps its plain sign
 - [x] LFO 2 in a very light blue in the dark theme (a very dark blue in the light), not the text colour
 - [x] The Patches panel's group names take a narrower column, the long ones on two lines
-  **Since then (2026-11-01, issue 156):** each group name stays on one line, in a short form where the column is narrow (Keys & Org, Str & Brass, Move & FX); Claude's call, open to the owner.
+  **Since then (2026-11-01, issue 156):** each group name stays on one line, in a short form where the column is narrow (Keys & Org, Str & Brass, Move & FX); Claude's call, let stand by the owner in 1.21.0.
 - [x] The Envelope Timeline drops its time labels (−1 s, −2 s…): on a phone the page is 12 px shorter, elsewhere the plot gets their height

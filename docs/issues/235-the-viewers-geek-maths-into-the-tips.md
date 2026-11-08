@@ -13,7 +13,7 @@ Decided by the owner, 2026-11-05: "For 235, the only thing Insuggested to transf
 1. **Only the formulas move:** the Synth Geek Layer's formulas drawn on the Oscillator Spectrum (each Waveform's Harmonic series, FM's sidebands, Ring's sums and differences) and on the Filter Spectrum (the Filter's response) leave the Viewers for the tips.
 2. **The rest stays as it is:** the Scopes' period and frequency, the Harmonic's number in the Spectrum's readout, the Noise's slope.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 3. **Each formula goes to the tip of the control it belongs to:** the Harmonic series to the Waveform's tip (Osc 1's and Osc 2's), FM's to FM's, Ring's to Ring's, the response to the Filter's Mode and Slope, in Under the hood, which shows as every Under the hood does today.
 4. **A better explanation:** each formula comes after a plain sentence of what it says, and every letter in it is named ("n, the Harmonic's number; bₙ, its level against the first").
@@ -45,7 +45,7 @@ No Viewer draws a formula any more, whatever the layers: the row the Synth Geek 
 - **FM's rule** gives β, J₀ to J₃ and where the partials land for the knobs, as on the Viewer before.
 - The Synth Geek Layer's own tip and the glossary say where the formulas are now.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **FM's formula is on the tip of Osc 1's "Pitch" heading, not FM's own** (amending decision 3). FM's tip was already the tallest (about 600 px on a 375 × 667 phone); with its formula it ran 200 px past the screen's foot, so its History line could not be read (the touch-tips test caught it). The Pitch heading sits over Octave and FM, and its tip already says what FM does. Putting it on FM's own would mean cutting FM's tip.
 2. **The letters are named for a wave whose peak is 1:** bₙ is "its amplitude, the wave's peak being 1", which is what 2 / (π n) is, rather than "its level against the first".

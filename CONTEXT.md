@@ -181,7 +181,7 @@ A Preset rebuilt from Init in Steps, with the person turning each control. A car
 _Avoid_: Lesson, course, walkthrough, onboarding, tour
 
 **Tour**:
-A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what to watch, then what the Section does, while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends; then two cards on what else there is to find, each ringing where it is, nothing moving or playing: the Synth Geek Layer with its History, and the Tutorials, the last (issue 210). Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
+A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what to watch, then what the Section does, while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends; then three cards, each ringing where it is, nothing moving or playing: the Synth Geek Layer with its History and the Tutorials, offering the first, on what else there is to find (issue 210); and the last, something to play, whose way out is the Song (issue 260). Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:
@@ -243,7 +243,7 @@ The Scope behaviour that aligns the trace to the Note's period so it stands stil
 _Avoid_: Trigger, sync, stabilisation
 
 **Glow**:
-A Display choice of Off (the default), Scopes or All: past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope, so what moves leaves a soft glow, halving every 70 ms or so (issue 180). Scopes glows each Scope's trace; All each Scope's trace and each Spectrum's outline (issues 199, 229). Only the live trace glows: the Spectrum's fill and the marks over it show only now.
+A Display choice of Off, Scopes (the default, issue 264) or All: past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope, so what moves leaves a soft glow, halving every 70 ms or so (issue 180). Scopes glows each Scope's trace; All each Scope's trace and each Spectrum's outline (issues 199, 229). Only the live trace glows: the Spectrum's fill and the marks over it show only now.
 _Avoid_: Phosphor, persistence, trails, averaging
 
 **Spectrum**:
@@ -267,7 +267,7 @@ The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum
 _Avoid_: Filter curve, transfer function (Synth Geek Layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen, each name shorter still where the key's room runs short (Short forms, below). While an LFO is synced with Retrigger off, its cycle following the beat, faint broken lines mark the Tempo's beats, as on that LFO's plot.
+A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, or aftertouch once a keyboard has sent it, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 or aftertouch moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, what aftertouch moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen, each name shorter still where the key's room runs short (Short forms, below). While an LFO is synced with Retrigger off, its cycle following the beat, faint broken lines mark the Tempo's beats, as on that LFO's plot.
 _Avoid_: ADSR display
 
 **Freeze**:
@@ -279,7 +279,7 @@ A captured Scope and Spectrum trace, kept faint for A/B comparison against the l
 _Avoid_: Reference trace, pin, compare
 
 **Synth Geek Layer**:
-An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Effective Cutoff's value, and Osc 2's tuning as the engine plays it (the Octave's and Semitone's multiples, Detune's beats in Hz at the last Note played, A4 before any: issue 167), each LFO's swing in its Destination's unit, the Cutoff at the Note under Key Track (issue 169), and on the Viewers each Scope's period and frequency, the Harmonic's number in a Spectrum's hover readout and the Noise's slope on the Oscillator Spectrum (issue 170). Switched on by Display's Geek toggle, a pair of glasses; off by default. It also adds to a control's tip its formula, under "Under the hood", and its History last; the formulas once drawn on the Spectrums are there, each after a plain sentence, its letters named, for the settings picked: a Waveform's Harmonic series, FM's sidebands on Osc 1's Pitch, Ring's sums and differences, the Response Curve's on the Filter Mode and Slope (issue 235); an Envelope fader's and Glide's work out their curve's time constant τ at their setting (issue 168), an LFO's Rate its period, at the tempo while synced: the Rate's readout stays as without the layer, Hz or a note value (issue 202). Named the Maths Layer until issue 165.
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Effective Cutoff's value, and Osc 2's tuning as the engine plays it (the Octave's and Semitone's multiples, Detune's beats in Hz at the last Note played, A4 before any: issue 167; those of the lowest pair of the two Oscillators' Harmonics that nearly coincide, "no beats" where none is heard beating: issue 256), each LFO's swing in its Destination's unit, the Cutoff at the Note under Key Track (issue 169), and on the Viewers each Scope's period and frequency, the Harmonic's number in a Spectrum's hover readout and the Noise's slope on the Oscillator Spectrum (issue 170). Switched on by Display's Geek toggle, a pair of glasses; off by default. It also adds to a control's tip its formula, under "Under the hood", and its History last; the formulas once drawn on the Spectrums are there, each after a plain sentence, its letters named, for the settings picked: a Waveform's Harmonic series, FM's sidebands on Osc 1's Pitch, Ring's sums and differences, the Response Curve's on the Filter Mode and Slope (issue 235); an Envelope fader's and Glide's work out their curve's time constant τ at their setting (issue 168), an LFO's Rate its period, at the tempo while synced: the Rate's readout stays as without the layer, Hz or a note value (issue 202). Named the Maths Layer until issue 165.
 _Avoid_: Maths Layer (its old name), Advanced mode, expert mode
 
 **History**:
@@ -293,7 +293,7 @@ A connected MIDI hardware device, such as the Synido TempoPAD C16. A **known Con
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
-A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…), an Action or the Tempo (issue 112). A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller.
+A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…), an Action or the Tempo (issue 112). A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller, but one MIDI Learn heard from another input on a control the C16 layout had, which leaves the C16 out (issue 255).
 _Avoid_: Binding, assignment
 
 **C16 layout**:
@@ -305,7 +305,7 @@ A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapsho
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:
-The mode in which the next Controller message received (but a Program button's Bank Select) becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action or a Switch (LFO Sync, Retrigger, Legato) is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147). On a Switch, each press then flips it, a pad's Note too (issue 223).
+The mode in which the next Controller message received (but a Program button's Bank Select) becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action or a Switch (LFO Sync, Retrigger, Legato) is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147). On a Switch, each press then flips it, a pad's Note too (issue 223). A press cut short by another target selected learns nothing. The Learn bar says what a new Mapping took: the Mappings sharing its control or its target, a C16 place by its bank and name ("bank B's K1 no longer turns Cutoff", issue 255).
 _Avoid_: Auto-map
 
 **Quick Setup**:
@@ -317,7 +317,7 @@ How a Controller knob reports movement. **Absolute** sends a position (0–127):
 _Avoid_: Knob type
 
 **Pickup**:
-For Absolute Mappings, the rule that the Parameter ignores the knob until the knob passes through the Parameter's current value, so values never jump.
+For Absolute Mappings, the rule that the Parameter ignores the knob until the knob passes through the Parameter's current value, so values never jump. While it waits, the control shows a dashed ring and says which way to turn the knob (issue 255).
 _Avoid_: Soft takeover, catch
 
 **Activity Monitor**:

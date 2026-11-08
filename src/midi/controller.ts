@@ -20,9 +20,16 @@ export interface KnownController {
   upgrade(stored: readonly Mapping[], recorded: string | null): readonly Mapping[] | null;
   /** The Section, by its place on the page, a control of its layout plays (undefined: none): the page follows its banks. */
   section(control: Control): number | undefined;
+  /** A control's place on it, by its bank's letter, its kind and its own name ("B", "knob", "K1"); undefined for a control it has not. */
+  place(control: Control): { bank: string; kind: PlaceKind; name: string } | undefined;
+  /** How many banks it has: a place taken on all of them is "every bank's". */
+  banks: number;
   /** The share of a Grid step a Relative message of more than one step (a fast turn) counts for, signed. */
   fastTurnStep: number;
 }
+
+/** What a place on a known Controller is: what its Mapping does is said by it (a knob turns, a fader moves). */
+export type PlaceKind = 'knob' | 'fader' | 'button';
 
 /** One record per tag: a tag added to the Mapping's list without its Controller does not compile. */
 const KNOWN: Record<ControllerId, KnownController> = { c16: C16 };
@@ -58,14 +65,19 @@ export const doubledPorts = (names: readonly string[]): DoubledPorts[] =>
 /** The inputs whose messages are set aside: a known Controller's ports other than the one followed. */
 export const setAside = (names: readonly string[]): Set<string> => new Set(doubledPorts(names).flatMap((d) => d.aside));
 
+/** A known Controller by its tag. */
+export const knownById = (id: ControllerId): KnownController => KNOWN[id];
+
 /** The known Controller a Mapping answers alone (its layout's); undefined when it answers every Controller. */
 export const answeredBy = (mapping: Mapping): KnownController | undefined => (mapping.device ? KNOWN[mapping.device] : undefined);
 
 /**
  * Whether a Mapping answers a message from an input: a layout's Mapping its own Controller only, any other every
- * Controller (ADR-0017). `from` is the input's known Controller, undefined for any other.
+ * Controller (ADR-0017), but the one it was learned away from (issue 255). `from` is the input's known Controller,
+ * undefined for any other.
  */
-export const answers = (mapping: Mapping, from: KnownController | undefined) => !mapping.device || mapping.device === from?.id;
+export const answers = (mapping: Mapping, from: KnownController | undefined) =>
+  mapping.device ? mapping.device === from?.id : !mapping.except || mapping.except !== from?.id;
 
 /**
  * A known Controller's layout, taken: recorded as in place, so it never comes in by itself again, and returned for

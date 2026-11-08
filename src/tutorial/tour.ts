@@ -50,7 +50,7 @@ export interface TourSection extends PhraseAtTempo {
 /** What the page shows where a card's moving control and its Viewers do not fit on screen together (issue 206). */
 export type Looking = 'control' | 'viewer';
 
-/** The Tour's own sound: Init, a saw through an open low-pass Filter (issue 128, decision 6). */
+/** The Tour's own sound: Init, a saw through a low-pass Filter at 2 kHz (issue 128, decision 6). */
 export const TOUR_PATCH = PRESETS[0];
 
 /**
@@ -146,9 +146,9 @@ export const TOUR: TourSection[] = [
 ];
 
 /**
- * A card after the Sections (issue 210): something else there is to find, said in a few lines, and the control on the
- * page where it is found, which the card shows and the synth leaves as it is: an option in Display's panel (its button
- * standing for it while the panel is shut), or a button in the header.
+ * A card after the Sections (issue 210): something else there is to find, or to play (issue 260), said in a few lines,
+ * and the control on the page where it is found, which the card shows and the synth leaves as it is: an option in
+ * Display's panel (its button standing for it while the panel is shut), or a button in the header.
  */
 export interface TourFind {
   title: string;
@@ -157,12 +157,18 @@ export interface TourFind {
   /** What it is, and how to use it. */
   says: string[];
   /** The control it shows. */
-  shows: { kind: 'display'; overlay: Overlay } | { kind: 'header'; name: 'Tutorial' };
+  shows: { kind: 'display'; overlay: Overlay } | { kind: 'header'; name: 'Tutorial' | 'Song' };
+  /**
+   * What its own button starts: the first Tutorial, offered beside Next; or the Song, the card's way out in place of
+   * Next, which ends the Tour (issue 260).
+   */
+  starts?: 'firstTutorial' | 'song';
 }
 
 /**
  * The Tour's last cards, after the Sections (issue 210, decided by the owner): the Synth Geek Layer with its History
- * lines, then the Tutorials, the last card, whose way on is the first Tutorial, Sub Ladder (issue 233).
+ * lines, then the Tutorials, which offer the first, Sub Ladder (issue 233); then the last card, something to play, whose
+ * way out is the Song (issue 260), so a newcomer leaves the Tour playing, not on the geek extras.
  */
 export const TOUR_FINDS: TourFind[] = [
   {
@@ -179,16 +185,27 @@ export const TOUR_FINDS: TourFind[] = [
     look: 'Find the ringed Tutorial button: each Tutorial in it has you rebuild one of the Presets yourself.',
     says: [
       'The Presets are Limpide’s ready-made sounds. A Tutorial starts from Init, a plain sound, and has you build one back step by step: you turn each control, and hear and see what it does.',
-      'That is the whole Tour. Now build a sound yourself: Sub Ladder plays each wave in turn and shows its own Harmonics.',
+      'To build one yourself, start with Sub Ladder: it plays each wave in turn and shows its own Harmonics.',
     ],
     shows: { kind: 'header', name: 'Tutorial' },
+    starts: 'firstTutorial',
+  },
+  {
+    title: 'Your turn',
+    look: 'Now play the piano’s keys, or press the ringed Song for a tune to play over.',
+    says: [
+      'On a computer the letter keys play too, from A.',
+      'That is the whole Tour. As the Song plays, flip the Presets with › beside the sound’s name, or turn a knob, and hear the sound change under the tune.',
+    ],
+    shows: { kind: 'header', name: 'Song' },
+    starts: 'song',
   },
 ];
 
-/** How many cards the Tour has: a Section's each, then what else there is to find. */
+/** How many cards the Tour has: a Section's each, then what else there is to find, and to play. */
 export const TOUR_LENGTH = TOUR.length + TOUR_FINDS.length;
 
-/** The Tour's card at `index`: a Section's, then, after the Sections, what else there is to find. */
+/** The Tour's card at `index`: a Section's, then, after the Sections, what else there is to find, and to play. */
 export const tourCardAt = (index: number): { kind: 'section'; section: TourSection } | { kind: 'find'; find: TourFind } =>
   index < TOUR.length ? { kind: 'section', section: TOUR[index] } : { kind: 'find', find: TOUR_FINDS[index - TOUR.length] };
 

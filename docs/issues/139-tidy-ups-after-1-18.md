@@ -26,14 +26,14 @@
 - The Presets' descriptions
 
 **Acceptance criteria:**
-- [ ] The Tour and the Tutorial cards look and behave as before (their e2e specs and the design audit pass unchanged)
-- [ ] Osc 2's Envelope term and FM's index each have one definition; the engine and model tests pass unchanged
-- [ ] "duty" is gone from the tests; the names follow CONTEXT.md
-- [ ] A visitor's stored folds and bend range load after the move
-- [ ] A test: the Tour's "Build a Bass" puts the focus on the Tutorial's Start
+- [ ] ~~The Tour and the Tutorial cards look and behave as before (their e2e specs and the design audit pass unchanged)~~ (not checked at the time)
+- [ ] ~~Osc 2's Envelope term and FM's index each have one definition; the engine and model tests pass unchanged~~ (not checked at the time)
+- [ ] ~~"duty" is gone from the tests; the names follow CONTEXT.md~~ (not checked at the time)
+- [ ] ~~A visitor's stored folds and bend range load after the move~~ (not checked at the time)
+- [ ] ~~A test: the Tour's "Build a Bass" puts the focus on the Tutorial's Start~~ (not checked at the time)
   **Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; the test is now "the last card's button puts the focus…".
-- [ ] The two descriptions pass the facts check
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~The two descriptions pass the facts check~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Any change to a sound or a layout
@@ -51,7 +51,7 @@ Built 2026-11-01, at night, on `night/2026-11-01` (commits `Issue 139: …`). No
 - **Two Preset descriptions.** FM Bass: at the strike FM is at its thinnest, a few sidebands spaced wide, because the Envelope raises Osc 2 an octave while FM's depth stays the knobs', which halves the index. As Osc 2 falls back onto the Note, the sidebands close in and fill every Harmonic. This matches the fact-check of 2026-10-30 (`docs/reviews`), which measured 2f going from −19 dB at the strike to +1.8 dB at 0.5 s. Poly Mod Zap: the zap is Osc 2's own two-octave dive, heard in the Mixer. Its FM, a quarter as deep at the strike (Osc 2 four times higher), brightens the held Note. The Patches are unchanged.
 - **The two descriptions shortened (a slip found after the build).** At 294 and 267 characters (now 247 and 237) they broke issue 153's rule in `e2e/patches.spec.ts` (FM Bass reached the Osc tabs at 375 px, and a description took three lines at 1440 and 2000 px). FM Bass drops "onto the Note" and its closing "a rubbery, punchy attack"; Poly Mod Zap says the dive is "heard in the Mixer" and "the laser zap", without "Osc 2’s own" and "each Note starts with". What each says about FM is unchanged. The spec passes at every width in Chromium and WebKit, and the Presets' unit tests pass (117).
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.21.0):
 
 1. **The e2e specs' class selectors were renamed with the classes** (`.tutorial-words` to `.card-words`, and so on, nine lines in three specs). Their assertions are unchanged. The criterion's "pass unchanged" is read as "check the same things".
 2. **The aftertouch Destination moved too,** though the issue names only the folds and the bend range. Issue 132 added it tonight beside the bend range, remembered the same loose way.

@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_OVERLAYS, OVERLAYS, toggleOverlay } from './overlays';
 
 describe('Viewer overlays', () => {
-  it('offers Harmonic Markers, the Ideal Reference, the Response Curve and the Scope guides', () => {
+  it('offers Harmonic Markers, the Ideal Reference, the Response Curve, the Scope guides and the Synth Geek Layer', () => {
     expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'guides', 'geek']);
   });
 
-  it('starts with the Harmonic Markers, the Ideal Reference and the Response Curve on, the guides off', () => {
+  it('starts with the Harmonic Markers, the Ideal Reference and the Response Curve on, the guides and the Synth Geek Layer off', () => {
     expect(DEFAULT_OVERLAYS).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, geek: false });
   });
 

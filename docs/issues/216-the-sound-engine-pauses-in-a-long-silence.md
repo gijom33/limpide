@@ -10,10 +10,10 @@
 
 From 182:
 
-1. **Measured before and after,** kept only if it shows (Claude's call, open to the owner).
+1. **Measured before and after,** kept only if it shows (Claude's call, let stand by the owner in 1.23.0).
 2. **The LFO plots and the modulation rings keep moving with nothing playing,** decided by the owner ("Keep it moving", 2026-11-03). They follow the sound's clock today, which stops while the engine is paused, so while it is, they move on a clock of their own and pick the sound's clock up again without a jump, as Bead's motion already does.
 
-Claude's calls, open to the owner (2026-11-03):
+Claude's calls, let stand by the owner in 1.23.0 (2026-11-03):
 
 3. **Never in the way of a Note.** The first Note after the pause sounds on time and without a click, from the computer keys, the piano, a Controller and the Demo; where a browser will not resume without a tap (an iPhone's Safari), it is not paused at all.
 4. **The page's own pause is not the browser's.** The invitation to tap for sound, and the return to the page after another app ([the iPhone fix](../inbox.md)), stay for when the browser stops the sound, never for this pause.
@@ -58,7 +58,7 @@ Not dropped under decision 5: 213 to 215 leave a page never clicked near rest, b
 - **The page's pause is not the browser's.** The invitation to tap never shows for it, and a return to the page leaves it paused. On an iPhone or iPad it never pauses (decision 3). If a browser refuses to resume without a tap after all, the page stops pausing for the rest of the visit, and the invitation shows as for any stop by the browser.
 - Tests: `enginePause.browser.test.ts` (from when nothing sounds; the clock shown runs on and is picked up without a jump; the first Note after a pause starts on the same sample as without one, opens no more steeply, and its tremolo follows the carried LFO sample by sample; a synced LFO stays on the carried beat). `pauseInSilence.test.ts` (when it pauses and when not, what wakes it, a refused resume). `unlockAudio.test.ts` (the page's own pause counts as running; which browsers need a tap). `e2e/enginePause.spec.ts`, with the wait shortened to a second: the Viewers rest and no invitation shows; a key, a piano press and the Demo all sound after the pause; an LFO plot moves through it. The specs of the browser stopping the sound pass unchanged.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **30 seconds of silence.** That is long enough that playing with pauses to think never meets it, and longer than the Timeline's longest window, so nothing on it moves when the LFOs are carried on.
 2. **Resuming costs the first Note a moment.** The Note plays from its start, but only once the browser has resumed. In the tests that took about 1.5 ms in Chromium and 7 to 17 ms in WebKit. A real laptop's output may take longer, and so may Firefox. A pointer moving or a key going down wakes it a little ahead, so a mouse user rarely meets it. Try it on the laptop: a first Note after a minute's rest that feels late would argue for a longer wait.
@@ -89,4 +89,4 @@ What to try in the app, on the laptop:
 - With an LFO on Volume or Cutoff, check the plot carries straight on as the first Note comes in.
 - Play the Demo and leave it running: it never pauses.
 
-**Since then (2026-11-05, [238](./238-tidy-ups-after-1-24.md)):** a Controller's every message wakes the sound too, as the page's keys and pointer do, ahead of the Note it may bring; and a paused Spectrum is drawn again when Harmonics, Ideal or the Synth Geek Layer is turned. Claude's call, open to the owner.
+**Since then (2026-11-05, [238](./238-tidy-ups-after-1-24.md)):** a Controller's every message wakes the sound too, as the page's keys and pointer do, ahead of the Note it may bring; and a paused Spectrum is drawn again when Harmonics, Ideal or the Synth Geek Layer is turned. Claude's call, let stand by the owner in 1.26.0.

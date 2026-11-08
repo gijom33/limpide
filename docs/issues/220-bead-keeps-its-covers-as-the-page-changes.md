@@ -8,7 +8,7 @@
 
 ## Decisions
 
-From 184 (Claude's calls, open to the owner, 2026-11-02):
+From 184 (Claude's calls, let stand by the owner in 1.23.0, 2026-11-02):
 
 1. **Nothing Bead does changes:** a speed-up, its behaviour held by the mascot spec as it is.
 2. **Measured on a quiet machine,** before and after: Bead's frame-cost test failed under load before (1.0 to 1.9 ms against 1 ms), so a loaded machine says nothing.
@@ -31,10 +31,10 @@ From 184 (Claude's calls, open to the owner, 2026-11-02):
 - Bead's frame
 
 **Acceptance criteria:**
-- [ ] Bead's frame cost measured idle and in the Demo, before and after, on a quiet machine, the figures in the issue; under 0.3 ms idle
-- [ ] A panel, a tip or a card opening moves Bead off what it covers as before (the mascot spec, unchanged, in both browsers)
-- [ ] Bead's frame-cost test passes on a quiet machine
-- [ ] A panel opened over Bead's resting text moves it within a frame or two, not half a second (a browser test)
+- [ ] ~~Bead's frame cost measured idle and in the Demo, before and after, on a quiet machine, the figures in the issue; under 0.3 ms idle~~ (not checked at the time)
+- [ ] ~~A panel, a tip or a card opening moves Bead off what it covers as before (the mascot spec, unchanged, in both browsers)~~ (not checked at the time)
+- [ ] ~~Bead's frame-cost test passes on a quiet machine~~ (not checked at the time)
+- [ ] ~~A panel opened over Bead's resting text moves it within a frame or two, not half a second (a browser test)~~ (not checked at the time)
 
 **Out of scope:**
 - The render loop's order of reads and writes ([221](./221-the-frame-reads-the-page-before-it-writes.md))
@@ -65,7 +65,7 @@ The night of 2026-11-03, on `night/2026-11-03`, test-first.
 - The 4× idle figure (0.49 ms) is over 0.3 ms. The 0.3 ms target was read as the M2's own speed, the frame-cost test's.
 - WebKit's clock counts whole milliseconds, so it was not measured.
 
-**The calls (Claude's call, open to the owner).**
+**The calls (Claude's call, let stand by the owner in 1.24.0).**
 1. **What makes the text be read again at once:** a cover opening, closing or moving with the page, and the window resizing. Other changes to the page wait for the twice-a-second read, as before. Reading at once on every change tried 30 reads a second in the Demo, and read every 0.1 s still cost 1.2 ms a frame at 4× in the Demo. No page change seen moves text under Bead without moving a cover: the panels are all drawn over the page.
 2. **The marks that no style names:** a `data-` or `aria-` attribute changes how the page looks only through a style rule that names it. So the watch reads the style rules once, as it starts, and passes over the others: the Viewers set some forty a frame for the tests. The page loads no stylesheet later. One that did would need the watch to read the rules again.
 3. **The criterion "a panel opened over Bead's resting text"** is tested by its two parts. Display opened over its edge sets it off within 3 frames, counting the frame of the click. Text brought under it by a scroll inside the page sets it off within 10 frames. The panels hold no text Bead keeps off, and move none.

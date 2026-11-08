@@ -2,7 +2,7 @@
 
 **What to build:** A slice of [133](./133-the-maths-layer-complete.md) (the layer made complete, grilled with the owner 2026-10-31): decisions 6 and 11. Polish of v1's learning layer ([131](./131-v1.md)).
 
-**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
+**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, let stand by the owner in 1.20.0)
 
 **Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Ok for now, we will revisit the geek overlay via an agent later."; what the layer keeps beyond History is for profile 19's review, later ([42](./42-reviews.md))
 
@@ -24,10 +24,10 @@
 - History lines ([134](./134-history-in-the-tooltips.md)); the layer's rename ([165](./165-the-synth-geek-layer.md))
 
 **Acceptance criteria:**
-- [ ] A4 played: each Scope's corner reads 2.27 ms · 440 Hz
-- [ ] Hovering the 3rd Harmonic the readout adds n = 3
-- [ ] Noise up and pink: the corner reads pink: −3 dB/oct
-- [ ] With the layer off nothing changes; every test passes in Linux's fonts too
+- [ ] ~~A4 played: each Scope's corner reads 2.27 ms · 440 Hz~~ (not checked at the time)
+- [ ] ~~Hovering the 3rd Harmonic the readout adds n = 3~~ (not checked at the time)
+- [ ] ~~Noise up and pink: the corner reads pink: −3 dB/oct~~ (not checked at the time)
+- [ ] ~~With the layer off nothing changes; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## How it was built
 
@@ -44,7 +44,7 @@ Built on 2026-11-01 on night/2026-11-01, test-first. The issue has no Decisions 
 - **On a phone** (decision 3), the corners show as they do wider. Measured first from 320 to 1920 px: the narrowest Scope is 278 px wide, and the widest period, "2.27 ms · 440 Hz at A4", takes 111 px, leaving the right for LIMITING (45 px). The Viewers' formulas show only in their touch-and-hold tips.
 - **With the layer off** nothing is drawn, and the hover readout and its box are as they were.
 
-Calls, Claude's call, open to the owner:
+Calls, Claude's call, let stand by the owner in 1.21.0:
 
 1. **The Scope's number is the fundamental it holds still** (the engine's Cycle Lock frequency), not the bare Note. That is the Note at Osc 1's Octave, the Sub's pitch when the Sub is up, and it follows Glide and the pitch bend. At the Init Patch the two are the same. With Osc 1 an octave up, C4 reads "1.91 ms · 523.3 Hz", the period of the cycles the Scope draws. Decision 11's words were "the period and frequency of the Note". Before any Note, such a Patch reads "880 Hz at A4", the A4 played an octave up; the Scope's tip says so.
    **Since then (2026-11-02, issue [180](./180-steadier-scopes.md)):** Cycle Lock follows the pitch as played, an LFO on Pitch included; the Scope's number stays the fundamental held still through a vibrato, so the two part where a vibrato swings the pitch. Decided by the owner (180).

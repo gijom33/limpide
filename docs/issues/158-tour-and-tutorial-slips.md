@@ -13,7 +13,7 @@
 
 **Current behavior and desired behavior:**
 - **The Tour's LFO card** tells the person to watch the dot on the Cutoff knob swing, but at 1440 × 900 and on a 375 px phone the Cutoff is out of view while the card shows. The card's "bring into view" includes the Cutoff (the control it watches) with the LFO's controls and Viewers, so the dot is on screen whenever the card speaks of it; where they cannot all fit, the Cutoff wins over the LFO's second Viewer.
-- **Bass Step 4** (turn on the Ideal in Display) is ticked as done before the person does anything, when the Ideal is already on, so the Step's lesson is skipped. A Display Step whose overlay is already on starts by turning it off (the Tutorial's own state, given back when it ends), so the person turns it on and sees what it adds; or, where turning it off would surprise, it says so and counts as done only once the person has opened Display. Claude's call, open to the owner: turn it off at the Step's start.
+- **Bass Step 4** (turn on the Ideal in Display) is ticked as done before the person does anything, when the Ideal is already on, so the Step's lesson is skipped. A Display Step whose overlay is already on starts by turning it off (the Tutorial's own state, given back when it ends), so the person turns it on and sees what it adds; or, where turning it off would surprise, it says so and counts as done only once the person has opened Display. Claude's call, let stand by the owner in 1.20.0: turn it off at the Step's start.
 - **Acid's Snapshot** (the faint A/B trace a Step takes) stays on the Viewers after Acid ends and through the Tutorials that follow, with nothing saying what it is. A Snapshot a Tutorial took is cleared when that Tutorial ends or is left, as its other changes to the Display are; a Snapshot the person took themselves stays.
 
 **Key interfaces:**
@@ -22,10 +22,10 @@
 - Snapshot in the Display state
 
 **Acceptance criteria:**
-- [ ] On the Tour's LFO card, at 1440 × 900 and 375 × 812, the Cutoff knob is on screen
+- [ ] ~~On the Tour's LFO card, at 1440 × 900 and 375 × 812, the Cutoff knob is on screen~~ (not checked at the time)
 - [x] Bass Step 4 with the Ideal already on: the Step is not done until the person turns it on
 - [x] After Acid ends or is left, no Snapshot shows unless the person took one
-- [ ] E2e tests for each, red before the fix; every test passes in Linux's fonts too
+- [ ] ~~E2e tests for each, red before the fix; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The words of the cards and Steps ([129](./129-words-fun-to-read.md))
@@ -51,7 +51,7 @@ Built test-first on night/2026-10-31 (2026-10-31): an e2e test for each slip, re
 - **Acid's Snapshot.** The Snapshot a Snapshot Step took is cleared when its Tutorial ends or is left, the same ways. A Snapshot the person took themselves stays: one taken before the Tutorial, or one taken after clearing the Tutorial's or over it.
 - The glossary's Step and Snapshot say so, and issues 40 (decision 4) and 59 (decision 5) carry a "Since then" line.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 - The Ideal is turned off as Step 4 comes, as the brief suggested, not left on with a different done test.
 - Bass Step 4 said "Open Display and see that Ideal is on (turn it on if not)", which would now be untrue: it says "Open Display and turn on Ideal." 129 may rewrite it.
 - A page the browser keeps to come back to (Back and Forward) turns the overlay back on as it goes and off again as it comes back, so the Step still waits.

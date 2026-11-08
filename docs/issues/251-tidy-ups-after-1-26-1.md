@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-07) on night/2026-11-07, for the owner to try
 
 ## The items
 
@@ -33,3 +33,30 @@
 - Tests: 248's and 244's kept passing as they are, among them the change of Mode just after a fade, before it settles.
 
 **Out of scope:** the fade's length or shape (248's calls 1 and 2).
+
+## How it was built
+
+Built at night (2026-11-07) on night/2026-11-07, test-first where there was behaviour to test.
+
+**What was built.**
+
+- **Items 1 to 3.** A Filter side is now the shared side itself, not a number. "The other side" is one helper. Each Voice's side holds the shared side it plays, so the two are linked where they are made, not kept in step by an index. The crossfade is one object: the side heard, the fade's start and share, the latest fade's number, whether it has settled, the Mode waiting and the Slope, with its rules beside them. The engine's fade is `beginFade`. A Voice's is two steps, `wireForFade` and `rampShares`, and its `settle` is `settleOn`.
+- **Item 4.** The record's slide lookup takes the unit it reads, Hz or semitones. Each pitch kept is a slide in each unit, where it goes and where it starts from.
+- **Item 5.** The engine's tests use its own render-quantum constant. The two 128s left in them are a buffer's length and a rounding to 1/128 s, not render quanta.
+- **Item 6.** A fade settles early only once the audio clock has passed its end, not when a change is given a time past the end. A new test gives aftertouch a time 15 ms ahead, halfway through a fade from the low-pass to the band-pass at 80 % Resonance. Before the fix it stepped 1.36 times the wave's own steepest step. Now it passes.
+- **Item 7, narrowed, not closed.** A Mode waiting since inside the fade still starts its fade from a clock read at the fade's end. Every Voice is now wired for the fade before the clock is read. After that read, only the ramps are written, so less work comes between the read and the writes. Closing it fully would need the waiting fade to be written by the clock alone. With two sides that cannot be done: the side faded out has to take its new Mode once it is silent, and a filter's Mode cannot be scheduled. An offline render does not wait for the page, so on a heavily loaded machine that path can still click. The app's real-time sound does not have this problem.
+- **Item 8.** A test now holds up every write made while the render runs, until the render is 20 ms past it, as a heavily loaded machine might. A change in the gap after a fade then clicks every time without 1.26.2's fix: 3.6 to 5.5 times the wave's own step over five runs. With the fix it passes, as that change is faded in at once.
+
+Nothing else heard or seen changes. 248's and 244's tests pass as they were, among them the change of Mode just after a fade, before it settles. 248's every-pair test passed three runs in three, run alone.
+
+**Claude's calls, open to the owner:**
+
+1. **Item 7 is narrowed, not closed** (as above). Closing it would take a third Filter side, so that a waiting Mode never has to wait. That would change 248's call 3, and it is no tidy-up.
+2. **A change given a time ahead of the clock, inside a fade, now waits like any other change made during a fade.** It then fades in when the fade ends, which may be earlier than the time it was given. None of the app's callers gives a Mode change a time ahead of the clock, so it was not given its own time to wait for.
+3. **Item 8's test holds up the browser's ramp writes itself,** to stand in for a loaded machine. It is the only way found to make a render show the click every time.
+
+**To try in the app:** nothing should sound or look different. The same as 248's:
+
+- Init, a Note held, Resonance at 80 %: switch between every Mode. No tick, only the change of tone.
+- Click the Mode picker quickly several times with a Note held: the last Mode clicked is the one heard, without a tick.
+- Hold a Note with Glide on, and with Key Track up: the slide and the Cutoff's tracking are as before.

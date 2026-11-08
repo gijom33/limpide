@@ -16,7 +16,7 @@ describe("the mascot's answer to a control turned (issue 115)", () => {
     expect(turned({ osc2Semitone: -5 })).toEqual(['lower']);
   });
 
-  it('stretches with an Envelope fader, shivers with Resonance, splashes with Volume up, winces with it down', () => {
+  it('stretches with an Envelope fader, shivers with Resonance, splashes with a level up, winces with the Volume down', () => {
     expect(turned({ ampSustain: 0.2 })).toEqual(['shorter']);
     expect(turned({ filterAttack: 2 })).toEqual(['taller']);
     expect(turned({ resonance: 0.8 })).toEqual(['rougher']);

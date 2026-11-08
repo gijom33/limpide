@@ -32,7 +32,7 @@
 - [x] A Start resets the beat count; a synced free LFO is pulled onto its beat over two cycles (ADR-0019), with no click on a held Note (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md))
   **Since then (2026-11-02, issue [194](./194-words-that-lag-the-code.md)):** under [ADR-0019](../adr/0019-a-synced-lfo-is-pulled-onto-the-beat.md) a synced free LFO is pulled onto the new beat over two cycles, not started on it; the box is reworded so, the owner accepting the pull (191, decision 3).
 - [x] While the Demo plays, a running clock does not change its tempo
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Sending a clock (no MIDI output, PRD)
@@ -51,10 +51,10 @@
 - **The record:** CONTEXT.md's Tempo, a PRD story (103) and its implementation line.
 - **A slip found after the build:** the players' browser test (`usePlayers`) still expected the tempo without its new `midi` field; it now expects `midi: false` while a player holds the tempo and after it stops, as no clock runs there. The code is unchanged: the field belongs in the tempo, which the BPM's mark reads. The file passes (6 tests).
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.21.0:**
 1. **The mark** is the word "MIDI" in place of "BPM" and the box's edge in the MIDI button's connected green. From 861 to 1099 px, where the BPM shows its number alone, only the edge shows: the word there took 25 px from the keyboard, the piano's keys falling from 27.6 to 24.8 px at 861 px with Verdana standing in for Linux's fonts (measured before building).
 
-   **Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** the BPM shows its number alone up to 1279 px, where Hold, MIDI and Display show their icons alone too; there only the edge marks the clock. Claude's call, open to the owner.
+   **Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** the BPM shows its number alone up to 1279 px, where Hold, MIDI and Display show their icons alone too; there only the edge marks the clock. Claude's call, let stand by the owner in 1.21.0.
 2. **The BPM stays whole** while a clock sets it, as the page's always is; the beat count is set again on the clock's beats, so the LFOs keep to the clock rather than to the rounded BPM.
 3. **Four beats** of ticks for the fit, a first BPM after one; three quarters of a BPM before the readout moves.
 4. **A second without a tick** is a stopped clock (at 40 BPM a tick comes every 63 ms); a Stop alone does not end it, since many clocks tick on while stopped.

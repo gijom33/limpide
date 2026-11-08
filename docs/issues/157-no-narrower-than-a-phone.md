@@ -10,7 +10,7 @@
 
 1. **No screen so narrow that buttons overlap.** Decided by the owner, 2026-10-31.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **The narrowest width is 320 px,** the narrowest phone still met (the first iPhone SE, small Androids in their zoomed display modes). Below it the page keeps its 320 px layout and the window scrolls sideways; nothing squeezes further.
 3. **From 320 px everything fits:** the header's rows hold their buttons without overlap from 320 px up (words giving way to icons, or the shorter forms of [156](./156-one-line-shorter-words.md), where the room runs out), and the design audit checks 320 px as well as 375.
@@ -32,7 +32,7 @@ Claude's call, open to the owner:
 - [x] At 280 px the page lays out at 320 px and scrolls sideways; nothing overlaps
 - [x] At 320, 340 and 375 px no two header buttons overlap, and every button keeps a 44 px target or its waiver
 - [x] The design audit runs at 320 px too and passes; a check fails on two controls overlapping
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Layouts above 375 px
@@ -47,13 +47,13 @@ Claude's call, open to the owner:
 - **The header spec** (`e2e/header.spec.ts`): at 280, 320, 340 and 375 px the eight buttons stand left to right on one row, each at least 44 × 32 px, nothing lies over anything, and the page is as wide as the window, or 320 px and scrolling sideways at 280.
 - **The design principles:** the rule (no two controls overlap, from 320 px up), the audit's sizes, and the black keys' waiver at 320 px.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **Tighter, not shorter:** the row fits by tighter padding and spacing, not by shorter words or icons alone (decision 3 allowed either): every word stays whole, so nothing needs issue 156's short forms here, and on a touch screen each icon keeps its word (the design principles' "Icons carry words where hover cannot").
 2. **A new waiver for the black keys at 320 px:** they are 20 px wide there (24 at 375), under the phone's 44 px, as the phone's 24 already was; the floor is 19.5. The white keys stay 33 px wide. The other way would be a seven-key octave or narrower octave buttons at 320.
 3. **The cards and dialogs fit the window, not the 320 px page,** in a window under 320 px: they stay on screen rather than run off its edge.
 4. **A side effect at 601 to 680 px:** the Display panel's own buttons (Freeze, Snapshot) pad 4 px there, not the 2 px the row's rule gave them before by a broader selector; the row itself is unchanged.
 
-   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** the 2 × 2 header's buttons pad as on a phone, the Display panel's own buttons with them; the narrow rule is for windows under 375 px alone. Claude's call, open to the owner.
+   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** the 2 × 2 header's buttons pad as on a phone, the Display panel's own buttons with them; the narrow rule is for windows under 375 px alone. Claude's call, let stand by the owner in 1.21.0.
 
 **Tests run:**
 - Red first: the audit at 320 px failed on Song over Hold; the header spec failed at 280, 320 and 340 px (Song → Hold) and passed at 375.

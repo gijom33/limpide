@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { sliderName } from './helpers';
+import { frames, sliderName } from './helpers';
 
 // Serum-style modulation on a knob (issue 20): a ring outside its value arc, over the range modulation can take it,
 // and a dot at the value right now while a Note sounds.
@@ -55,7 +55,7 @@ test('the live dot rides the Effective Cutoff while a Note sounds, and only then
   await expect(dot(cutoff)).toBeHidden({ timeout: 3000 }); // once the Release has faded
 });
 
-test('the live dot moves with the Filter Envelope alone, no LFO, as with the LFO or both', async ({ page }) => {
+test('the live dot moves with the Filter Envelope alone, no LFO', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await turnUp(page, 'Filter', 'Amount', 15);
@@ -99,7 +99,7 @@ test('pointing at a source: the LFOs’, Velocity’s and Key Track’s controls
   await turnUp(page, 'Filter', 'Velocity', 5);
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await page.getByRole('group', { name: 'LFO 1', exact: true }).getByRole('slider', { name: 'Depth' }).hover();
-  await page.waitForTimeout(100);
+  await frames(page); // the ring drawn since, by the render loop
   await expect(ring(cutoff)).not.toHaveAttribute('data-dim');
   await page.mouse.move(0, 0);
   // No source draws a blue share any more (the owner, 2026-10-28): their rings are the white and grey ones.
@@ -111,7 +111,7 @@ test('pointing at a source: the LFOs’, Velocity’s and Key Track’s controls
   // Velocity and Key Track dim nothing (the owner, 2026-10-28), and nothing draws a blue share.
   for (const name of ['Velocity', 'Key Track']) {
     await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name }).focus();
-    await page.waitForTimeout(100);
+    await frames(page); // the ring drawn since, by the render loop
     await expect(ring(cutoff), name).not.toHaveAttribute('data-dim');
     await expect(cutoff.locator('path[class*="share"]')).toHaveCount(0);
   }
@@ -125,7 +125,7 @@ test('with reduced motion asked for, the ring stays and the moving dot does not 
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await page.keyboard.down('KeyA');
   await expect(ring(cutoff)).toBeVisible();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: the Note sounding, a dot would show by now
   await expect(dot(cutoff)).toBeHidden();
   await page.keyboard.up('KeyA');
 });
@@ -190,7 +190,7 @@ test('Velocity draws a grey ring beyond the Envelope’s, and neither moves befo
   await expect(dot(cutoff)).toBeVisible();
   for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // held: still
   await page.keyboard.up('KeyA');
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(150); // a time: into the Release, the dot still heard
   await expect(dot(cutoff)).toBeVisible(); // still heard
   for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // released: still
 });
@@ -207,7 +207,7 @@ test('Velocity alone, no Envelope: its grey ring starts at the knob and stays wh
   let reach = await velocityRing(cutoff).getAttribute('d');
   await expect
     .poll(async () => {
-      await page.waitForTimeout(100);
+      await frames(page, 3);
       const now = await velocityRing(cutoff).getAttribute('d');
       const still = now === reach;
       reach = now;
@@ -237,7 +237,7 @@ test('the dot rides the knob’s own track whatever moves it, an LFO as well as 
   await expect(dot(cutoff)).toBeVisible();
   expect(await fromCentre()).toBeLessThan(0.1); // with the LFO alone: on the track, not the blue ring
   await turnUp(page, 'Filter', 'Amount', 10);
-  await page.waitForTimeout(100);
+  await frames(page); // the dot drawn since, by the render loop
   expect(await fromCentre()).toBeLessThan(0.1); // with the Envelope too
   await page.keyboard.up('KeyA');
 });
@@ -261,7 +261,7 @@ test('Key Track draws grey rings over the piano’s keys, and no ring moves from
   let before = await rings();
   await expect
     .poll(async () => {
-      await page.waitForTimeout(100);
+      await frames(page, 3);
       const now = await rings();
       const still = JSON.stringify(now) === JSON.stringify(before);
       before = now;

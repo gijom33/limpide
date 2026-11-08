@@ -28,6 +28,14 @@ describe('the Hold button’s taps', () => {
     expect(gaps.reduce((a, b) => a + b, 0) / beat).toBeCloseTo(4, 1);
   });
 
+  it('as the Hold tip says, rests a beat after the last tap before it starts over (issue 266)', () => {
+    const taps = createHoldTaps();
+    for (const t of [10, 10.5, 11, 11.5]) taps.press(t);
+    const { gaps, beat } = taps.rhythm()!;
+    // The last tap's own beat, then a beat of rest, then the first tap again.
+    expect(gaps[gaps.length - 1] / beat).toBeCloseTo(2, 5);
+  });
+
   it('a click after a longer pause switches Hold off and forgets the rhythm', () => {
     const taps = createHoldTaps();
     taps.press(10);

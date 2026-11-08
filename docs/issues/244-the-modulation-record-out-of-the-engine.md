@@ -15,7 +15,7 @@ Decided by the owner, 2026-11-05 ("Agreed.", "write up"):
 3. **All of the record moves:** the Gates and dips, the pitches and Glide, the Patches over time, the bend, aftertouch and its glide, the Tempo, the trimming, and how a pause in a long silence carries on (216). The engine keeps only the audio nodes and records into the module as it plays (Q3).
 4. **The record's tests run without a browser:** about 99 of the engine's 188 browser tests ask the record, and become fast unit tests on the module; the browser keeps one check per feature that the sound and the record still agree, as [ADR-0003](../adr/0003-modulation-model-mirrors-the-audio-graph.md) wants (Q4).
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 5. **No new ADR:** it follows ADR-0003, whose model was meant to be pure; nor a glossary word, being code only.
 6. **The readers ask the engine as today;** the module's own shape is the builder's.
@@ -54,7 +54,7 @@ Built on `night/2026-11-05`, on top of 238 and the night's other issues:
 - **Tests:** 30 node unit tests on the module (0.1 s), checked against deliberate slips in it (a pause carried the wrong way, no trimming, aftertouch not gliding, a Patch at the same moment kept twice, a Gate's start level lost, the Velocity read from a Gate off): each slip fails some. The ten engine browser tests that asked the record alone, with no sound rendered, moved there. Every other engine browser test passes as it was. `tsc`, the lint, the engine's browser tests (545) and the Playwright specs of the record's readers (the rings, the Pitch marker, the LFO plots, the Envelopes' Timeline, the pause, the tempo and MIDI clock, the mascot, the Viewer controls) pass in Chromium and WebKit.
 - **The review** (standards and spec, since the night's 243) found no change heard or seen; its notes are made: the engine shares the record's `append` rather than a copy, the record exports only what is read, each test names the issue its behaviour came from, and issue 102 says where its model test now lives.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 1. **The browser keeps every test that holds the sound to the record, not one per feature.** Of the engine's 188 browser tests, 63 ask the record, not 99 as the write-up counted, and 52 of those also measure the sound: cutting them down to one per feature would drop checks on the sound, which decision 1 and the brief ("the browser tests that check them pass as they are") keep. Only the 10 that asked the record alone moved; a later pass can thin the agreement checks where they repeat.
 2. **Kept in the browser, though they ask the record alone:** the cut recorded by All Sound Off, what the mascot reads (a Note into a Release struck after its dip), and the Timeline's past staying put while knobs turn: each is the one check that the engine records that feature into the record, which the module's tests cannot see.

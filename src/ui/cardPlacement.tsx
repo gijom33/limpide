@@ -4,7 +4,7 @@ import { safeStorage } from '../app/storage';
 import { ChevronIcon } from './icons';
 
 /** Whether the card may move: the CSS says, so the phone's breakpoint is written once (issue 67). */
-const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
+export const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
 
 type CardKind = 'demo' | 'tutorial' | 'tour';
 /** The person's folds made this session, each kind of card's: what is remembered, where storage keeps nothing. */
@@ -105,9 +105,10 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: Card
       }
       setFolded(!folded);
     },
-    /** On the card: where it has been moved to, and whether it is folded. */
+    /** On the card: where it has been moved to, whether by the person (the Tour then leaves it there, issue 254), and whether it is folded. */
     cardProps: {
       style: { '--card-dx': `${offset.x}px`, '--card-dy': `${offset.y}px` } as CSSProperties,
+      'data-moved': offset.x !== 0 || offset.y !== 0 || undefined,
       'data-folded': folded || undefined,
     },
     /** On the card's top row: the handle it is dragged by. */

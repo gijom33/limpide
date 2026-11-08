@@ -4,7 +4,7 @@
 
 What exists already: each Tutorial Step has a `say` (what to do) and a `note` (the idea behind it, what to hear and see), 68 notes in all, drafted by Claude "in the voice of the Presets' about lines, reviewed by the owner before release" ([40](./40-preset-tutorials.md), decision 14). The Tour's four cards ([128](./128-how-a-synth-works.md)) are written the same way. That voice is exact but dense: a note often names two or three synth words (Harmonic, Cutoff, Envelope) that it doesn't explain, and few notes have a light touch.
 
-**Blocked by:** [130](./130-the-tour-freezes-to-show-adsr.md), which rewrites the Tour's Amp card first (Claude's call, open to the owner)
+**Blocked by:** [130](./130-the-tour-freezes-to-show-adsr.md), which rewrites the Tour's Amp card first (Claude's call, let stand by the owner in 1.20.0)
 
 **Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner, having read the words (decision 5): "Okay."
 
@@ -18,7 +18,7 @@ Decided by the owner in a grilling, 2026-10-31 (Claude's recommendations, each a
 4. **When:** after profile 16's first review, so the rewrite answers where a real neophyte got lost or bored. That review is agent work and can run now.
 5. **Issue 40's decision 14** (the Tutorials in the voice of the Presets' descriptions) is replaced by this voice for the Tutorials and the Tour; the owner still reviews the words before the release.
 
-Claude's call, open to the owner, from profile 16's review (2026-10-31):
+Claude's call, let stand by the owner in 1.20.0, from profile 16's review (2026-10-31):
 
 6. **Each Tutorial gets its own first card** in this voice, saying what it teaches and what the person will hear, instead of leading with its Preset's description (the densest text in the app, which decision 3 leaves as it is, in the Patch panel). Bass already has one.
 7. **One word for the idea, one for the picture:** Harmonic for the idea, and on the Spectrum "the Harmonics' lines"; partials, rungs, spikes and bars go. The words not explained anywhere (Harmonic, Hz, ms, dB, Init, Decay, Sustain, the Filter Envelope) are each explained where a Tutorial or the Tour first uses them.
@@ -45,7 +45,7 @@ Claude's call, open to the owner, from profile 16's review (2026-10-31):
 - [x] No synth word in a Step or card that its Tutorial has not explained first (a unit test over the Tutorials' text against a list of the words that need explaining)
 - [x] Each Tutorial has its own first card; its end card names the next
 - [x] The Tutorial and Tour specs pass; a Step's target and a Tutorial's sound do not change
-- [ ] The owner reads the words before the release (decision 5)
+- [ ] ~~The owner reads the words before the release (decision 5)~~ (not checked at the time)
 
 **Out of scope:**
 - The tips, the Presets' descriptions, About
@@ -87,7 +87,7 @@ Every Tutorial's `say` and `note`, every first and last card, the Tutorial menu 
 14. **Acid's Snapshot staying through later Tutorials:** fixed in [158](./158-tour-and-tutorial-slips.md) (a Tutorial's Snapshot is cleared when it ends), so no words were needed.
 15. **Next does nothing until a Step is made, and says not why:** not answered here. It is the card's behaviour, not its words, so it falls under this issue's Out of scope (the review's bugs apart from words). It is a line for the inbox if the owner wants it.
 
-### Calls made (Claude's call, open to the owner)
+### Calls made (Claude's call, let stand by the owner in 1.21.0)
 
 - **The Preset's description is gone from the first card,** not just moved after the intro: it is the densest text in the app, and the test would fail on it. It still shows in the Patches panel.
 - **The Tour card's first line is a new "what to watch" line** on every screen, not only on a phone, so the card reads the same everywhere.

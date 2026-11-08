@@ -44,7 +44,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 - [x] While the Demo plays, the BPM shows the track's; after it stops, the owner's comes back; the Demo sounds as it did
 - [x] The beat lines show on the LFO plot and the Timeline only while Sync is on
 - [x] The C16's R2 and R4 on bank D switch Sync, and the C16 card shows them
-- [ ] The design audit and the fit tests pass at every width; every test passes in Linux's fonts too
+- [ ] ~~The design audit and the fit tests pass at every width; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Following a MIDI clock ([136](./136-following-midi-clock.md))
@@ -78,13 +78,13 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 15. **The learning layer:** tips for Sync, the BPM and Tap; the Synth Geek Layer writes the conversion on the Rate ("1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz"); a Step in the Tutorial that teaches the LFO syncs the wobble to the beat; History's line goes to [134](./134-history-in-the-tooltips.md). Built in [137](./137-teaching-tempo-sync.md).
 16. **Three slices:** this issue the tempo and Sync; [136](./136-following-midi-clock.md) following MIDI clock; [137](./137-teaching-tempo-sync.md) teaching it; both blocked by this one.
 
-Claude's call, open to the owner: a player's beat count starts with the player, so its synced LFOs land on its first beat.
+Claude's call, let stand by the owner in 1.19.0: a player's beat count starts with the player, so its synced LFOs land on its first beat.
 
 **Since then (2026-11-01, [issue 176](./176-a-synced-rate-shows-its-note-value-alone.md)):** decision 10's Hz beside the note value is gone: a synced Rate reads its note value alone, at one width, so the knobs no longer shift; the Hz is in the Rate's tip. Decided by the owner.
 
-**Since then (2026-11-02, [issue 193](./193-tempo-and-step-slips.md)):** the beat lines (decision 12) show only while an LFO's cycle follows the beat, Sync on with Retrigger off; with Retrigger on, each Note starts the cycle. A knob mapped to the BPM moves it one BPM a click, not two. Claude's call, open to the owner.
+**Since then (2026-11-02, [issue 193](./193-tempo-and-step-slips.md)):** the beat lines (decision 12) show only while an LFO's cycle follows the beat, Sync on with Retrigger off; with Retrigger on, each Note starts the cycle. A knob mapped to the BPM moves it one BPM a click, not two. Claude's call, let stand by the owner in 1.23.0.
 
-**Since then (2026-11-01, [review 14](../reviews/2026-11-01/14-ear-stand-in.md), finding 1):** decision 4's lock no longer jumps. When a synced free LFO's note value, Waveform or tempo changes, or Sync comes on, it carries on from its phase at the new Rate and is pulled onto the beat over its next two cycles, running at most a quarter faster or slower meanwhile, in the sound and the Modulation model alike. The jump to the beat's phase clicked on the Volume: the Demo's Tremolo Keys at bar 6 (×16), a note value turned by hand (up to ×121), one BPM or a Tap (up to ×42). Setting the tempo, by hand, by Tap or by typing it, still starts the beat count again, and the LFO is on it two cycles later; only a beat count that starts later than now (a player's first beat, its first Note there) restarts the LFO at once. ADR-0018's "restarts its oscillator where the beat puts it" is now this pull. Claude's call, open to the owner.
+**Since then (2026-11-01, [review 14](../reviews/2026-11-01/14-ear-stand-in.md), finding 1):** decision 4's lock no longer jumps. When a synced free LFO's note value, Waveform or tempo changes, or Sync comes on, it carries on from its phase at the new Rate and is pulled onto the beat over its next two cycles, running at most a quarter faster or slower meanwhile, in the sound and the Modulation model alike. The jump to the beat's phase clicked on the Volume: the Demo's Tremolo Keys at bar 6 (×16), a note value turned by hand (up to ×121), one BPM or a Tap (up to ×42). Setting the tempo, by hand, by Tap or by typing it, still starts the beat count again, and the LFO is on it two cycles later; only a beat count that starts later than now (a player's first beat, its first Note there) restarts the LFO at once. ADR-0018's "restarts its oscillator where the beat puts it" is now this pull. Claude's call, let stand by the owner in 1.20.0.
 
 ## How it was built (2026-10-31, on night/2026-10-31)
 
@@ -100,10 +100,10 @@ Claude's call, open to the owner: a player's beat count starts with the player, 
 - **MIDI:** bank D's R2 and R4 on the C16 switch each LFO's Sync (toggles), and the C16 card (and its PDF) shows them; a C16 set up with issue 145's layout gains them once, where its own Mappings leave them free. MIDI Learn maps the BPM to a knob and Tap to a button; a control mapped to an LFO's Rate turns its note value while Sync is on.
 - **The record:** ADR-0018 supersedes issue 53's decision; the PRD (a story, an implementation line, Out of Scope), CONTEXT.md (Tempo, Tap, Sync), issues 53 and 145 and the tips follow.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **The header's room.** The set-up row had none to spare from 861 to 1365 px: there Hold, MIDI, Display and About show their icons alone (their tooltips name them; they keep their words from 1366 px, Demo, Tutorial and Song from 1100 px as before); from 861 to 1099 px the BPM shows its number alone; from 1200 to 1365 px the piano's keys are 42 px, so the piano stays at the centre in Linux's wider fonts (measured with Verdana standing in for them). In 2 × 2 each LFO's plot takes what its knobs leave, as on a phone, and the narrowest 2 × 2 windows (601 to 680 px) pad the header's buttons 2 px.
 
-   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** in 2 × 2 the playing and set-up buttons have a row of their own, as on a phone, and pad as on a phone again: the 2 px from 601 to 680 px is gone. Claude's call, open to the owner.
+   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** in 2 × 2 the playing and set-up buttons have a row of their own, as on a phone, and pad as on a phone again: the 2 px from 601 to 680 px is gone. Claude's call, let stand by the owner in 1.21.0.
 
    **Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** from 861 px the tempo is a column of its own beside Hold, the BPM over Tap, in arrangement C (decided by the owner). Hold, MIDI and Display keep their words from 1280 px, About with Demo, Tutorial and Song from 1100 px; the BPM its unit from 1280 px. The piano's 42 px keys from 1200 to 1365 px are gone: its keys are 42 to 44 px wherever it has more than 10 white keys.
 2. **The small field below 861 px** is on tablets (2 × 2) as well as phones, since Tap is beside the BPM from 861 px only.

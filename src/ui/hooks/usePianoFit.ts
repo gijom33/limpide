@@ -5,7 +5,7 @@ type Fit = ReturnType<typeof fitPiano>;
 
 /**
  * The piano's white keys and their width from what the header leaves the keyboard (issue 154): its box, beside the
- * octave buttons, measured as the window changes. Off where the piano keeps its 17 keys, up to 860 px. `style` sizes
+ * octave buttons, measured as the window changes. Off up to 860 px, where the piano keeps its 17 keys (one octave, C to C, on a phone). `style` sizes
  * the piano for the white keys it draws in `octave` (fewer near the top), so it always ends against the buttons.
  */
 export function usePianoFit(on: boolean, octave: number) {

@@ -2,8 +2,12 @@
 // the page and the README's summary written from the rows. Measuring them is `measureStatistics.ts`, run by
 // `npm run stats` before each release's commit.
 
-/** How long each state of the running app is measured, after it has settled, and how many page loads are timed. */
-export const TIMINGS = { stateSeconds: 10, settleSeconds: 2, pageLoads: 3 };
+/**
+ * How long each state of the running app is measured, after it has settled, and how many page loads are timed. The
+ * Demo's numbers are the median of `demoRuns`, measured after `coolDownSeconds` of nothing once the suites and the
+ * build are done (issue 257): one run straight after them read a fifth higher than a quiet machine gives.
+ */
+export const TIMINGS = { stateSeconds: 10, settleSeconds: 2, pageLoads: 3, demoRuns: 3, coolDownSeconds: 60 };
 
 /** The running app's three states (the owner, 2026-10-30): the page left alone, the Demo playing, an 8-Voice chord held. */
 export const STATES = [
@@ -163,9 +167,20 @@ interface Table {
 
 const capital = (text: string) => `${text[0].toUpperCase()}${text.slice(1)}`;
 
+/** The machine's load as the Demo's runs began, beside its numbers (issue 257). */
+const LOAD: Column = {
+  header: 'Load',
+  explain:
+    'the machine’s load average over the minute before the Demo’s runs began, after the cool-down (`uptime`’s first number): from about its number of cores up, other work was sharing the processor, and the Demo’s numbers read high',
+  cell: one('demoLoad', (n) => n.toFixed(2)),
+};
+
 const runningApp = (state: (typeof STATES)[number]): Table => ({
   title: capital(state.title),
-  intro: `${capital(state.what)}.`,
+  intro:
+    state.id === 'demo'
+      ? `${capital(state.what)}: each number the median of ${TIMINGS.demoRuns} runs, after a ${TIMINGS.coolDownSeconds} s cool-down, the machine’s load beside them (a row with no load is one run).`
+      : `${capital(state.what)}.`,
   columns: [
     {
       header: 'Frames a second',
@@ -196,6 +211,7 @@ const runningApp = (state: (typeof STATES)[number]): Table => ({
       cell: one(`${state.id}Heap`, MB),
       change: changeIn(`${state.id}Heap`, MB),
     },
+    ...(state.id === 'demo' ? [LOAD] : []),
   ],
 });
 
@@ -358,7 +374,7 @@ function tableMarkdown(table: Table, rows: Row[], heading = '##', explained = fa
 
 /** The statistics page: one row per release in each table, the newest first, each number explained under its table. */
 export function statisticsPage(rows: Row[]): string {
-  const { stateSeconds, settleSeconds, pageLoads } = TIMINGS;
+  const { stateSeconds, settleSeconds, pageLoads, demoRuns, coolDownSeconds } = TIMINGS;
   return [
     '# Statistics',
     '',
@@ -369,7 +385,7 @@ export function statisticsPage(rows: Row[]): string {
     ...(rows.length === 0 ? ['No release has been measured yet: the first row is measured at the next release, on a quiet machine.', ''] : []),
     '## Where it was measured',
     '',
-    `The page loads and the running app are measured in Chromium through Playwright, headless, in a 1440 × 900 window at twice the pixels (a Retina screen), on the built site served from this computer. A page load is the median of ${pageLoads}, each a first visit with an empty cache. Each state of the running app starts in a fresh page, settles for ${settleSeconds} s, then is measured for ${stateSeconds} s, the same each time. Other work on the machine skews the timings: measure on a quiet one.`,
+    `The page loads and the running app are measured in Chromium through Playwright, headless, in a 1440 × 900 window at twice the pixels (a Retina screen), on the built site served from this computer. A page load is the median of ${pageLoads}, each a first visit with an empty cache. Each state of the running app starts in a fresh page, settles for ${settleSeconds} s, then is measured for ${stateSeconds} s, the same each time; the Demo’s numbers are the median of ${demoRuns} runs, measured after ${coolDownSeconds} s of nothing once the suites and the build are done. Other work on the machine skews the timings: measure on a quiet one.`,
     '',
     tableLine(['Version', ...MACHINE.map(([header]) => header)]),
     tableLine(['---', ...MACHINE.map(() => '---')]),
@@ -380,9 +396,9 @@ export function statisticsPage(rows: Row[]): string {
     ...TABLES.flatMap((table) => tableMarkdown(table, rows)),
     '## The running app',
     '',
-    'Three states, each with the same five numbers:',
+    'Three states, each with the same five numbers, and the Demo with the machine’s load beside them:',
     '',
-    ...runningApp(STATES[0]).columns.map((c) => `- **${c.header}:** ${c.explain}.`),
+    ...[...runningApp(STATES[0]).columns, LOAD].map((c) => `- **${c.header}:** ${c.explain}.`),
     '',
     ...STATES.flatMap((state) => tableMarkdown(runningApp(state), rows, '###', true)),
   ]
@@ -393,7 +409,7 @@ export function statisticsPage(rows: Row[]): string {
 const SUMMARY_START = '<!-- statistics -->';
 const SUMMARY_END = '<!-- /statistics -->';
 
-/** The README's few headline numbers, from the newest row. */
+/** The README's few headline numbers, from the newest row: those that read alone; the rest are on the statistics page. */
 export function summary(row: Row | undefined): string {
   const link = '[the statistics page](docs/statistics.md)';
   if (!row) return `The project’s size, quality and performance are measured at each release, from the next one, on ${link}.`;
@@ -408,7 +424,9 @@ export function summary(row: Row | undefined): string {
     has(v, 'coverageLines') && `${percent(v.coverageLines!)} of the app code’s lines run by the unit and engine tests`,
     has(v, 'jsGzip') && `${kB(v.jsGzip!)} of JavaScript gzipped`,
     has(v, 'largestPaint') && `the page drawn in ${ms(v.largestPaint!)}`,
-    has(v, 'demoFps', 'demoCpu') && `the Demo at ${Math.round(v.demoFps!)} frames a second for ${percent(v.demoCpu!)} of a processor core`,
+    // The CPU share is left to the statistics page, where its column says what it counts: alone, "107.8% of a processor
+    // core" read as a warning (issue 259).
+    has(v, 'demoFps') && `the Demo at ${Math.round(v.demoFps!)} frames a second`,
   ].filter((part): part is string => typeof part === 'string');
   return `At ${row.version} (${row.date}): ${parts.join(', ')}. Every number, release by release, is on ${link}.`;
 }

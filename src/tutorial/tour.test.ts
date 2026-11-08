@@ -178,16 +178,17 @@ describe('What the Tour looks at, in turn (issue 206)', () => {
 
 // Issue 210: after the Sections, the Tour tells what else there is to find, and shows where.
 describe('After the Sections, what else there is to find (issue 210)', () => {
-  const [geek, tutorials] = TOUR_FINDS;
+  const [geek, tutorials, play] = TOUR_FINDS;
   const words = (c: (typeof TOUR_FINDS)[number]) => [c.look, ...c.says].join(' ');
 
-  it('a card for the Synth Geek Layer and its History, then the last, for the Tutorials', () => {
-    expect(TOUR_FINDS.map((c) => c.title)).toEqual(['Synth Geek Layer', 'Tutorials']);
-    expect(TOUR_LENGTH).toBe(6);
-    expect([3, 4, 5].map((i) => tourCardAt(i))).toMatchObject([
+  it('a card for the Synth Geek Layer and its History, then the Tutorials, then the last, something to play (issue 260)', () => {
+    expect(TOUR_FINDS.map((c) => c.title)).toEqual(['Synth Geek Layer', 'Tutorials', 'Your turn']);
+    expect(TOUR_LENGTH).toBe(7);
+    expect([3, 4, 5, 6].map((i) => tourCardAt(i))).toMatchObject([
       { kind: 'section', section: { title: 'LFOs' } },
       { kind: 'find', find: { title: 'Synth Geek Layer' } },
       { kind: 'find', find: { title: 'Tutorials' } },
+      { kind: 'find', find: { title: 'Your turn' } },
     ]);
   });
 
@@ -201,13 +202,27 @@ describe('After the Sections, what else there is to find (issue 210)', () => {
   it('says each Tutorial has you rebuild a Preset yourself, step by step from Init, from the Tutorial button', () => {
     expect(tutorials.look).toMatch(/Tutorial button.*Preset.*yourself/);
     expect(words(tutorials)).toMatch(/Init.*step by step/);
-    expect(words(tutorials)).toMatch(/Sub Ladder/); // the way on, its button's, the first Tutorial (issue 233)
+    expect(words(tutorials)).toMatch(/Sub Ladder/); // its button's, the first Tutorial (issue 233)
+    expect(words(tutorials)).not.toMatch(/whole Tour/); // the Tour goes on after it
   });
 
-  it('shows the control each names: Display’s Geek switch, the header’s Tutorial button', () => {
+  it('ends on something to play: the piano, the letter keys, the Presets by ›, the Song, a knob (issue 260)', () => {
+    expect(play.look).toMatch(/play.*piano.*Song/);
+    expect(words(play)).toMatch(/letter keys/);
+    expect(play.says.at(-1)).toMatch(/Song plays.*Presets with ›/); // once the Song has given the person's Patch back
+    expect(words(play)).toMatch(/knob/);
+    expect(play.says.at(-1)).toMatch(/whole Tour/);
+  });
+
+  it('offers the first Tutorial beside Next, and ends on the Song (issue 260)', () => {
+    expect(TOUR_FINDS.map((c) => c.starts)).toEqual([undefined, 'firstTutorial', 'song']);
+  });
+
+  it('shows the control each names: Display’s Geek switch, the header’s Tutorial button, its Song button', () => {
     expect(TOUR_FINDS.map((c) => c.shows)).toEqual([
       { kind: 'display', overlay: 'geek' },
       { kind: 'header', name: 'Tutorial' },
+      { kind: 'header', name: 'Song' },
     ]);
   });
 

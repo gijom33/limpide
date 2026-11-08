@@ -14,7 +14,7 @@ Decided by the owner, 2026-11-02:
 2. **Inside it, the fader steps in dB,** as it reads there (160, decision 15).
 3. **The fader's position does not depend on the unit:** switching the Synth Geek Layer on or off moves no fader and changes no sound, only its readout and its steps.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 4. **Shift and Page follow the unit shown:** outside the Synth Geek Layer Shift 0.1 %, Page 10 %; inside it as 160 set (Shift 0.1 dB, Page 6 dB, then −∞ below −40 dB).
 5. **Ring steps in %** in both, as it always reads % (160's call 1 had it step in dB).
@@ -61,7 +61,7 @@ Claude's calls, open to the owner:
 - **The tips** (`src/ui/tips.ts`, `src/ui/Tooltip.tsx`): a fader's tip has a second steps line for the layer, shown while it is on.
 - **Docs:** the glossary's Grid entry; a dated line in 160.
 - **Tests:** the Grid's unit tests (% off, dB on, Ring in both, the other Grids alike on and off); the control surface's (a C16 click on Osc 1 and Ring, the layer off then on); the tips' (both steps lines, none for Ring in dB); in the browser, the keyboard-access spec (presses, Page and a wheel notch off and on, the layer switched twice with the fader and its value unmoved, Ring by the %), the tooltip spec (the steps line off and on), the MIDI Learn spec (a Relative click off and on, the switch moving nothing). The Tutorial spec's Bass Step now reaches 47 % by Page and presses. `npx tsc`, `npm run lint`, the unit tests of the files touched, and the keyboard-access, tooltip, MIDI Learn, Tutorial, knob, Synth Geek Layer and oscillator specs in Chromium and WebKit, all passing. Then the code review (standards and spec); its points fixed (160's dated line, a test's name, the wheel tested in the layer too).
-- **Claude's calls, open to the owner:**
+- **Claude's calls, let stand by the owner in 1.23.0:**
   1. Decisions 4 to 7 as written: Shift and Page follow the unit shown, Ring steps in % in both, the wheel, a Relative click and the tip follow the same choice, an Absolute knob unchanged.
   2. **Shift ↓ from 100 % stores 99.9 % but reads "100 %":** every percent readout shows whole percents, as every percent control's Shift has since 160. The criterion's 99.9 % is met in the value (and the sound), not in the readout; showing a tenth of a percent is a change for every percent control, left out.
   3. **Gathered thirds kept across a switch:** a C16's fast thirds gathered towards a step before the layer is switched count towards a step of the new Grid; a third is a third of whichever step.

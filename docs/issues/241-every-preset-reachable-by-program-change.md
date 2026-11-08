@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner, 2026-11-05:
+Claude's call, let stand by the owner in 1.25.0, 2026-11-05:
 
 1. Bank Select's CC 0 (its MSB) picks a bank of 128 Presets, and the next Program Change loads Preset bank × 128 + n. CC 32 (the LSB) is read and ignored. Bank 0 stays the default, so a keyboard that never sends Bank Select works as today.
 2. A Program Change past the last Preset does nothing, as now.
@@ -42,7 +42,7 @@ Built at night, 2026-11-05, as the Decisions and the Agent Brief say.
 - The tip on the bend range, the one that names the keyboard's own controls, now says Bank Select reaches the Presets past the 128th. Issue 52 has a dated line saying so.
 - Tests: two unit tests on the control surface (the bank across Program Changes, CC 32 ignored, back to bank 0; a mapped CC 0) and one Playwright test (Bank 1 Program 0 loads Wind; Bank 1 Program 14, one past the last, leaves the Patch alone).
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.26.0:
 
 1. One bank for every channel and every Controller, since Limpide plays all channels as one instrument; MIDI would keep one per channel.
 2. Reset All Controllers leaves the bank alone, as MIDI defines it.

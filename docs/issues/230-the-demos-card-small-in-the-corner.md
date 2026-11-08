@@ -61,7 +61,7 @@ Measured before writing (2026-11-04, the welcome closed, Chromium): a 340 × 60 
 - **Tests:** in `dockedCards`, the card's place, size, names and what lies under it at the four windows; unfolding and folding back; a window resized from three across to 2 × 2 and back; the fold not remembered. The test of the remembered fold, at 1440 px before, now runs in 2 × 2 (768 × 1024), where the fold is still remembered; the 2 × 2 and phone tests are otherwise unchanged and pass. The design audit opens the Demo's card a second time, unfolded, so the whole card in the corner is checked too. The tests that press the segments in a wide window (Demo, keyboard, Bead's) unfold the card first; Bead's issue-164 check now drags the card over LFO 1's plot, which the card in the corner leaves clear.
 - **Docs:** `docs/bead.md` (the card no longer covers the plots), and a dated line in issues 59, 99, 171 and 204.
 
-## Claude's calls, open to the owner
+## Claude's calls, let stand by the owner in 1.25.0
 
 1. **On the small card the parts are a line that only shows them, not fifteen segments to press:** in 340 px fifteen segments come to about 18 px each, under the design principles' 24 px targets, and a waiver felt wrong for a card the person can unfold. So the line cannot be clicked or reached by Tab; ⌃ gives back the segments. Screen readers hear it as "Part 3 of 15", and the caption is still read out as it changes.
 2. **A fold made in the corner is not remembered:** the card opens folded there every time anyway, and remembering it would change how the card opens in 2 × 2 and on a phone, where the remembered fold stays the person's.

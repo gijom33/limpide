@@ -54,7 +54,7 @@
 9. CONTEXT.md stays domain-only: no entry for the store.
 10. Built in the session that grilled it, test-first, committed as it goes, not pushed.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 11. The Demo finds what a person turned by comparing the Patch before and after their change, Parameters only. A knob pushed against its stop, which changes nothing, no longer counts as turned; it has no value for the Demo to override anyway.
 12. The engine keeps its guard against two Patches at the same instant: with every change applied at once, a knob drag can send two inside one audio render quantum.

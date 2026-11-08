@@ -22,7 +22,7 @@
 
 ## Questions for the owner
 
-1. **Ready to do without a decision (Claude's call, open to the owner):** the new screenshot, the two README sections merged into one, the Release titles in one form ("Limpide 1.16.0") from now on and the old ones renamed, a credit line under the tagline, pull requests in their own CI group with deploys never cancelled, and SECURITY.md once step 2 is done. Go ahead?
+1. **Ready to do without a decision (Claude's call, let stand by the owner in 1.16.1):** the new screenshot, the two README sections merged into one, the Release titles in one form ("Limpide 1.16.0") from now on and the old ones renamed, a credit line under the tagline, pull requests in their own CI group with deploys never cancelled, and SECURITY.md once step 2 is done. Go ahead?
 2. **DCO sign-off for contributors** (`git commit -s`)? Claude's recommendation: no for now. It adds a step for a first contributor, and nobody has contributed yet; MIT's terms in CONTRIBUTING already cover what they send.
 3. **AI-assisted contributions:** ask contributors to say so with a `Co-Authored-By` line, as the project does? Claude's recommendation: yes, one sentence in CONTRIBUTING.
 4. **The copyright line:** change it to "© Guillaume Boillet, to the extent of the author's rights; written with Claude Code" and add Limpide's MIT licence to the third-party notices? Claude's recommendation: yes for the notices. For the wording, only a lawyer can say what holds; the reviewer's suggestion is a start, not advice.
@@ -67,9 +67,9 @@ Built at night on 2026-10-30, on the branch night/2026-10-30, for the owner to t
 - **README:** a new screenshot; a credit line under the tagline ("Designed and directed by Guillaume Boillet; code written with Claude Code, Anthropic's AI coding agent", the name linked to the same LinkedIn page as About); "How it's built" and "How this was built" merged into one section under the second name (CONTRIBUTING links it), with the statistics' summary at its end. The License line now says the notices end with Limpide's own licence; its copyright wording is unchanged (Decision 4).
 - **Releases:** the release steps create each Release with `--title "Limpide X.Y.Z"`. The old titles are left for the owner to rename (step 3), since the night shift changes nothing on GitHub.
 - **CONTRIBUTING:** one sentence asks for AI help to be marked with a `Co-Authored-By` line naming the tool.
-- **SECURITY.md:** not written. Private vulnerability reporting was still off on 2026-10-31 (read through GitHub's API), and SECURITY.md waits on it. **Since then (2026-11-05):** written by day once the owner had switched reporting on: the live site and latest release supported; what Limpide reads from outside (a shared link's Patch, MIDI, the browser's storage) and what counts as a vulnerability; reports through the Security tab, no email address. Claude's calls, open to the owner: credit to the reporter if they wish, and "allow a few days for a first answer".
+- **SECURITY.md:** not written. Private vulnerability reporting was still off on 2026-10-31 (read through GitHub's API), and SECURITY.md waits on it. **Since then (2026-11-05):** written by day once the owner had switched reporting on: the live site and latest release supported; what Limpide reads from outside (a shared link's Patch, MIDI, the browser's storage) and what counts as a vulnerability; reports through the Security tab, no email address. Claude's calls, let stand by the owner in 1.26.0: credit to the reporter if they wish, and "allow a few days for a first answer".
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.18.0):
 
 1. The screenshot is the Demo playing Acid at 1920 × 1080 (the four sections across), saved at 1.25× (2400 × 1350), with the Demo's card closed so every Viewer shows whole. With the card open it covers the foot of the Filter's and Amp's Spectrum; it would show what to listen for, though.
 2. The credit line follows About's words, Claude Code included; the merged section then only says every commit names Claude Code.

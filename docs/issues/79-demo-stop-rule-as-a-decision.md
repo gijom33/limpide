@@ -41,7 +41,7 @@
 
 1. Version A: the rule as a pure decision from a plain description, the selectors in one step that names what was touched; the Playwright tests unchanged; nothing visible changes.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 2. What was touched is named in a fixed order (the Demo's own controls, Display, a control that shapes the sound, outside the page, the piano, the rest of the page), so a target that is two of them is named the way the old checks treated it.
 3. Built in the session that grilled it, test-first, not pushed.

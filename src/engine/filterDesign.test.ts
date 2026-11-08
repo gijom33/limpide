@@ -124,7 +124,7 @@ describe('the Filter at the top of its range (issue 195)', () => {
 describe('a band-pass’s make-up (issue 231)', () => {
   const db = (gain: number) => 20 * Math.log10(gain);
 
-  it('raises a band-pass by 9 dB at 12 dB and 12 dB at 24 dB, up to Init’s Resonance', () => {
+  it('raises a band-pass by 9 dB at 12 dB and 12 dB at 24 dB, up to 5 % Resonance', () => {
     for (const resonance of [0, 0.03, 0.05]) {
       expect(db(makeUp('bandpass', 12, resonance)), `Resonance ${resonance}`).toBeCloseTo(9, 6);
       expect(db(makeUp('bandpass', 24, resonance)), `Resonance ${resonance}`).toBeCloseTo(12, 6);

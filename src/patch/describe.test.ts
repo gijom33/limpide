@@ -44,8 +44,8 @@ describe('A Patch in plain words (issue 123)', () => {
     ['Trance Gate', 'two detuned saws, softly filtered, sustained, with a rhythmic chop'],
     // FM 35 % (sidebands), a 200 Hz Cutoff under the 392 Hz Note, Velocity full, Sustain 10 % after a 2.5 s Decay.
     ['Tine Piano', 'a sine with FM, muffled, brighter played harder, fading slowly'],
-    // No Oscillator, Noise into a Filter at full Resonance whose Envelope throws it 3 octaves up at the strike.
-    ['Kick', 'Noise, through a singing Filter, opening on each Note, plucked'],
+    // No Oscillator, Pink Noise into a Filter at full Resonance whose Envelope throws it 3 octaves up at the strike.
+    ['Kick', 'pink Noise, through a singing Filter, opening on each Note, plucked'],
   ])('%s: “%s”', (name, phrase) => {
     expect(describePatch(preset(name))).toBe(phrase);
   });

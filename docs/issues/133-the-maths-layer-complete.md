@@ -43,3 +43,5 @@ Each Waveform's Harmonic series, FM's sidebands and Ring's sums and differences 
 - Where each one shows: under its control as the readouts do today, in the Viewer, or in the control's tooltip (with [134](./134-history-in-the-tooltips.md)'s History line beside it).
 - How much fits on a phone.
 - How each formula is held to the engine: a test per formula, as the Harmonic series' are held to the Ideal Reference.
+
+**Since (2026-11-07, [256](./256-detunes-beats-at-every-interval.md)):** decision 7's Detune formula is now Δf = |p f₁ − q f₂|, the beats of the lowest pair of the two Oscillators' Harmonics that nearly coincide, "no beats" where none is heard beating.

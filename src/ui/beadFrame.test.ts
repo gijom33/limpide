@@ -169,7 +169,7 @@ describe("Bead's frame, three across", () => {
     const plot = rect(THREE_ACROSS.plots[0].box);
     for (const part of [1, 2, 3, 4, 5, 6]) {
       b.script.demoPart = part;
-      // Part 5, Tremolo Keys, an LFO on: its plot drawing; Part 3, Poly Pluck, none.
+      // Counted from 0: part 5, Self-Oscillation, with an LFO's plot drawing; the others with none here.
       b.script.plots = part === 5 ? [THREE_ACROSS.plots[0]] : [];
       b.run(3);
       acts.push(b.drawn.marks.act);

@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner, 2026-10-31, from profile 17's review:
+Claude's call, let stand by the owner in 1.20.0, 2026-10-31, from profile 17's review:
 
 1. **Detected while learning only,** never live on a learned Mapping: two quick presses of a toggle send the same pair as one momentary press, and quick presses are what Hold's tapped rhythm is made of.
 2. **The rule:** a button learned on an Action whose first message is a press (above the middle) and whose release (at or below the middle) follows within about half a second is momentary; one whose release does not follow in that time is a toggle. A first message at or below the middle is a toggle (a toggle whose light was on), since a momentary press never starts with its release.
@@ -33,7 +33,7 @@ Claude's call, open to the owner, 2026-10-31, from profile 17's review:
 **Acceptance criteria:**
 - [x] Learn on an Action, press-and-release (127 then 0 within the window): the Mapping is momentary and fires once a press
 - [x] Learn on an Action, one 127 and nothing for the window: the Mapping is a toggle and fires on each of the next 0, 127, 0
-- [ ] Learn on an Action from a 0: a toggle, at once
+- [ ] ~~Learn on an Action from a 0: a toggle, at once~~ (not checked at the time)
 - [x] The release while learning fires no Action and does not move Quick Setup on twice
 - [x] Learn on an Action from a note: momentary, as before
 - [x] The MIDI panel shows "Toggle" or "Momentary" to match
@@ -61,7 +61,7 @@ Built on 2026-10-31, on night/2026-10-31, in two commits: the build, then the co
 - An end-to-end test in the MIDI Learn spec, through the MIDI panel with a fake MIDI input. It also fails on the code before the fix.
 - Passing: `tsc`, the lint, all unit tests, and the MIDI Learn and Quick Setup Playwright specs (Chromium).
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.20.0):**
 1. **Decision 2 changed, after the code review:**
    - The rule is now: one message alone in the window is a toggle, whatever its value; a second message makes it momentary.
    - This replaces "a first message at or below the middle is a toggle at once". A knob or fader turned on an Action starts at any value, so learning a toggle at once from a low first value made it fire on every message of the rest of the turn.

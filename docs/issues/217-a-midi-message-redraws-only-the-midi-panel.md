@@ -35,7 +35,7 @@
 - What the panel shows, and when, is unchanged: the same line, "Nothing received yet" before the first message, and the same text after each message.
 - Tests: a new test sends a stream of 50 aftertouch messages and a CC, and checks that the page does not render again while the line moves on. The Activity Monitor's end-to-end test passes unchanged, in Chromium and WebKit.
 
-Calls made (Claude's call, open to the owner):
+Calls made (Claude's call, let stand by the owner in 1.24.0):
 1. Only the Activity line redraws, not the whole MIDI panel. The issue's title says "the MIDI panel", but its brief asks for "that line alone".
 2. A MIDI clock never touched the Activity line: its ticks go to the tempo. The page still renders once a beat when the clock moves the BPM. That is outside this issue, and it happens once a beat, not 24 times.
 

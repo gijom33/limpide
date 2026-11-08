@@ -11,7 +11,7 @@ The cause: on a phone Bead stands on a section's top edge only with room for its
 ## Decisions
 
 1. **Bead stands on the line, drawn over the tabs' foot** (option B of three: hanging higher behind the tabs, or hanging clear of the line, were the others). Decided by the owner, 2026-10-31.
-2. **How far over:** as long as the edge shows under the tabs (2 px or more), so it stays on the line as the page scrolls, over the tabs by up to its height for the last pixels; once the edge has gone under them, it hangs as before. A first try allowed two thirds of its height and left a band of scroll where it hung off the line again (the owner's second screenshot). Only under the section strip: under the header (2 × 2) it still needs its whole height. An edge with room under the tabs still comes first. Claude's call, open to the owner.
+2. **How far over:** as long as the edge shows under the tabs (2 px or more), so it stays on the line as the page scrolls, over the tabs by up to its height for the last pixels; once the edge has gone under them, it hangs as before. A first try allowed two thirds of its height and left a band of scroll where it hung off the line again (the owner's second screenshot). Only under the section strip: under the header (2 × 2) it still needs its whole height. An edge with room under the tabs still comes first. Claude's call, let stand by the owner in 1.19.0.
 3. **Hovering where it loses ground:** Claude's plan below, as written. Decided by the owner, 2026-10-31 ("ok on all questions").
    **Since then (2026-11-02, issue [192](./192-beads-cover-checks-complete.md)):** with the hover line itself covered, Bead waits out of sight under the header or the tabs, and comes back into view once somewhere is clear. Decided by the owner (192).
 
@@ -50,7 +50,7 @@ The owner, 2026-10-31 (inbox): "If Bead has nowehere to go, maybe we can make it
 - **Reduced motion:** it is on its hover line at once and hovers still, its tail down without the whirl, no bob.
 - **The words:** bead.md ("Where it lives", and sending it away), CONTEXT.md's Mascot, and dated lines in 115 and 164.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **Under the tabs, not over them.** The plan said "its foot a little under the tabs or the header". Read as its foot just under them, the drop would hover over the tabs; its pixels take the pointer (tickles, clicks), so a hovering Bead would keep a finger off the tab under it for as long as no edge is in view, and under the header it would be hidden (it is drawn under the header). So the whole drop hovers under them, its top 3 to 6 px below. The cost: when its edge goes under the tabs (where, by decision 2, it stood with its body over them), it eases about 30 px down to hover rather than staying at that height. The other way: over the tabs' foot under the section strip only, as decision 2 does for standing.
 2. **Local, not fixed:** it may stray 12 px either way from where it lost ground, so its dancing steps and little strolls go on.
 3. **No spray while hovering:** its tail flings droplets while taking off, as in its flight up, but not while it hovers, so a long hover over a section does not keep raining on it.

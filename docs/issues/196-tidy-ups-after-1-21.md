@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
 
 ## Agent Brief
 
@@ -29,8 +29,8 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - **Later, not now:** a shared "a player holds a setting until touched" helper (112, 130, 158), if a fourth comes.
 
 **Acceptance criteria:**
-- [ ] Each item done or answered in this issue; nothing visible changes but the plain words' shared swing (a unit test)
-- [ ] tsc, the lint, every unit and engine test; the specs touched pass; every test passes in Linux's fonts too
+- [ ] ~~Each item done or answered in this issue; nothing visible changes but the plain words' shared swing (a unit test)~~ (not checked at the time)
+- [ ] ~~tsc, the lint, every unit and engine test; the specs touched pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Bead's frame logic (issue 184)
@@ -57,7 +57,7 @@ Done later the same night (the coordinator lifted the time limit), each its own 
 - **The Controller seam (149):** the C16's tag is written once (`C16_ID`) in c16.ts; the MIDI panel finds a Controller's tips in `CONTROLLER_TIPS`, typed by its id, not by `${id}Layout`.
 - **The e2e tests:** read as the tests 129, 132, 154 and 156 added that name no issue, in a describe or their title (found from each issue's commits): nine, each title now ending with its issue.
 
-Answered, not done (Claude's calls, open to the owner):
+Answered, not done (Claude's calls, let stand by the owner in 1.23.0):
 
 - **The Escape-or-press-outside effect:** Display, MIDI, the Tutorials and the Tempo already share `useHeaderPanel` (since 189); the Patch bar's stays its own, as its Escape clears the search first. Folding it in means the hook taking an Escape handler: left for a later tidy-up.
 - **"A panel is open" written twice:** the Tooltip's `[data-panel]`/`[aria-expanded]` and the Patch bar's `OPEN_ELSEWHERE` ask different questions (a header panel, against anything open but a card); not merged.

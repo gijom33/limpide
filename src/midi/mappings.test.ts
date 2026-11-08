@@ -41,6 +41,14 @@ describe('Mapping store', () => {
     expect(store.list().map((m) => m.target)).toEqual([{ kind: 'param', id: 'resonance' }]);
   });
 
+  it('loads a stored bend wheel’s Mapping (CC 128), but no Note or CC past the 0 to 127 a message can carry (issue 255)', () => {
+    const onBend: Mapping = { ...cutoffOnKnob, control: { kind: 'cc', channel: 1, number: 128 }, mode: 'absolute' };
+    const note128 = { ...holdOnPad, control: { kind: 'note', channel: 10, number: 128 } };
+    const past = { ...cutoffOnKnob, control: { kind: 'cc', channel: 1, number: 129 } };
+    const store = createMappingStore(memoryStorage({ 'limpide.mappings': JSON.stringify([onBend, note128, past]) }));
+    expect(store.list()).toEqual([onBend]);
+  });
+
   it('loads stored Mappings with a known Controller’s tag or none, and drops one tagged for no known Controller (issue 149)', () => {
     const ofC16: Mapping = { ...cutoffOnKnob, device: 'c16' };
     const unknown = { ...holdOnPad, device: 'keystep' };

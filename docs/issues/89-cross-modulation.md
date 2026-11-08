@@ -33,9 +33,9 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. Linear FM, its index scaled by Osc 2's frequency, so a Patch sounds alike on every Note (exponential FM would detune the Note as it deepens): Claude's call, open to the owner.
-3. Full Cross Mod is an index of 4: Claude's call, open to the owner.
-4. Revised while building: the knob is labelled FM (the glossary's word; Cross Mod in its tooltip), a small set-and-forget knob, in Osc 1's Pitch row beside its Octave, the Oscillator it moves. Play-sized beside Osc 2's Pulse Width, it pushed Pulse Width off the Waveform picker's side on laptops and phones; "Cross Mod" was too wide a name for the row: Claude's call, open to the owner. Where the row sits is the owner's decision 4 of [90](./90-osc1-octave.md).
+2. Linear FM, its index scaled by Osc 2's frequency, so a Patch sounds alike on every Note (exponential FM would detune the Note as it deepens): Claude's call, let stand by the owner in 1.16.0.
+3. Full Cross Mod is an index of 4: Claude's call, let stand by the owner in 1.16.0.
+4. Revised while building: the knob is labelled FM (the glossary's word; Cross Mod in its tooltip), a small set-and-forget knob, in Osc 1's Pitch row beside its Octave, the Oscillator it moves. Play-sized beside Osc 2's Pulse Width, it pushed Pulse Width off the Waveform picker's side on laptops and phones; "Cross Mod" was too wide a name for the row: Claude's call, let stand by the owner in 1.16.0. Where the row sits is the owner's decision 4 of [90](./90-osc1-octave.md).
 
 ## How it was built
 

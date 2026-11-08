@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-/** Opens the Display panel (Freeze, Snapshot, axes, overlays) if it is not open already. */
+/** Opens the Display panel (the Viewers' View, Axes and Show, and the page's Keys, Tips, Bead and Theme) if it is not open already. */
 export async function openDisplay(page: Page) {
   const button = page.getByRole('button', { name: 'Display' });
   if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
@@ -67,3 +67,57 @@ export async function wholeDemoCard(page: Page) {
   if (await unfold.isVisible()) await unfold.click();
   await expect(card.getByRole('button', { name: 'Fold the card' })).toBeVisible();
 }
+
+/**
+ * Waits until the page's scroll and scroll size and the elements' boxes and scroll have held still for five frames
+ * running, with no short transition or animation running inside them, watched in the page: a layout or a scroll
+ * settled (a window resized and its canvases with it, a card unfolded, a wheel's or a fling's scroll ended: issue 263).
+ * It gives up after five seconds without failing, and the test's own expectations then say what moved.
+ */
+export async function steady(page: Page, ...elements: Locator[]) {
+  const handles = await Promise.all(elements.map((element) => element.elementHandle()));
+  await page.evaluate(
+    (elements) =>
+      new Promise<void>((done) => {
+        const root = document.documentElement;
+        const read = () =>
+          [
+            scrollX,
+            scrollY,
+            root.scrollWidth,
+            root.scrollHeight,
+            ...elements.map((e) => (e ? [...Object.values(e.getBoundingClientRect().toJSON()), e.scrollLeft, e.scrollTop].join(' ') : '')),
+          ].join();
+        // A long one (the Demo card's part filling over its seconds) is no settling.
+        const moving = () =>
+          elements.some((e) =>
+            e?.getAnimations({ subtree: true }).some((a) => a.playState === 'running' && Number(a.effect?.getComputedTiming().endTime) < 2000),
+          );
+        let [was, still] = [read(), 0];
+        const limit = 5000;
+        const end = performance.now() + limit;
+        const giveUp = setTimeout(done, limit); // were the frames paused
+        const frame = (now: number) => {
+          const reading = read();
+          still = reading === was && !moving() ? still + 1 : 0;
+          was = reading;
+          if (still >= 5 || now >= end) {
+            clearTimeout(giveUp);
+            done();
+          } else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+    handles,
+  );
+  await Promise.all(handles.map((handle) => handle?.dispose()));
+}
+
+/**
+ * Waits for the page to draw `count` frames: what an input handled as it came (a key, a MIDI message, a focus) has
+ * changed is on the page by then, the Viewers and the knobs' rings drawn with it (issue 263).
+ */
+export const frames = (page: Page, count = 2) =>
+  page.evaluate(async (count) => {
+    for (let i = 0; i < count; i++) await new Promise(requestAnimationFrame);
+  }, count);

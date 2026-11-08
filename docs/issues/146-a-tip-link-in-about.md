@@ -19,7 +19,7 @@
 
 1. **In v1,** as About's polish: the owner set the page up and gave its address the same day, to be linked. Decided by the owner.
 2. **Buy Me a Coffee**, at https://buymeacoffee.com/gijom33; its About text, "Hi, I'm Guillaume…", drafted by Claude and chosen by the owner. Decided by the owner.
-3. **The words:** a "Support" line in About right under the credit ("Enjoying Limpide? Buy me a coffee"), so it shows on a phone's first screen, and one line under the README's "Play it in your browser". Claude's call, open to the owner.
+3. **The words:** a "Support" line in About right under the credit ("Enjoying Limpide? Buy me a coffee"), so it shows on a phone's first screen, and one line under the README's "Play it in your browser". Claude's call, let stand by the owner in 1.19.0.
 
 ## How it was built
 

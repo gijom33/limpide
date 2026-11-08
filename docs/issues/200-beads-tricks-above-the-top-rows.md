@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-02:
 
 1. **A trick is seen whole:** an animation Bead plays is not partly hidden by the top rows ("some animations are still partly hidden below the top rows").
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 2. **Reproduce first,** at a phone's width and in 2 × 2, with the header shown and slid away: the fountain, then every trick that rises above Bead (the spray, a leap, a word trick's letters), so the fix covers them all and not the fountain alone.
 3. **The trick fits under the header, rather than over it:** the header stays on top of everything, as 142 settled for Bead hovering ("under the tabs, not over them"). Where Bead stands too near the top for a trick's height, the trick is drawn lower or smaller, or Bead steps down before it plays; which one is the implementer's choice, the trick's look kept.
@@ -35,12 +35,12 @@ Claude's calls, open to the owner:
 - The room between Bead and the header's bottom edge (the header's height less what has slid away)
 
 **Acceptance criteria:**
-- [ ] At 375 px and in 2 × 2, Bead on the edge just under the header plays the fountain in full, below the header
-- [ ] The same with the header slid away (scrolled down) and back
-- [ ] Each other trick that rises above Bead, the same
-- [ ] On a wide window, a trick played at the screen's top edge is seen whole
-- [ ] Lower in the page, the tricks look and time as before; reduced motion as before
-- [ ] A browser test at a phone's width checks the fountain's top against the header's bottom
+- [ ] ~~At 375 px and in 2 × 2, Bead on the edge just under the header plays the fountain in full, below the header~~ (not checked at the time)
+- [ ] ~~The same with the header slid away (scrolled down) and back~~ (not checked at the time)
+- [ ] ~~Each other trick that rises above Bead, the same~~ (not checked at the time)
+- [ ] ~~On a wide window, a trick played at the screen's top edge is seen whole~~ (not checked at the time)
+- [ ] ~~Lower in the page, the tricks look and time as before; reduced motion as before~~ (not checked at the time)
+- [ ] ~~A browser test at a phone's width checks the fountain's top against the header's bottom~~ (not checked at the time)
 
 **Out of scope:**
 - Where Bead rests or hovers (181, 142)
@@ -55,7 +55,7 @@ Reproduced first in a browser at 375 px, 800 px (2 × 2) and 1440 px, every risi
 - **Lower in the page** nothing changes: the room is ample, so none of this applies. Reduced motion is as before (no tricks).
 - A browser test at 375 px scrolls Bead's edge up under the tabs (the header slid away), cues the fountain show and the fountain, and checks every frame that nothing of Bead or its droplets is above the header's foot. The tests' own build gains a cue for a trick, as the players' Note log of 198.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 1. **Lower and smaller, not stepping down:** the trick fits the room where Bead is; Bead never moves away to play it, since where it rests and hovers is out of scope (181, 142). The cost: hovering a few pixels under the header in 2 × 2, a fountain is only a little spurt.
 2. **The header is the limit on a phone, not the section tabs:** Bead is drawn over the tabs (142), so a trick may rise over them; only the header hides it.

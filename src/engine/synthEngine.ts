@@ -8,7 +8,7 @@ import { createCache } from '../music/cache';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { A4_HZ, noteToFrequency } from '../music/pitch';
-import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
@@ -154,7 +154,7 @@ const MASTER_LEVEL = 0.45;
  */
 const MODE_FADE = 0.01;
 /** The frames the browser renders at a time: a scheduled node's `ended` comes once its last one is rendered. */
-const RENDER_QUANTUM = 128;
+export const RENDER_QUANTUM = 128;
 
 /** The bend wheel's steps are smoothed over this time constant, in seconds. */
 const BEND_SMOOTHING = 0.004;
@@ -321,23 +321,61 @@ function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, start: numbe
 const NEVER = 1e9;
 
 /**
+ * How long a retriggered LFO's new oscillator takes over from the one it replaces (issue 267): the old fades out as the
+ * new fades in. Every Voice shares the LFO, so a Note joining others still sounding restarts theirs as well: the fade
+ * keeps that from stepping them, a click on the Volume, and hides a restarted square's or saw's first samples, on its
+ * jump. Half a millisecond is gentler than the LFOs' own softened jumps, and over before the model's LFO is checked
+ * against the sound.
+ */
+const LFO_HANDOVER = 0.0005;
+
+/** A node of a takeover: when it starts, whether it fades in then, and when the restart that ends it comes. */
+interface TakeoverSpan {
+  start: number;
+  fadesIn: boolean;
+  ends: number;
+}
+
+/**
  * The oscillators behind one that can start its cycle again (issue 94): an OscillatorNode cannot be reset, so at each
  * restart a new one takes over. A restart handed over ahead of now leaves the node it replaces running until then;
- * one earlier still stops every node at its own moment, so one node sounds at a time however restarts arrive (issue
- * 101). An ended node is cut off by `cut`.
+ * one earlier still stops every node at its own moment, so however restarts arrive (issue 101) one node sounds at a
+ * time, but for a fade. An ended node is cut off by `cut`. With `fade` (an LFO's, issue 267), each node feeds the
+ * sound through its own gain, and a node taking over fades in over `fade.seconds` while the one sounding then fades
+ * out: for that moment, the two sound together.
  */
-function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void) {
-  // Each node not yet ended, and when it starts and stops.
-  const running = new Map<OscillatorNode, { start: number; stop: number }>();
-  const add = (node: OscillatorNode, at: number) => {
-    running.set(node, { start: at, stop: Infinity });
+function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void, fade?: { seconds: number; gain: (node: OscillatorNode) => AudioParam }) {
+  // Each node not yet ended.
+  const running = new Map<OscillatorNode, TakeoverSpan>();
+  const add = (node: OscillatorNode, at: number, fadesIn: boolean) => {
+    running.set(node, { start: at, fadesIn, ends: Infinity });
     node.onended = () => {
       running.delete(node);
       cut(node);
     };
     node.start(at);
+    if (fade && fadesIn) {
+      const gain = fade.gain(node);
+      gain.setValueAtTime(0, at);
+      gain.linearRampToValueAtTime(1, at + fade.seconds);
+    }
   };
-  add(first, start);
+  /** The node ends at the restart at `t`: at once, or faded out from `t` if it sounds by then. */
+  const end = (node: OscillatorNode, span: TakeoverSpan, t: number) => {
+    span.ends = t;
+    if (!fade || span.start >= t) {
+      node.stop(t); // one not yet started never sounds, and ends all the same
+      return;
+    }
+    // Everything it was to do from `t` called off (the end of its fade-in, a fade-out for a later restart), it ramps on
+    // along its fade-in to the level reached at `t`, then down to nothing.
+    const gain = fade.gain(node);
+    gain.cancelScheduledValues(t);
+    gain.linearRampToValueAtTime(span.fadesIn ? Math.min(1, (t - span.start) / fade.seconds) : 1, t);
+    gain.linearRampToValueAtTime(0, t + fade.seconds);
+    node.stop(t + fade.seconds);
+  };
+  add(first, start, false);
   let restartAt = -1;
   return {
     /** Every node not yet ended: a new wave or rate reaches each. */
@@ -351,12 +389,8 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
     restart(t: number, make: () => OscillatorNode, { again = false } = {}) {
       if (t === restartAt && !again) return false;
       restartAt = t;
-      for (const [node, span] of running) {
-        if (span.stop <= t) continue;
-        node.stop(t); // one not yet started never sounds, and ends all the same
-        span.stop = t;
-      }
-      add(make(), t);
+      for (const [node, span] of running) if (span.ends > t) end(node, span, t);
+      add(make(), t, true);
       return true;
     },
     /**
@@ -367,10 +401,16 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
       for (const [node, span] of running) {
         if (span.start > t) {
           node.stop(t);
-          span.stop = t;
-        } else if (span.stop > t && span.stop !== Infinity) {
+          span.ends = t;
+        } else if (span.ends > t && span.ends !== Infinity) {
           node.stop(NEVER);
-          span.stop = Infinity;
+          if (fade) {
+            // Its fade-out called off, and the end of its own fade-in if that came after it.
+            const gain = fade.gain(node);
+            gain.cancelScheduledValues(span.ends);
+            if (span.fadesIn && span.start + fade.seconds >= span.ends) gain.linearRampToValueAtTime(1, span.start + fade.seconds);
+          }
+          span.ends = Infinity;
         }
       }
       if (restartAt > t) restartAt = -1;
@@ -452,8 +492,9 @@ const CYCLE_CURVE = Float32Array.from({ length: (2 * FOLLOWED_CENTS) / CYCLE_STE
 
 /**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
- * analogue way, as a saw minus a delayed copy of itself: the delay (the width's share of a cycle) sets the Pulse Width and,
- * unlike a PeriodicWave, can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a
+ * analogue way, as a delayed copy of a rising saw minus the saw itself: high from each drop of the saw until the
+ * copy's, the delay (the width's share of a cycle) sets the Pulse Width, the share of the cycle spent high (issue 266),
+ * and unlike a PeriodicWave can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a
  * restart the delay still holds the old cycle for one width: a fraction of a cycle, inside the Note's attack.
  *
  * The delay is the width (the knob, and each LFO's swing of it) times the Note's period, times one cycle's length at
@@ -464,7 +505,7 @@ const CYCLE_CURVE = Float32Array.from({ length: (2 * FOLLOWED_CENTS) / CYCLE_STE
 function createVoiceOscillator(ctx: BaseAudioContext) {
   const direct = ctx.createGain();
   const delay = ctx.createDelay(1);
-  const inverted = ctx.createGain();
+  const lagged = ctx.createGain();
   const out = ctx.createGain();
   const source: Restartable = createRestartable(ctx, A4_HZ, [direct, delay]);
   const width = ctx.createConstantSource();
@@ -488,9 +529,9 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   period.connect(toDelay).connect(delay.delayTime);
   width.start();
   direct.connect(out);
-  delay.connect(inverted).connect(out);
-  inverted.gain.value = 0;
-  return { source, out, direct, inverted, width, pwm, period };
+  delay.connect(lagged).connect(out);
+  lagged.gain.value = 0;
+  return { source, out, direct, lagged, width, pwm, period };
 }
 
 /** Every one of FM's gains: its own, then each LFO's swing of it. */
@@ -604,14 +645,16 @@ const SILENT = 0.001;
 
 /**
  * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
- * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, the Resonance (into the
- * shared curve to each Filter stage's Q), the tremolo's gain.
- * Pulse Width goes through each Voice's own gains, since its swing depends on the Note. The oscillator feeds a bus
- * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note; the
- * bus is the LFO's clamp, holding it within ±1.
+ * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, the Resonance (into each
+ * Filter side's curves, to its stages' Q and its make-up), the tremolo's gain.
+ * Pulse Width and FM go through each Voice's own gains, since their swing depends on the Note. The oscillator feeds a
+ * bus the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note;
+ * the bus is the LFO's clamp, holding it within ±1.
  */
 interface LfoNodes {
   takeover: ReturnType<typeof createTakeover>;
+  /** Wires a new oscillator to the bus, through the gain its takeover fades (issue 267). */
+  feed(node: OscillatorNode): void;
   bus: WaveShaperNode;
   toCutoff: GainNode;
   toPitch: GainNode;
@@ -645,7 +688,7 @@ interface FilterSide {
   curveStages: [number, number];
 }
 
-/** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
+/** What every Voice shares: the two LFOs, the pitch bend, the noise loops (white and pink), the Oscillators' waves, and where the Voices' outputs go. */
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
   /**
@@ -659,7 +702,7 @@ interface Shared {
   bend: ConstantSourceNode;
   /** Aftertouch on Pitch in cents (issue 132), beside the bend: it glides over its own time constant (issue 219). */
   pressing: ConstantSourceNode;
-  /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
+  /** The tremolo's resting gain, into every Voice's: the Volume less the LFOs' total swing on it (issue 62). */
   tremoloRest: ConstantSourceNode;
   noise: Record<NoiseColour, AudioBuffer>;
   /** A Waveform's series up to its Harmonic `harmonics`, as a wave the Oscillators play. */
@@ -796,8 +839,9 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     const share = ctx.createGain();
     share.gain.value = 0;
     level.connect(share);
-    // Whether the Mixer reaches it, and what reaches the Amp from it: its level, its share, or nothing.
-    return { stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
+    // The shared side it plays (its Mode and curves); whether the Mixer reaches it, and what reaches the Amp from it:
+    // its level, its share, or nothing.
+    return { sharedSide, stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
   });
   type Side = (typeof sides)[number];
   // The Taps listening to what the Filter sends the Amp: they follow its wiring.
@@ -854,7 +898,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(cutoffSum);
   trackedNote.start();
 
-  amp.connect(tremoloGain).connect(shared.master);
+  // To the master only while wired (`setWired`).
+  amp.connect(tremoloGain);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
@@ -917,12 +962,17 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   /**
    * How many Harmonics Osc 1 and Osc 2 play on a Note of `frequency`: all of them, but while Ring is up only those whose
    * products with the other's stay under the top of what the browser plays, so Ring's sums do not fold back (issue
-   * 103). A Sine needs only its own pitch; two richer waves share the top evenly. Each keeps at least its first.
+   * 103). A Sine needs only its own pitch; two richer waves share the top evenly. Each keeps at least its first. Each
+   * is taken at the top of the LFOs' swing of its pitch, so a vibrato does not take the top product past (issue 267).
    */
   const harmonicsOn = (frequency: number): number[] => {
-    if (!patch?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
-    const hz = pitchOverNote.map((r) => frequency * r);
-    const rich = [patch.waveform, patch.osc2Waveform].map((w) => w !== 'sine');
+    const knobs = patch;
+    if (!knobs?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
+    /** How far both LFOs together take a Destination up, at the top of their swings. */
+    const upTo = (destination: LfoDestination) => destinationSwings(knobs, destination).reduce((sum, swing) => sum + swing, 0);
+    const cents = [upTo('pitch') * 100, upTo('pitch') * 100 + upTo('osc2Pitch') * 100 + upTo('detune')];
+    const hz = pitchOverNote.map((r, i) => frequency * r * 2 ** (cents[i] / 1200));
+    const rich = [knobs.waveform, knobs.osc2Waveform].map((w) => w !== 'sine');
     const top = playedTop(ctx.sampleRate);
     const reach = (i: number) => (rich[i] ? Math.max(top / 2, hz[i]) : hz[i]);
     return [0, 1].map((i) => (rich[i] ? Math.min(WAVE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : WAVE_HARMONICS));
@@ -934,7 +984,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   };
 
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
-  // saw here, and becomes a pulse through the delayed, inverted copy.
+  // saw here, turned over, and becomes a pulse through the delayed copy: high for the width (issue 266).
   const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
   const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
     const o = oscillators[i];
@@ -944,10 +994,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     write(o.width.offset, width, t);
     const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
     swings.forEach((swing, n) => write(o.pwm[n].gain, swing, t));
-    // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
+    // saw(t − d·T) − saw(t) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
     const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
-    write(o.direct.gain, scale, t);
-    write(o.inverted.gain, pulse ? -scale : 0, t);
+    write(o.direct.gain, pulse ? -scale : 1, t);
+    write(o.lagged.gain, pulse ? scale : 0, t);
   };
 
   const frequencyAt = (t: number) => glideFrequency(pitches, t) || A4_HZ;
@@ -962,6 +1012,17 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     releasedAt: null as number | null,
     freeAt: -Infinity,
     pitches,
+    /**
+     * Whether its sound reaches the master (issue 257). Unwired, and none of the Taps listening, nothing the browser
+     * renders pulls it, so its nodes cost the audio thread nothing; it starts so, until the engine wires it.
+     */
+    wired: false,
+    setWired(on: boolean) {
+      if (on === voice.wired) return;
+      if (on) tremoloGain.connect(shared.master);
+      else tremoloGain.disconnect(shared.master);
+      voice.wired = on;
+    },
 
     /** Move to a Note: at once, or sliding there over the Glide. */
     setPitch(note: number, t: number, glide: number) {
@@ -1059,32 +1120,38 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
      * side's shared `toQ`, faded at the top (issue 195).
      */
     setSides(slope: FilterSlope, t: number) {
-      sides.forEach((side, s) => {
-        const mode = shared.sides[s].mode;
-        if (!mode) return;
+      for (const side of sides) {
+        const mode = side.sharedSide.mode;
+        if (!mode) continue;
         const flat = filterStages(mode, slope, 0);
         side.stages.forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
         write(side.resonanceFade.gain, isPeaked(mode) ? -1 : 0, t);
         write(side.levelFade.gain, fadesOutAtTheTop(mode) ? -1 : 0, t);
-      });
+      }
     },
 
     /**
-     * Fade over to side `to` from `t` (issue 248), from `startShare`, its share of the sound then, to all of it: both
-     * sides wired, each through its share, until `settle`.
+     * Both sides wired, each through its share of the sound, as a fade has them (issue 248): seamless whenever it is
+     * done, as the shares hold where they are until the fade's ramps (`rampShares`) start.
      */
-    fadeTo(to: number, t: number, startShare: number) {
-      sides.forEach((side, s) => {
-        wire(side, true, side.share);
-        side.share.gain.cancelScheduledValues(t);
-        side.share.gain.setValueAtTime(s === to ? startShare : 1 - startShare, t);
-        side.share.gain.linearRampToValueAtTime(s === to ? 1 : 0, t + MODE_FADE);
-      });
+    wireForFade() {
+      for (const side of sides) wire(side, true, side.share);
     },
-    /** Once the fade to side `to` is over: it alone wired, directly, and the other side not at all, with new stages. */
-    settle(to: number) {
-      sides.forEach((side, s) => {
-        if (s === to) return wire(side, true, side.level);
+    /** The shares' ramps of a fade over to the side playing `to`, from `t`: its own from `startShare` to all of it. */
+    rampShares(to: FilterSide, t: number, startShare: number) {
+      for (const side of sides) {
+        side.share.gain.cancelScheduledValues(t);
+        side.share.gain.setValueAtTime(side.sharedSide === to ? startShare : 1 - startShare, t);
+        side.share.gain.linearRampToValueAtTime(side.sharedSide === to ? 1 : 0, t + MODE_FADE);
+      }
+    },
+    /** Once the fade to `to` is over: its side alone wired, directly, and the other not at all, with new stages. */
+    settleOn(to: FilterSide) {
+      for (const side of sides) {
+        if (side.sharedSide === to) {
+          wire(side, true, side.level);
+          continue;
+        }
         wire(side, false);
         side.stages.forEach((node, k) => {
           node.disconnect();
@@ -1092,7 +1159,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
           side.kept[k].disconnect(node.Q);
         });
         side.stages = newStages(side.kept, side.level);
-      });
+      }
     },
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
@@ -1112,9 +1179,99 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 type Voice = ReturnType<typeof createVoice>;
 
 /**
+ * The Filter's crossfade on a change of Mode (issue 248): which of its two `sides` is heard, the fade under way, and its
+ * rules. A change goes to the side not heard, and every Voice fades over to it, so no side changes Mode while it is
+ * heard. While a fade is under way, a change back to the Mode faded from turns the fade round from where it is; any
+ * other waits for the fade's end, and the last one asked for fades in then. A fade is under way until it has settled:
+ * till then the side faded out keeps its old Mode, silent once the fade is over by the clock (the 1.26.1 review). It is
+ * settled by the audio clock, never by a time ahead of it (issue 251): at its end (`atClock`), or by the next change
+ * once the clock has passed its end, as the side faded out is then silent (1.26.1's statistics run).
+ */
+function createModeFade(
+  ctx: BaseAudioContext,
+  sides: readonly [FilterSide, FilterSide],
+  voices: readonly Voice[],
+  atClock: (t: number, then: () => void) => void,
+  setSideCurves: (slope: FilterSlope, t: number) => void,
+) {
+  /** The side that is not `side`. */
+  const other = (side: FilterSide) => (side === sides[0] ? sides[1] : sides[0]);
+  // The side heard, or faded to; when its fade began, and its share of the sound then.
+  let heard = sides[0];
+  let fade = { start: -MODE_FADE, startShare: 1 };
+  // The latest fade's number: a fade's end acts only while its fade is still the latest, so beginning a fade, or settling
+  // one early, gives up the end of the one before. Whether the latest has settled.
+  let latest = 0;
+  let settled = true;
+  // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
+  let pending: FilterMode | undefined;
+  let slope: FilterSlope = 12;
+  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades or waits to. */
+  const heardShare = (t: number) =>
+    t >= fade.start + MODE_FADE ? 1 : fade.startShare + ((1 - fade.startShare) * Math.max(0, t - fade.start)) / MODE_FADE;
+  const fadeOver = () => ctx.currentTime >= fade.start + MODE_FADE;
+  /** Every Voice settles on the side heard, the side faded out unwired: the latest fade is over. */
+  const settle = () => {
+    for (const v of voices) v.settleOn(heard);
+    settled = true;
+  };
+  /**
+   * Every Voice fades over to `to` from `at`, from its share of the sound then; with no `at`, from just after the clock
+   * as read once every Voice is wired for it, the last thing before the fade's ramps are written (issue 251): the sound
+   * goes on meanwhile, as an offline render does not wait, and a side wired for it holds where it is until they start.
+   * When the browser says the fade is over, if it is still the latest, a Mode asked for meanwhile fades in next; or else
+   * the side faded out is unwired.
+   */
+  const beginFade = (to: FilterSide, at?: number) => {
+    for (const v of voices) v.wireForFade();
+    const t = at ?? ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate;
+    const share = heardShare(t);
+    const startShare = to === heard ? share : 1 - share;
+    heard = to;
+    fade = { start: t, startShare };
+    settled = false;
+    for (const v of voices) v.rampShares(to, t, startShare);
+    const fading = ++latest;
+    atClock(t + MODE_FADE, () => {
+      if (fading !== latest) return;
+      settle();
+      if (!pending) return;
+      // The side faded out, unwired with new stages, takes the Mode.
+      other(heard).mode = pending;
+      pending = undefined;
+      for (const v of voices) v.setSides(slope, ctx.currentTime);
+      setSideCurves(slope, ctx.currentTime);
+      beginFade(other(heard));
+    });
+  };
+  return {
+    /** A change of Filter Mode to `mode` at `t`, the Patch's Slope then `nextSlope`. */
+    toMode(mode: FilterMode, nextSlope: FilterSlope, t: number) {
+      slope = nextSlope;
+      if (!heard.mode) heard.mode = mode;
+      if (!settled && fadeOver()) {
+        // Settled now, its end's own settling and any Mode waiting given up for this one.
+        ++latest;
+        settle();
+        pending = undefined;
+      }
+      if (!settled) {
+        pending = heard.mode === mode || other(heard).mode === mode ? undefined : mode;
+        if (other(heard).mode === mode) beginFade(other(heard), t);
+        return;
+      }
+      if (heard.mode === mode) return;
+      other(heard).mode = mode;
+      beginFade(other(heard), t);
+    },
+  };
+}
+
+/**
  * The instrument: up to MAX_VOICES Voices (Oscillator → Filter → Amp each) summed into one master and safety
- * stage, with one LFO shared. The Taps, the Modulation model and Cycle Lock follow the Voice of the newest Note,
- * so the Viewers always show one Note as if it were played alone (ADR-0007).
+ * stage, with two LFOs shared. The Oscillator and Filter Taps, the Modulation model and Cycle Lock follow the Voice
+ * of the newest Note, so those Viewers show one Note as if it were played alone (ADR-0007); the Amp Tap carries every
+ * Voice unless the Viewers are set to follow the newest (ADR-0022).
  */
 export function createSynthEngine(
   ctx: BaseAudioContext,
@@ -1154,7 +1311,14 @@ export function createSynthEngine(
     const osc = ctx.createOscillator();
     osc.frequency.value = PARAMS.lfoRate.default;
     const bus = lfoClamp(ctx);
-    osc.connect(bus);
+    // Each oscillator reaches the bus through its own gain, which hands it over to the next (issue 267).
+    const feeds = new WeakMap<OscillatorNode, GainNode>();
+    const feed = (node: OscillatorNode) => {
+      const gain = ctx.createGain();
+      node.connect(gain).connect(bus);
+      feeds.set(node, gain);
+    };
+    feed(osc);
     const [toCutoff, toPitch, toOsc2, toResonance, toVolume] = Array.from({ length: 5 }, () => {
       const g = ctx.createGain();
       g.gain.value = 0;
@@ -1165,7 +1329,16 @@ export function createSynthEngine(
       toResonance.connect(side.resonanceQ);
       toResonance.connect(side.makeUp);
     }
-    return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
+    const takeover = createTakeover(
+      osc,
+      ctx.currentTime,
+      (node) => {
+        node.disconnect();
+        feeds.get(node)?.disconnect();
+      },
+      { seconds: LFO_HANDOVER, gain: (node) => feeds.get(node)!.gain },
+    );
+    return { takeover, feed, bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
   };
   const resonanceIn = ctx.createConstantSource();
   resonanceIn.offset.value = -1;
@@ -1182,20 +1355,6 @@ export function createSynthEngine(
     resonanceIn.connect(makeUp);
     return { resonanceQ, toQ, makeUp, curveFrom: createChangeDetector<readonly [FilterMode, FilterSlope]>(), curveStages: [0, 0] };
   }) as [FilterSide, FilterSide];
-  // The side heard, or faded to (issue 248); when its fade began, and its share of the sound then.
-  let heard = 0;
-  let fade = { start: -MODE_FADE, startShare: 1 };
-  // The latest fade's number: a fade's end acts only while its fade is still the latest, so beginning a fade, or settling
-  // one early, gives up the end of the one before. Whether the latest has settled: until then the side faded out keeps
-  // its old Mode, though silent once the fade is over by the clock (the 1.26.1 review and statistics run).
-  let latestFade = 0;
-  let settled = true;
-  // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
-  let pending: FilterMode | undefined;
-  let slopeNow: FilterSlope = 12;
-  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades or waits to. */
-  const heardShare = (t: number) =>
-    t >= fade.start + MODE_FADE ? 1 : fade.startShare + ((1 - fade.startShare) * Math.max(0, t - fade.start)) / MODE_FADE;
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
   const twinStagesFrom = createChangeDetector<readonly [FilterMode, FilterSlope, number]>();
   const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
@@ -1284,7 +1443,7 @@ export function createSynthEngine(
     setLfoWave(next, l.waveform);
     next.frequency.value = hz(l);
     lfoSetTo.set(next, { rate: hz(l), waveform: l.waveform });
-    next.connect(shared.lfos[i].bus);
+    shared.lfos[i].feed(next);
     return next;
   };
   /**
@@ -1292,11 +1451,12 @@ export function createSynthEngine(
    * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
    * with it, at the same phase; restarts handed over for after `t` are called off in both. A chord's Notes, asked for
    * at the same moment, restart it once, where the first of them starts: those that dip first (issue 102) start 3 ms
-   * into its cycle, rather than it jumping 3 ms into the others'.
+   * into its cycle, rather than it jumping 3 ms into the others'. So do Notes asked within one handover of the first
+   * (LFO_HANDOVER, issue 267): handed over again mid-fade, three cycles would sound, their shares summing under 1.
    */
   const restartLfo = (i: number, l: Lfo, asked: number, t: number) => {
     const chord = lfoChords[i];
-    if (chord && chord.asked === asked && chord.t <= t) return;
+    if (chord && asked >= chord.asked && asked - chord.asked < LFO_HANDOVER && chord.t <= t) return;
     lfoChords[i] = { asked, t };
     const start = LFO_START[l.waveform];
     if (!shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, start))) return;
@@ -1395,7 +1555,7 @@ export function createSynthEngine(
     for (const v of voices) {
       const wanted = new Set<TapName>();
       if (v === lead) wanted.add('oscillator').add('filter').add('amp');
-      if (tapSource === 'all') wanted.add('amp');
+      if (tapSource === 'all' && v.wired) wanted.add('amp');
       const current = listening.get(v)!;
       for (const tap of current) if (!wanted.has(tap)) { v.detach(taps, tap); current.delete(tap); }
       for (const tap of wanted) if (!current.has(tap)) { v.attach(taps, tap); current.add(tap); }
@@ -1404,6 +1564,47 @@ export function createSynthEngine(
 
   const at = (time?: number) => time ?? ctx.currentTime;
   const voiceCount = (): Voices => patch?.voices ?? 1;
+
+  /**
+   * Calls `then` once the browser has rendered the sound up to `t`: a silent source ending there, wired so it is
+   * rendered, is the audio clock's own timer, which an offline render keeps to as well.
+   */
+  const atClock = (t: number, then: () => void) => {
+    const timer = ctx.createConstantSource();
+    timer.offset.value = 0;
+    timer.connect(master);
+    timer.onended = () => {
+      timer.disconnect();
+      then();
+    };
+    timer.start(t);
+    timer.stop(t + RENDER_QUANTUM / ctx.sampleRate);
+  };
+  /** When each Voice ringing out beyond the setting is looked at again: the end of its Release. */
+  const releaseEnds = new Map<Voice, number>();
+  /**
+   * Only the Voices that may sound are wired (issue 257): those the Voices setting uses, the newest Note's (the Taps
+   * listen to it), and any still ringing out, looked at again when its Release has faded. The others are unwired, so
+   * at 1 Voice the browser renders one Voice, not eight. A Voice set on is wired at once, silent, before any Note can
+   * take it, and one unwired is silent: neither clicks.
+   */
+  const rewire = () => {
+    const now = ctx.currentTime;
+    voices.forEach((v, i) => {
+      const used = i < voiceCount() || v === lead;
+      const ringing = v.freeAt > now;
+      v.setWired(used || ringing);
+      if (used || !ringing || !Number.isFinite(v.freeAt) || releaseEnds.get(v) === v.freeAt) return;
+      // The browser's clock tells when the Release is over, as it tells a Mode's fade.
+      const end = v.freeAt;
+      releaseEnds.set(v, end);
+      atClock(end, () => {
+        if (releaseEnds.get(v) === end) releaseEnds.delete(v);
+        rewire();
+      });
+    });
+    listen();
+  };
 
   /**
    * A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off the
@@ -1440,6 +1641,8 @@ export function createSynthEngine(
       callOffRestarts(voice, t);
       voice.releasedAt = t;
       voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
+      // One beyond the setting rings out, then is unwired.
+      if (voices.indexOf(voice) >= voiceCount()) rewire();
     }
   };
 
@@ -1459,7 +1662,7 @@ export function createSynthEngine(
   const follow = (voice: Voice) => {
     if (voice === lead) return;
     lead = voice;
-    listen();
+    rewire();
   };
   follow(voices[0]);
 
@@ -1489,73 +1692,15 @@ export function createSynthEngine(
       side.toQ.forEach((g, k) => write(g.gain, side.curveStages[k], t));
     }
   };
-  /** Every Voice settles on side `to`, the side faded out unwired: the latest fade is over. */
-  const settleOn = (to: number) => {
-    for (const v of voices) v.settle(to);
-    settled = true;
-  };
-  /**
-   * Every Voice fades over to side `to` from `t`, from its share of the sound then. When the browser says the fade is
-   * over, if it is still the latest, a Mode asked for meanwhile fades in next; or else the side faded out is unwired.
-   */
-  const fadeTo = (to: number, t: number) => {
-    const share = heardShare(t);
-    const startShare = to === heard ? share : 1 - share;
-    heard = to;
-    fade = { start: t, startShare };
-    settled = false;
-    for (const v of voices) v.fadeTo(to, t, startShare);
-    const fading = ++latestFade;
-    const timer = ctx.createConstantSource();
-    timer.offset.value = 0;
-    timer.connect(master);
-    timer.onended = () => {
-      timer.disconnect();
-      if (fading !== latestFade) return;
-      settleOn(to);
-      if (!pending) return;
-      // The side faded out, unwired with new stages, takes the Mode; its fade starts a little after now, as the sound
-      // may have gone on past the clock read here by the time the fade is written (an offline render does not wait).
-      sides[1 - heard].mode = pending;
-      pending = undefined;
-      for (const v of voices) v.setSides(slopeNow, ctx.currentTime);
-      setSideCurves(slopeNow, ctx.currentTime);
-      fadeTo(1 - heard, ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate);
-    };
-    timer.start(t);
-    timer.stop(t + MODE_FADE + RENDER_QUANTUM / ctx.sampleRate);
-  };
-  /**
-   * A change of Filter Mode at `t` (issue 248): the side not heard takes the new Mode, and every Voice fades over to it,
-   * so no side changes Mode while it is heard. While a fade is under way, a change back to the Mode faded from turns
-   * the fade round from where it is; any other waits for the fade's end, and the last one asked for fades in then. Once
-   * the fade is over by the clock, though the browser has not yet said so, a change settles it and fades in at once.
-   */
-  const toMode = (mode: FilterMode, t: number) => {
-    if (!sides[heard].mode) sides[heard].mode = mode;
-    if (!settled && t >= fade.start + MODE_FADE) {
-      // The fade is over by the clock: settled now, its end's own settling and any Mode waiting given up for this one.
-      ++latestFade;
-      settleOn(heard);
-      pending = undefined;
-    }
-    if (!settled) {
-      pending = sides[heard].mode === mode || sides[1 - heard].mode === mode ? undefined : mode;
-      if (sides[1 - heard].mode === mode) fadeTo(1 - heard, t);
-      return;
-    }
-    if (sides[heard].mode === mode) return;
-    sides[1 - heard].mode = mode;
-    fadeTo(1 - heard, t);
-  };
+  // The Filter's crossfade between its sides on a change of Mode (issue 248).
+  const modeFade = createModeFade(ctx, sides, voices, atClock, setSideCurves);
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through: only those it changes, or with `whole`
    * every one (issue 218).
    */
   const applyToSound = (next: Patch, t: number, { whole = false } = {}) => {
-    slopeNow = next.filterSlope;
-    toMode(next.filterMode, t);
+    modeFade.toMode(next.filterMode, next.filterSlope, t);
     for (const v of voices) v.apply(next, t, { whole });
     // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
     const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
@@ -1650,7 +1795,9 @@ export function createSynthEngine(
     },
 
     applyPatch(next, { whole = false } = {}) {
+      const voicesBefore = voiceCount();
       patch = next;
+      if (next.voices !== voicesBefore) rewire();
       if (whole) {
         shared.writes.forget();
         lfoSetTo = new WeakMap();

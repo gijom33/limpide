@@ -85,6 +85,11 @@ export interface Mapping {
   target: Target;
   mode: EncoderMode | 'detect' | ButtonMode;
   device?: ControllerId;
+  /**
+   * The known Controller a Mapping answers every Controller but: one MIDI Learn heard from another input on a control
+   * that Controller's layout had (issue 255), so the C16's knob it took turns nothing, not its new target the wrong way.
+   */
+  except?: ControllerId;
 }
 
 /** A knob's Mapping as the MIDI panel shows it and switches it (issue 186): Absolute, or Relative of either kind. */
@@ -117,21 +122,23 @@ const renamed = (m: unknown): unknown => {
 };
 
 const isMapping = (m: unknown): m is Mapping => {
-  const { control: c, target: t, mode, device } = (m ?? {}) as Partial<Mapping>;
+  const { control: c, target: t, mode, device, except } = (m ?? {}) as Partial<Mapping>;
   const byte = (n: unknown, min: number, max: number) =>
     Number.isInteger(n) && (n as number) >= min && (n as number) <= max;
   return (
     !!c &&
     (c.kind === 'cc' || c.kind === 'note') &&
     byte(c.channel, 1, 16) &&
-    byte(c.number, 0, 127) &&
+    // A CC up to the bend wheel's 128, which MIDI Learn maps like a knob (issue 255); a Note up to 127.
+    byte(c.number, 0, c.kind === 'cc' ? PITCH_BEND : 127) &&
     !!t &&
     ((t.kind === 'param' && Object.hasOwn(PARAMS, t.id)) ||
       (t.kind === 'choice' && Object.hasOwn(CHOICES, t.id)) ||
       (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id)) ||
       (t.kind === 'tempo' && t.id === 'bpm')) &&
     MODES.includes(mode as string) &&
-    (device === undefined || CONTROLLER_IDS.includes(device))
+    (device === undefined || CONTROLLER_IDS.includes(device)) &&
+    (except === undefined || CONTROLLER_IDS.includes(except))
   );
 };
 

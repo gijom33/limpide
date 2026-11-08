@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import { recall, remember } from '../app/rememberedSettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
@@ -26,6 +26,7 @@ import { usePianoFit } from './hooks/usePianoFit';
 import { usePresetAbout } from './hooks/usePresetAbout';
 import { useRememberedSetting } from './hooks/useRememberedSetting';
 import { useShows } from './hooks/useShows';
+import { useSongInvite } from './hooks/useSongInvite';
 import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
@@ -74,7 +75,7 @@ interface BlockProps {
   children?: React.ReactNode;
   /** Extra controls under the main knobs (e.g. the Filter Envelope). */
   more?: React.ReactNode;
-  /** Controls on the heading line (e.g. the Filter Mode and Slope). */
+  /** A row of controls under the heading, before the others (e.g. the Filter Mode and Slope). */
   heading?: React.ReactNode;
   viewers?: React.ReactNode;
   /** What the stage does, on its heading. */
@@ -222,6 +223,10 @@ export function App() {
     midi.setBankFollow(null);
   };
   const toggleSong = () => shows.toggleSong(() => octaveRef.current);
+  // While the Song plays, a line under the sound's name invites changing it (issue 260).
+  const songInvite = useSongInvite(show.playing === 'song', patch, !!tutorial);
+  // Each count closes the Display panel: a Tutorial's Display Step made on a phone, its Viewer under the panel (issue 260).
+  const [displayShut, shutDisplay] = useReducer((n: number) => n + 1, 0);
   // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
   const tourCard = tour?.index ?? null;
   const guide = useMemo(
@@ -311,6 +316,7 @@ export function App() {
           onCloseAbout={presetAbout.hide}
           tutorials={tutorialList}
           onTutorial={startTutorial}
+          songInvite={songInvite}
         />
       </div>
     </div>
@@ -367,6 +373,7 @@ export function App() {
       onOpen={midi.connect}
       activity={midi.activity}
       mappings={midi.mappings}
+      sendingPositions={midi.sendingPositions}
       learning={learning}
       onLearn={() => midi.surface.startLearn()}
       onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
@@ -382,7 +389,7 @@ export function App() {
     />
   );
   const displayMenu = (
-    <DisplayMenu key="display" active={viewer.frozen || viewer.snapshot !== null}>
+    <DisplayMenu key="display" active={viewer.frozen || viewer.snapshot !== null} shut={displayShut}>
       <section className="toolbar" aria-label="Viewer controls">
         <div className="toolbar-groups">
           <ToolGroup title="View">
@@ -859,6 +866,8 @@ export function App() {
             onNext={() => shows.moveTour(1)}
             // The Tutorial ends the Tour as it starts, the person's Patch given back before its Init.
             onFirstTutorial={() => shows.startTutorial(TUTORIALS[0])}
+            // The Song ends the Tour as it starts, the person's Patch given back for it to play on.
+            onSong={toggleSong}
             onClose={shows.endTour}
           />
         )}
@@ -877,6 +886,7 @@ export function App() {
             onMatch={shows.matchPreset}
             onStartNext={shows.startTutorial}
             onQuit={shows.quitTutorial}
+            onShutDisplay={shutDisplay}
           />
         )}
         {bead.presence !== 'away' && (

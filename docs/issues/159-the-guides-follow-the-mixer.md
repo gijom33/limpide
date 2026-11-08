@@ -12,7 +12,7 @@ What the Guides are: dashed lines at the Nominal Level, one Oscillator's peak (0
 
 1. **The Guides follow the Mixer:** they mark the level the Mixer sends, the sum of its sources' levels, so only Resonance takes a trace beyond them. Decided by the owner, 2026-10-31 ("Yes, follow the Mixer"), on question 1 below.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **The sum:** every source the Mixer has (Osc 1, Osc 2, Ring, the Sub, the Noise) at its fader's level, added, and never beyond full scale. One Oscillator at full gives today's Guides; nothing up leaves them at the Nominal Level, not at zero, so they never vanish.
 3. **The Amp Scope** keeps whatever rule it has today relative to the Volume, with the Mixer's sum in place of one Oscillator's level.
@@ -38,7 +38,7 @@ Claude's call, open to the owner:
 - [x] Osc 1 and Osc 2 at full, Resonance at 0: the Oscillator and Filter Scopes' traces inside their Guides (an engine or viewer test, with the overshoot's allowance)
 - [x] The same with Resonance up: the Filter Scope's trace beyond them
 - [x] The Guides capped at full scale; never at zero
-- [ ] The tip and CONTEXT.md updated; every test passes in Linux's fonts too (the words updated; Linux's fonts are for GitHub's run, not run here)
+- [ ] ~~The tip and CONTEXT.md updated; every test passes in Linux's fonts too (the words updated; Linux's fonts are for GitHub's run, not run here)~~ (not checked at the time)
 
 **Out of scope:**
 - Any change to a sound or the Mixer's levels
@@ -52,7 +52,7 @@ Claude's call, open to the owner:
 - **The words:** the tip now says the Guides stand at the level the Mixer sends and move with its faders, and keeps the Resonance sentence. CONTEXT.md's Nominal Level is where one Oscillator puts the Guides, and the Guides have their own entry.
 - **Tests:** the store's level (one Oscillator, two, every source, pink Noise, the cap, nothing up); the glide; the engine's Oscillator and Filter Taps inside the Guides with Osc 1 and Osc 2 at full and no Resonance (saw, square and triangle, three Cutoffs, both Slopes, detuned or not: at most 7 % past, the allowance 15 %); white and pink Noise with the Sub inside them; the Filter Tap 2.6 times beyond them at full Resonance; an end-to-end check that Osc 2's fader moves every Scope's Guides from 0.5 to full scale; the tip's words. `npx tsc`, the lint, every unit test, the engine browser tests and the Playwright specs touched (overlays, tooltips, Quick Setup, LIMITING) pass. One full engine run failed one test and passed whole on the rerun: a load flake.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **Decisions 2 to 5 as written**, with the Noise at its peak (above): a fader barely up puts the Guides close to the centre line, and the last step down to nothing sends them back out to the Nominal Level.
 2. **Capped at full scale,** so three or more sources at full can still go beyond them on the Oscillator Scope; there the margin beyond full scale shows how far.
 3. **The Amp Scope** follows the same level, the Volume ignored as before (decision 3). A chord, on the Amp Tap's every-Voice source, still goes beyond them: the Guides are one Voice's, as they were.

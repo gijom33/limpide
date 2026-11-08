@@ -11,6 +11,7 @@ import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPea
 import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
 import { createRest } from './rest';
 import { amplitudeToSpectrumDb } from './spectrumScale';
+import type { Hooks } from './testHooks';
 import type { ViewSettings } from './viewSettings';
 
 const MIN_LABEL_GAP = 22;
@@ -122,8 +123,11 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
   const rest = createRest();
 
-  /** `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). */
-  return function draw(silent: boolean) {
+  /**
+   * `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). Hands back what
+   * it drew as the canvas's test hooks, for the frame's write (issue 257): none at rest.
+   */
+  return function draw(silent: boolean): Hooks | undefined {
     const { overlays, viewer, glow: chosen } = view();
     const glowing = glows(chosen, 'spectrum');
     const width = canvas.clientWidth;
@@ -151,7 +155,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, glowing, curveGains, slope,
       overlays.harmonics, overlays.ideal, overlays.geek, showIdeal,
     ];
-    if (rest(silent && !cursor, inputs)) return;
+    if (rest(silent && !cursor, inputs)) return undefined;
+    const hooks: Hooks = {};
 
     if (!viewer.frozen) {
       analyser.getFloatFrequencyData(bins);
@@ -227,7 +232,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       strokeColumns(g, value, yOf, ratio);
     }
     g.globalAlpha = 1;
-    canvas.dataset.glow = String(past.length);
+    hooks.glow = String(past.length);
 
     g.fillStyle = trace;
     g.globalAlpha = 0.16;
@@ -270,7 +275,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // trace shows a sound, as the Ideal marks (the owner, 2026-10-27): none while silent, as after a reload.
     const sounding = outline.some((v) => yOf(v) < height - 0.5);
     const ticks = overlays.harmonics && sounding ? markers : [];
-    canvas.dataset.markers = String(ticks.length);
+    hooks.markers = String(ticks.length);
     if (ticks.length) {
       g.textAlign = 'center';
       g.fillStyle = muted;
@@ -312,7 +317,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       }
     }
 
-    canvas.dataset.idealMarks = String(markCount);
+    hooks.idealMarks = String(markCount);
 
     // The frequency axis's labels last, over the Harmonic bars, each on a halo of the background (issue 47).
     g.font = '10px system-ui, sans-serif';
@@ -321,7 +326,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     for (const f of fAxis.gridlines) haloText(g, f >= 1000 ? `${f / 1000}k` : `${f}`, xOf(f) + 3, height - 4, background);
 
     // The Synth Geek Layer (issue 170): the Noise's slope while it is up, top right under the Harmonic Markers' labels.
-    canvas.dataset.noiseSlope = slope ?? '';
+    hooks.noiseSlope = slope ?? '';
     if (slope) {
       g.textAlign = 'right';
       haloText(g, slope, width - 6, MARKER_LABEL_ROW + 13, background);
@@ -329,7 +334,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     }
 
     // Hover readout: frequency, nearest Note and the level of the trace under the cursor, stacked in a box of one size.
-    if (!cursor) delete canvas.dataset.readout;
+    hooks.readout = undefined;
     if (cursor) {
       const col = snapToPeak(peak, Math.max(0, Math.min(columns - 1, Math.floor(cursor.x))), HOVER_SNAP);
       g.strokeStyle = muted;
@@ -341,7 +346,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const level = Number.isFinite(levelDb) ? levelDb : peak[col];
       // With the Synth Geek Layer on, the Harmonic's number when the peak is on one, and none on silence (issue 170).
       const harmonicLine = { geek: overlays.geek, harmonic: overlays.geek && level > SILENT_DB ? harmonicNumber(frequency, f0, binHz) : undefined };
-      canvas.dataset.readout = hoverReadout(frequency, level, harmonicLine);
+      hooks.readout = hoverReadout(frequency, level, harmonicLine);
       if (measuredColumns?.font !== g.font || measuredColumns.geek !== overlays.geek) {
         measuredColumns = { font: g.font, geek: overlays.geek, columns: readoutColumns((t) => g.measureText(t).width, { harmonic: overlays.geek }) };
       }
@@ -355,5 +360,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       }
       g.textAlign = 'left';
     }
+    return hooks;
   };
 }

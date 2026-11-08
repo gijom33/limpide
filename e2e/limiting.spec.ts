@@ -26,6 +26,6 @@ test('LIMITING shows on the Amp Scope only while the safety limiter is bending t
 
 test('an ordinary sound, even with Resonance boosting past the guides, never shows LIMITING', async ({ page }) => {
   await play(page, { resonance: 0.9, cutoff: 1400, filterSlope: 24, ampSustain: 1 }); // Resonant Ring
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1500); // a time: LIMITING, would it come, would show by now
   await expect(scope(page, 'Amp')).toHaveAttribute('data-limiting', 'false');
 });

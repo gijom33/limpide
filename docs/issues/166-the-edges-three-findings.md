@@ -31,9 +31,9 @@ Decided by the owner, 2026-10-31 (Claude's recommendations, accepted):
 
 **Acceptance criteria:**
 - [x] The sweep passes with the three faults' marks removed
-- [ ] Talking Filter keeps its vowels (profile 15's check), and the owner has heard it
+- [ ] ~~Talking Filter keeps its vowels (profile 15's check), and the owner has heard it~~ (not checked at the time)
 - [x] The engine and model tests pass; the Spectrum's draw-cost test passes under heavy FM
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Other Presets' sounds
@@ -50,7 +50,7 @@ Decided by the owner, 2026-10-31 (Claude's recommendations, accepted):
 
 **Talking Filter, retuned:** Resonance 0.6 → 0.45, LFO 2's Depth 0.6 → 0.45, Volume 0.7 → 0.9. LFO 2's square now takes the band from its widest (Resonance 0, Q 0.5) to narrow (0.9, Q 14, as narrow as its top was before): two vowels, a wide "ah" and a narrow "oo", by turns, each swept by LFO 1 an octave either way. Before, the low half was the saw unfiltered. The Volume keeps its level: its loudest 100 ms is −21.7 dBFS on C4 (−21.8 before; −23.9 at the old Volume). A test holds it: both halves sweep with LFO 1, the wide one 16 dB louder than the narrow one, and the wide one 16 dB short of the open saw above 4 kHz. *(2026-11-02: retuned again by [205](./205-talking-filter-talks.md), the owner hearing the narrow half as a beep: LFO 2 a triangle gliding the Q between 0.72 and 4.5, and its test changed with it.)*
 
-### Calls made (Claude's call, open to the owner)
+### Calls made (Claude's call, let stand by the owner in 1.20.0)
 
 - **Talking Filter's retune,** above: the narrow half kept where it was, the wide half the widest a band-pass goes, the nearest to the unfiltered half it had. Its Resonance knob and Volume changed with its LFO 2 Depth, so it keeps its level.
 - **The cap: 1,024 sidebands,** a thousand rather than "a few thousand". At 4,096 four Patches still drew their first frame over the budget when the frame test ran alone (10.4 to 14 ms against 10.3). At 2,048 it passed alone three times, but in the whole engine run, other files rendering beside it, one frame took 10.2 ms against 10.0. At 1,024 the whole run passes. A Spectrum has room for a few hundred marks, so a Patch past the cap still shows a dense band of them.

@@ -9,8 +9,9 @@ export const SECTIONS = [
 ] as const;
 
 /**
- * Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own and the
- * section strip sticks. The stylesheet cannot read it, so a test checks the stylesheet has it.
+ * Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own (the
+ * section strip shows on phones alone, up to 600 px). The stylesheet cannot read it, so a test checks the stylesheet
+ * has it.
  */
 export const STACKED = '(max-width: 860px)';
 

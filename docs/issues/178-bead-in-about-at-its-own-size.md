@@ -11,7 +11,7 @@
 1. **Bead at its own size** (as on the page), **its foot level with the bottom of the logo's mark** (the coloured wave above the word "Limpide"). Decided by the owner, 2026-11-01; replaces 163's decision 3's size and place.
    **Since then (2026-11-02):** decision 4 puts its foot on the name's baseline instead.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **Still beside the mark, to its right,** the mark and Bead centred together as the logo was; everything else of 163 (its idling, its button and card, hidden with the switch Off) as built.
 
@@ -40,7 +40,7 @@ Decided by the owner, 2026-11-02, while decision 3 was built: "Move Bead on righ
 **Acceptance criteria:**
 - [x] Bead's drawn size in About equals its size on the page
 - [x] Its foot is within 1 px of the bottom of the logo's mark (since decision 4, of the name's baseline), at a phone's width and a laptop's
-- [ ] The About and mascot specs and the design audit pass; every test passes in Linux's fonts too
+- [ ] ~~The About and mascot specs and the design audit pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## How it was built
 
@@ -51,7 +51,7 @@ Built 2026-11-01, at night, on `night/2026-11-01` (commits `Issue 178: …`).
 - **Its button** stays a phone's 44 px tall, as the design audit asks of every target: the drawn Bead is at its foot, the button's room above it empty. Its card, idling and switch are 163's, unchanged.
 - **Tests:** the About spec measures, at 393 × 659 and 1440 × 900, Bead's drawn size against Bead's on the page, its foot within 1 px of the mark's lowest point (the path's bottom and half its stroke) and the pair centred within 1 px; the About, mascot and design-audit specs pass in Chromium. Linux's fonts are GitHub's run to check: nothing of the place hangs on a font.
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.21.0):
 
 1. **Centred together** (decision 2): the pair's middle on About's middle, so the mark sits a little left of the name's middle, by half of Bead and the gap. The alternative was the mark over the name's middle, Bead hanging to its right, as 163 had it above 340 px.
 2. **The button's height:** 44 px, taller than the drawn Bead, as a phone's touch target; the room is above Bead, so its focus ring is taller than it.
@@ -71,4 +71,4 @@ Calls made without the owner (Claude's call, open to the owner):
 - **Tests:** the About spec's Bead test now checks the mark centred alone within 1 px (red before the change, at 393 px), with Bead to its right at its page size and its foot on the mark's bottom; it fits from 280 px with no sideways scroll. The About spec and the design audit pass in Chromium and WebKit (70), and the mascot spec's About test in both. Seen at 375 px: the mark's middle on About's middle (188 px), Bead 12 px right of it.
 - **To try:** open About on the iPhone: the wave over "Limpide" is centred, Bead beside it on the right.
 
-- **The narrowest windows** (1.21.1's code review and branch run, 2026-11-02): the grid's outer columns shrink alike, so the name stays centred down to 280 px (it sat 6.8 px left there). Below 340 px the name is set at 24 px, not 30, and Bead's gap is 8 px, not 12 (Claude's call, open to the owner): in Linux's wider type the centred name otherwise left Bead 9 px past About's padding at 280 px; measured with the name 0.12em wider than macOS sets it, Bead keeps 6 px of room there.
+- **The narrowest windows** (1.21.1's code review and branch run, 2026-11-02): the grid's outer columns shrink alike, so the name stays centred down to 280 px (it sat 6.8 px left there). Below 340 px the name is set at 24 px, not 30, and Bead's gap is 8 px, not 12 (Claude's call, let stand by the owner in 1.21.1): in Linux's wider type the centred name otherwise left Bead 9 px past About's padding at 280 px; measured with the name 0.12em wider than macOS sets it, Bead keeps 6 px of room there.

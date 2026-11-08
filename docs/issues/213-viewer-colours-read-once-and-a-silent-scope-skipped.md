@@ -8,7 +8,7 @@
 
 ## Decisions
 
-From 182 (Claude's calls, open to the owner, 2026-11-02):
+From 182 (Claude's calls, let stand by the owner in 1.23.0, 2026-11-02):
 
 1. **Measured before and after,** as review 18 measured (idle, the Demo, an 8-Voice chord, at 1×, 1.25× and 4× throttling), each change kept only if it shows.
 2. **What the person sees does not change.**
@@ -29,10 +29,10 @@ From 182 (Claude's calls, open to the owner, 2026-11-02):
 - Cycle Lock's run per Scope per frame
 
 **Acceptance criteria:**
-- [ ] Idle main-thread cost measured lower than before, at 1× and 4× (review 18's method), the figures written in the issue
-- [ ] A theme change, light to dark and back, redraws every Viewer in its new colours at once
-- [ ] A Note after silence is locked on the Scope as before, from its first cycles
-- [ ] Every Viewer test and the design audit pass unchanged
+- [ ] ~~Idle main-thread cost measured lower than before, at 1× and 4× (review 18's method), the figures written in the issue~~ (not checked at the time)
+- [ ] ~~A theme change, light to dark and back, redraws every Viewer in its new colours at once~~ (not checked at the time)
+- [ ] ~~A Note after silence is locked on the Scope as before, from its first cycles~~ (not checked at the time)
+- [ ] ~~Every Viewer test and the design audit pass unchanged~~ (not checked at the time)
 
 **Out of scope:**
 - The render loop at rest ([214](./214-the-silent-viewers-rest.md)), the Timeline ([215](./215-the-envelope-timeline-draws-only-new-columns.md)), the audio engine's pause ([216](./216-the-sound-engine-pauses-in-a-long-silence.md))
@@ -42,7 +42,7 @@ From 182 (Claude's calls, open to the owner, 2026-11-02):
 - **Cycle Lock skips its search on a silent Tap.** Before the windowed correlation, the Scope's buffer is scanned for its loudest sample; under 1e-6/√2 of full scale the correlation could never reach the floor under which it finds no fundamental, so the search is skipped and the Scope draws silence exactly as before. The first buffer with any sound in it is searched as ever, and the skip's threshold is derived from that floor, so the two cannot drift apart. Tests (`cycleLock.test.ts`): a silent buffer asks the pitch only for the span of silence drawn (red before); a Note after silence is locked from its first cycles; a Note at a ten-thousandth of full scale is still locked.
 - **The colours are not cached.** A cache of every Viewer's colours, read once and again on a change of the theme, the root's style or the window's colour scheme, was built test-first and measured, and showed nothing (below). Under decision 1 it was dropped: the Viewers still read their colours every frame, so a theme change redraws them in their new colours at once, as before.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **The colour cache dropped, not kept,** as decision 1 asks of a change that does not show. Reading a property from a style already up to date costs next to nothing: the frame's first `clientWidth` read has already brought the style up to date.
 2. **The skip's threshold proves no change in what is drawn,** rather than a looser "quiet" level: below it the old search returned nothing in any case, so nothing a Scope draws can change.
@@ -75,4 +75,4 @@ One thing seen beside the issue, not acted on: in these runs the 8-Voice chord t
 
 What to try in the app: nothing should look different. Play a Note after a silence and watch each Scope lock onto it from its first cycles. Then let it ring out, and check that the Scopes draw a flat line as before.
 
-**Since then (2026-11-05, [238](./238-tidy-ups-after-1-24.md)):** Cycle Lock skips its search on the Viewers' one definition of silence, every sample under a millionth of full scale, rather than under 1e-6/√2. Decision 2's proof no longer holds for a Tap between the two, whose trace, a millionth of the Scope's height, is no longer locked; nothing a Scope draws changes that can be seen. Claude's call, open to the owner.
+**Since then (2026-11-05, [238](./238-tidy-ups-after-1-24.md)):** Cycle Lock skips its search on the Viewers' one definition of silence, every sample under a millionth of full scale, rather than under 1e-6/√2. Decision 2's proof no longer holds for a Tap between the two, whose trace, a millionth of the Scope's height, is no longer locked; nothing a Scope draws changes that can be seen. Claude's call, let stand by the owner in 1.26.0.

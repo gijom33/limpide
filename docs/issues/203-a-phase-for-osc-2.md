@@ -9,5 +9,5 @@
 ## What a grilling would settle
 
 1. Whether Limpide's Oscillators restart in step on each Note today: to check first, as it decides whether a phase can be heard at all.
-2. A Phase knob on Osc 2 (0–360°), working only while the Oscillators restart together and greyed out otherwise, or no control and a Tutorial step or Preset showing phase cancellation at Detune 0 (Claude's options, open to the owner).
+2. A Phase knob on Osc 2 (0–360°), working only while the Oscillators restart together and greyed out otherwise, or no control and a Tutorial step or Preset showing phase cancellation at Detune 0 (Claude's options, let stand by the owner in 1.22.0).
 3. Its place on the C16 layout and in the Synth Geek Layer, if a control.

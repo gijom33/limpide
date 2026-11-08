@@ -60,8 +60,9 @@ export interface KeyEntry {
 
 /**
  * The key: what the Timeline draws with this Patch (`timelineShows`), in the owner's order (2026-10-28): what LFO 1
- * moves, then what LFO 2 moves, then the Cutoff and the Filter Envelope, last the Amp Envelope. An LFO on the Cutoff
- * shows as the Cutoff. With no Filter Envelope and no LFO, the Amp Envelope alone.
+ * moves, then what LFO 2 moves, then what aftertouch moves (issue 132), then the Cutoff and the Filter Envelope, last
+ * the Amp Envelope. An LFO on the Cutoff shows as the Cutoff. With no Filter Envelope, no LFO and no aftertouch, the
+ * Amp Envelope alone.
  */
 export function timelineKey(patch: Patch | undefined, aftertouch: LfoDestination | null): KeyEntry[] {
   const shows = timelineShows(patch, aftertouch);

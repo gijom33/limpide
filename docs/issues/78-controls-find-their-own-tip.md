@@ -37,7 +37,7 @@
 
 1. Version A: every Parameter's tip in one map, found by Knob and Fader themselves; the stage block's dead props go; nothing visible changes.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 2. Built in the session that grilled it, test-first, not pushed.
 

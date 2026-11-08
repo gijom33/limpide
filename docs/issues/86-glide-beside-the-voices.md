@@ -35,6 +35,6 @@
 ## How it was built
 
 - The cause: the Amp's controls are a container, and the Voices name went above its numbers only under 300 px, as every row's name does; beside them, the name, the numbers and Glide need about 308 px, so Glide wrapped at 300 to 308 px (718 to 725 px wide, 2 × 2; 1068 to 1089 px, three across).
-- A container query of the Voices row's own puts its name above its numbers under 325 px (`src/styles.css`, Claude's call on the margin, open to the owner).
+- A container query of the Voices row's own puts its name above its numbers under 325 px (`src/styles.css`, Claude's call on the margin, let stand by the owner in 1.15.0).
 - Test: "Glide stays right of the Voices numbers at every width (issue 86)" in `e2e/voices.spec.ts`, every 7 px from 340 to 1920, in Chromium and WebKit.
 

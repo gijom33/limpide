@@ -13,7 +13,7 @@ Decided by the owner, 2026-11-02:
 1. **On a small screen the Tour shows both the controls it moves and the Viewer that shows them,** at once where they fit.
 2. **Where they do not fit, each in turn, by scrolling:** the control while it moves, then the Viewer while it shows the result.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 3. **Every card, not the Amp's alone:** each Tour card that moves a control and points at a Viewer follows the same rule (the Oscillators, the Filter, the Amp, the LFOs), measured at each width the Tour supports.
 4. **The scroll is smooth and timed to the action:** the page scrolls to the control just before it moves, holds while it moves, then scrolls to the Viewer and holds through what the card shows there (on the Amp card, each freeze); the card stays where it is. With reduced motion, the page jumps instead of gliding.
@@ -69,7 +69,7 @@ Decided by the owner, 2026-11-03, answering the question below:
 - **What the page looks at:** each card's clock (`tourAt`) now also says whether the page shows the moving control or the Viewers. The control for its first second whenever it starts from rest (a knob's move, or its leg after a hold; each new Waveform), else the Viewers. On the Amp card that is the fader through its 1 s turn and its 0.8 s return after the freeze (the next fader's turn follows on the same row), and the Timeline from the Note's onset through its freeze. In the control's turn the page brings the control and as many Viewers as fit with it; in the Viewers' turn the Viewers and the control if it fits. So where both fit the two turns are the same scroll and the page holds still.
 - **Smooth, or a jump** with reduced motion, as before; the card stays where it is.
 - **The person's scroll** (the wheel, a finger, the scroll keys, the scroll bar) stops the Tour's scrolling, and its re-scroll when the card changes size, for the rest of that card. A wheel or finger turning a control, or a key a control takes, is not a scroll.
-- **Claude's calls, open to the owner:**
+- **Claude's calls, let stand by the owner in 1.23.0:**
   1. **The rule goes by fit, at every width,** not by the phone's breakpoint. The brief said everything fits from 2 × 2 up; it does on tall windows (601 × 960, 860 × 1100, where the page now holds still as before), but not on windows about 800 px tall: there the Amp card (2 × 2 and a 1280 × 800 laptop), the LFO card and the Oscillators card (2 × 2) now show the control and the Viewer in turn. That follows decisions 1 and 2 and the criterion naming 601 and 860 px; it changes the Tour on short 2 × 2 and laptop windows, against "from 2 × 2 up, unchanged". Keeping it to phones would be a one-line change.
   2. **A sweep shows its control for its first second only,** then the Viewers for the rest (the Filter's Cutoff falls over 4 s and comes back over 4 s; the page goes to the Viewers after 1 s and stays for the climb back). Holding the control through the whole sweep would keep the Viewers, where the card's words point, out of view for most of the card.
   3. **The control's turn starts as the move does,** not before: the smooth scroll takes part of that first second. On the Amp card the fader's turn starts as the freeze ends, so the freeze is always seen whole.
@@ -81,7 +81,7 @@ Decided by the owner, 2026-11-03, answering the question below:
 
 ## Questions for the owner
 
-Written by the night's lead, 2026-11-02 (Claude's call, open to the owner: the code is kept on the night branch rather than set back, since the other answer is a one-line change and the owner is away all day).
+Written by the night's lead, 2026-11-02 (Claude's call, let stand by the owner in 1.23.0: the code is kept on the night branch rather than set back, since the other answer is a one-line change and the owner is away all day).
 
 1. **By fit at every width, or on phones alone?** The measurement found "from 2 × 2 up everything fits" true only on tall windows: about 800 px tall, the Amp card does not fit at 2 × 2 or on a 1280 × 800 laptop, nor the LFO and Oscillators cards at 2 × 2. As built, the Tour scrolls between control and Viewer wherever they do not fit, which changes those short 2 × 2 and laptop windows against the criterion "from 2 × 2 up, unchanged". Claude's recommendation: keep it by fit, since a card whose Viewer is out of view on a laptop shows nothing of its effect; or limit it to phones (one line), leaving short laptops as they were.
 

@@ -10,7 +10,7 @@ describe('defaultPatch', () => {
     }
   });
 
-  it('gives the Voice an Oscillator, a Filter and an Amp Envelope', () => {
+  it('holds every Parameter of the Oscillators, the Mixer, the Filter, the Envelopes, the LFOs and the Amp', () => {
     expect(Object.keys(PARAMS).sort()).toEqual(
       [
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',

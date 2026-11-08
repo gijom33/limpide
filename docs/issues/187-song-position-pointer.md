@@ -4,4 +4,4 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. v2, not committed (Claude's call, open to the owner): beyond what 136 set for v1, by the scope rule ([131](./131-v1.md)); small, as the parser already reads its two bytes, so the owner may move it into v1
+**Status:** needs-triage · enhancement. v2, not committed (Claude's call, let stand by the owner in 1.22.0): beyond what 136 set for v1, by the scope rule ([131](./131-v1.md)); small, as the parser already reads its two bytes, so the owner may move it into v1

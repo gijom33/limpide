@@ -1,4 +1,4 @@
-import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
 import { knownController, pluggedIn, setAside, takeLayout } from '../../midi/controller';
@@ -102,15 +102,35 @@ export function useMidi(host: Host) {
   const lastBank = useRef<number | undefined>(undefined);
   const [bankFollow, setBankFollow] = useState<{ name: SectionName; key: number } | null>(null);
 
-  const onLearned = useRef((mapping: Mapping): void => void mapping);
+  // The known Controllers seen sending positions from knobs their layout has Relative: the MIDI panel says how to set
+  // them, once each this visit (issue 255).
+  const [sendingPositions, setSendingPositions] = useState<readonly ControllerId[]>([]);
+  // The controls whose knob Pickup waits for, by target, with the way to turn it (issue 255): each shows it until the
+  // knob crosses its value. Changed only as one starts or stops waiting, so a stream of CCs renders nothing; forgotten
+  // as the Mappings change or the Patch is changed other than by a Controller (a Preset, the screen), when the way to
+  // turn may have changed, and shown again at the knob's next move.
+  const [pickups, setPickups] = useState<ReadonlyMap<string, 'up' | 'down'>>(() => new Map());
+  const pickupsRef = useRef(pickups);
+  /** One control's cue set (a way) or taken away (none); every control's taken away with `null`. */
+  const setPickup = useCallback((key: string | null, way?: 'up' | 'down') => {
+    if (key === null ? !pickupsRef.current.size : pickupsRef.current.get(key) === way) return;
+    const next = new Map(key === null ? [] : pickupsRef.current);
+    if (key !== null && way) next.set(key, way);
+    else if (key !== null) next.delete(key);
+    pickupsRef.current = next;
+    setPickups(next);
+  }, []);
+  const onLearned = useRef((mapping: Mapping, took: readonly Mapping[]): void => void [mapping, took]);
   const surface = useMemo(() => {
     const flashes = new Map<string, ReturnType<typeof setTimeout>>();
-    // The knob a Controller moved shows it for a moment ('waiting' while Pickup has not caught it yet).
-    const flash = (target: Target, state: 'moved' | 'waiting') => {
+    // The knob a Controller moved shows it for a moment; while Pickup has not caught it yet, it shows it waits.
+    const flash = (target: Target, state: 'moved' | 'waiting', way?: 'up' | 'down') => {
       const key = targetKey(target);
+      setPickup(key, state === 'waiting' ? way : undefined);
       const element = document.querySelector<HTMLElement>(`[data-learn="${key}"]`);
       if (!element) return;
       reveal(element);
+      if (state === 'waiting') return;
       element.dataset.midi = state;
       clearTimeout(flashes.get(key));
       flashes.set(key, setTimeout(() => delete element.dataset.midi, 400));
@@ -151,34 +171,37 @@ export function useMidi(host: Host) {
       pressure: (amount) => keyboard.current.onPressure(amount),
       // All Sound Off (issue 185): every Voice silent at once, the Notes the Controller held released first.
       silence: () => session.engine.silence(),
+      sendsPositions: (known) => setSendingPositions((ids) => (ids.includes(known.id) ? ids : [...ids, known.id])),
       learnChanged: (state) => {
         setLearn(state);
-        if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
+        if (state.phase === 'armed' && state.learned) onLearned.current(state.learned, state.took ?? []);
       },
     });
-  }, [mappingStore, session, patches, viewers, pressHoldRef]);
+  }, [mappingStore, session, patches, viewers, pressHoldRef, setPickup]);
 
   // An LFO's Sync switched, however: the Rate knob turns the other of its Hz and its note value, so what a Relative knob
   // had gathered towards a step of one is forgotten (issue 193).
   useEffect(
     () =>
-      patches.subscribe(({ before, after }) => {
+      patches.subscribe(({ before, after, by }) => {
+        if (by !== 'controller') setPickup(null);
         for (const lfo of [1, 2] as const)
           if (rateKnob(before, lfo) !== rateKnob(after, lfo)) surface.restartSteps({ kind: 'param', id: LFO_KEYS[lfo].rate });
       }),
-    [patches, surface],
+    [patches, surface, setPickup],
   );
 
   // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
   const [setup, setSetup] = useState<QuickSetupState | null>(null);
-  const [setupLast, setSetupLast] = useState<{ step: number; mapping: Mapping } | null>(null);
+  const [setupLast, setSetupLast] = useState<{ step: number; mapping: Mapping; took: readonly Mapping[] } | null>(null);
   const setupRef = useRef(setup);
+  const lastTook = useRef<readonly Mapping[]>([]); // what the step learned last took, for its card to say (issue 255)
   const updateSetup = (event: QuickSetupEvent | { type: 'start' }) => {
     const current = setupRef.current;
     const next =
       event.type === 'start' ? startQuickSetup(QUICK_SETUP, mappingStore.list()) : current && quickSetupReducer(current, event);
     if (!next || next === current) return;
-    if (event.type === 'learned' && current) setSetupLast({ step: current.index, mapping: event.mapping });
+    if (event.type === 'learned' && current) setSetupLast({ step: current.index, mapping: event.mapping, took: lastTook.current });
     if (event.type === 'start') setSetupLast(null);
     setupRef.current = next.phase === 'cancelled' ? null : next;
     setSetup(setupRef.current);
@@ -191,7 +214,10 @@ export function useMidi(host: Host) {
     }
   };
   const finishSetup = useEffectEvent(() => updateSetup({ type: 'finish' }));
-  onLearned.current = (mapping) => updateSetup({ type: 'learned', mapping });
+  onLearned.current = (mapping, took) => {
+    lastTook.current = took;
+    updateSetup({ type: 'learned', mapping });
+  };
   const closeSetup = () => {
     setupRef.current = null;
     setSetup(null);
@@ -225,12 +251,15 @@ export function useMidi(host: Host) {
       document.removeEventListener('keydown', onKey, { capture: true });
     };
   }, [learning, surface]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the Mappings changed are the cue to forget
+  useEffect(() => setPickup(null), [mappings, setPickup]);
   const learnContext = useMemo(
     () => ({
       mapped: new Set(mappings.map((m) => targetKey(m.target))),
       selected: learn.phase !== 'off' && learn.target ? targetKey(learn.target) : null,
+      pickups,
     }),
-    [mappings, learn],
+    [mappings, learn, pickups],
   );
   // The control MIDI Learn is waiting for is shown, even on a hidden tab.
   useEffect(() => {
@@ -308,7 +337,7 @@ export function useMidi(host: Host) {
   }, [surface, midiWanted, mappingStore, storage, session, activity]);
 
   return {
-    midi, activity: readActivity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
+    midi, activity: readActivity, pressureHeard, mappings, sendingPositions, mappingStore, learn, learning, learnContext, surface,
     setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };

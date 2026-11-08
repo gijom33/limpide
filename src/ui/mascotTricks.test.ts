@@ -35,7 +35,7 @@ describe("the mascot's funny turns (issue 115)", () => {
     expect(PICKED_TRICKS).not.toContain('scared');
   });
 
-  it('every one moves it, and ends back as it was', () => {
+  it('every one moves it', () => {
     for (const name of Object.keys(TRICK_MOVES) as Trick[]) {
       const { poses } = play(name);
       expect(poses.some((p) => JSON.stringify(p) !== JSON.stringify(resting)), name).toBe(true);

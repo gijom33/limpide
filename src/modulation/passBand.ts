@@ -1,8 +1,8 @@
 import type { FilterMode } from '../patch/patch';
 
 /**
- * The frequency ranges a Filter Mode lets through, as [low, high] pairs in Hz: what the Envelope Timeline
- * shades. `bandwidth` (octaves) applies to band-pass and notch, centred on the Cutoff.
+ * The frequency ranges a Filter Mode lets through, as [low, high] pairs in Hz. `bandwidth` (octaves) applies to
+ * band-pass and notch, centred on the Cutoff.
  */
 export function passBand(mode: FilterMode, cutoff: number, bandwidth: number, { min, max }: { min: number; max: number }): [number, number][] {
   const clamp = (f: number) => Math.min(max, Math.max(min, f));

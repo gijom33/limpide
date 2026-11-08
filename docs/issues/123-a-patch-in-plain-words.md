@@ -20,7 +20,7 @@
 - The Patch, the line under the Patch name
 
 **Acceptance criteria:**
-- [ ] Unit tests give the phrase for Init and for a dozen Presets, each read and accepted as true by the fact-check before the push
+- [ ] ~~Unit tests give the phrase for Init and for a dozen Presets, each read and accepted as true by the fact-check before the push~~ (not checked at the time)
 - [x] Turning a knob changes the line within a moment; a Preset shows its own about line until a knob is turned
 - [x] At every layout the line fits or is cut with an ellipsis, never pushing the header
 
@@ -46,14 +46,14 @@ The unit tests give Init's phrase and sixteen Presets' (Rubber among them), each
 **The line.** Under the Patch name once the sound is not a Preset as loaded: after the first change to the sound, or for a saved, imported or shared Patch or the last session. A Preset as loaded shows none (by the arrows), or its own about line when picked in the Patches panel (issue 153), until a knob is turned. It follows the knobs at most four times a second, and goes at once on a load. A synced LFO is read at the page's tempo. Built in `src/ui/hooks/usePatchWords.ts` and the Patch bar.
 
 - **From 861 px** it lies where the about line's words lie, one line under the header's left end, as wide as the Oscillators and the Filter, in the room above the Sections (it needs 20 px of the 41), cut with an ellipsis.
-  **Since then (2026-11-01, issue 154):** from 861 px wide and 700 px tall the Sections start 8 px lower, room for Bead under the header, so that room is 8 px taller. Claude's call, open to the owner.
+  **Since then (2026-11-01, issue 154):** from 861 px wide and 700 px tall the Sections start 8 px lower, room for Bead under the header, so that room is 8 px taller. Claude's call, let stand by the owner in 1.21.0.
 - **Up to 860 px** (the 2 × 2 and phones) there is no room under the header: it is sticky, and the Sections or their strip begin right under it, and under the Patch name sits the next row of buttons. The words are the Patch name's second line there, in the 9 px of the header buttons' words, cut with an ellipsis within the name.
 
 An e2e test turns a knob from a Preset picked in the panel, watches the line change within a second, keeps it through a save and loses it on the arrows; another sets every Preset's phrase, as drawn and in wider type, at 320, 375, 700, 861, 1100, 1440 and 2000 px, and checks it on one line or ending in an ellipsis, clear of the Sections and within the Filter's right edge (or inside the Patch name), the header's and the name's sizes unchanged. The design audit has the line as one more state; Bead keeps clear of it as of the about line.
 
 **The octave buttons are no change** (found after the build, 2026-11-01): the Song spec's first test caught the words coming under Init once Octave up was pressed, as the line compared the whole Patch, the keyboard octave the buttons write into it (issue 126) included. The octave says where the keys start, not the sound, and the Patch's changed dot already left it out; so the words and the Preset's about line now go by the sound alone: an octave moved brings no words and leaves the about line showing. The Song, the Demo and the Tutorials move the octave shown without writing it into the Patch, so they bring none either; the Demo and the Tutorials bring the words only as their Steps turn knobs (call 4). A patches spec test covers it, and the Demo spec reads the name alone, as its knobs' words follow a moment after it stops.
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.21.0):
 
 1. **Its place up to 860 px:** the Patch name's second line, small. The alternatives were a row of its own in the header (which pushes the header) or no line on phones and the 2 × 2.
 2. **The Note the words are measured on:** the G in the middle of the Patch's keys, so "filtered low" is true where the Patch is meant to be played; on a much higher Note without Key Track a Filter called "low" cuts more, on a much lower one less.

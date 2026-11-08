@@ -17,7 +17,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
+**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
 
 ## Decisions
 
@@ -45,9 +45,40 @@ Decided by the owner (2026-11-07, "Yes to both"):
 - The PWM Tutorial's words
 
 **Acceptance criteria:**
-- [ ] A test: a 10 % pulse is above its middle for 10 % of the cycle; Harmonics' levels unchanged from before
-- [ ] The claim tests cover items 2 to 12
-- [ ] The Scope's and the Tutorials' tests pass with the pulse the right way up
+- [x] A test: a 10 % pulse is above its middle for 10 % of the cycle; Harmonics' levels unchanged from before
+- [x] The claim tests cover items 2 to 12
+- [x] The Scope's and the Tutorials' tests pass with the pulse the right way up
 - [ ] The fact-checker, at the next release, finds these claims true
 
 **Out of scope:** the Presets' levels ([258](./258-preset-levels-across-the-keyboard.md)); Felt Piano's Velocity claim (258's).
+
+## How it was built
+
+1. **The pulse, high for its width** (the Decision): the engine still builds it from a saw and a copy of the saw delayed by the width's share of a cycle, but now plays the copy less the saw, not the saw less the copy. It is high from each drop of the saw until the copy's, so a 10 % pulse is above its middle for 10 % of the cycle, at every width and under PWM (the delay moves, the sign never does, so a moving width clicks no more than before). The Harmonics' levels are exactly as before: the wave is the old one turned over. The Ideal Reference's own pulse (for Ring's and FM's cycles) turns with it. The Pulse's Geek formula now says "high for d of each cycle and low for the rest". The Pulse Width tip, the glossary, Thin Pulse's "narrow blip", PWM Morph's "needle" and the Tutorials' "how long each pulse stays up" were already worded this way up and are now true; none changed. Issues 9, 94 and 96 have a dated line.
+2. **The words**, each to what review 13 measured, and each with a test that renders it:
+   - Slow Beats: "swells and fades, about once every second or two in the middle of the keyboard, faster higher up" (the dips 1.4 to 2 s apart on C4, over 0.85 s on A4, closer on C5).
+   - Rolling Fifth: "Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a major sixth" (5 to 5.5 and 8.5 to 9 semitones over the Note).
+   - Square on Square: "every Harmonic of the lower one present but every fourth, which neither square has" (rungs 4, 8 and 12 under −60 dB, the rest over −30).
+   - Init: "a low-pass Filter at 2 kHz" (its Cutoff 2 kHz throughout, the 16th Harmonic over 6 dB under an open Filter's). The Tour's comment says the same.
+   - Deep Sweep: "the Response Curve sweeps four octaves, from 200 Hz to 3.2 kHz on C4".
+   - Perfect Fifth: "rolling about every two seconds on C4, faster higher up" (the two-cycle pattern comes back after 1.5 to 2.5 s on C4, under two thirds of that on C5).
+   - Self-Oscillation: "the Harmonic nearest the Cutoff rings out about 8 dB over the rest" (over 7 dB above Harmonics 1, 2, 4 and 5 on C4, and nothing at 900 Hz between them).
+   - Clang Alarm: "between a pure sine and a full metal clang and back two and a half times a second" (a new state each fifth of a second); Trill "there and back six times a second" (its test already heard a new pitch each twelfth of a second; its name now says so).
+   - Rave Stab: "a triad a stab of its Notes, their fifths and the Sub under them" (all nine tones of C–E–G).
+   - Ride: "a clashing metal cymbal", no longer the 808's recipe.
+   - The tips: the LFO plot's "Saw Down jumps up and ramps down"; Hold's "resting a beat after the last tap before starting over"; the Resonance Destination "up to its whole range, but only as far each way as its knob leaves room", as FM's says (Breathing Pad's 30 % swings from 0 to 60 %).
+3. **Tests:** the engine's pulse tests (10, 25 and 75 % high for their width, and 90 % and 10 % at an LFO's top and bottom); the claim tests in the Presets' browser tests; the LFO shapes' and Hold's in their unit tests; the Geek formula's. Issue 258's levels hold within 1 dB, unchanged.
+
+**Claude's calls, open to the owner:**
+
+1. **The pulse turned over, not delayed the other way:** playing the copy less the saw keeps the delay a width long. Delaying by the rest of the cycle instead would have kept the sign but made a restart hold the old cycle for most of a cycle rather than a width. One heard change follows, small: a pulse on Osc 2 swinging Osc 1 through FM now swings the other way, so its upper and lower sidebands trade levels (the Ideal Reference follows; no Preset uses a pulse there). A pulse beside a saw or a square on the other Oscillator, in tune, adds with the other sign; detuned, as every factory Preset that does it is, nothing changes on average. The Sub never shares a Harmonic with Osc 1, so PWM Bass is as it was.
+2. **Ride's 808 dropped rather than sourced:** its two squares through Ring and Noise are not the 808's six squares, so a source for the 808 would not make the old words true; "a clashing metal cymbal" is a listening word, its fade tested as before.
+3. **Rolling Fifth says "nearly a major sixth"**, where the review's wording said "a minor sixth": 8.8 semitones is past a minor sixth (8).
+4. **Perfect Fifth loses "(nearly 3:2)"** to stay within five lines on a phone with the longer roll; "2 cents short of 3:2" still says it.
+5. **ADR-0001 left as it is:** it says a pulse is "a saw minus a delayed copy of itself"; the decision, a pulse built from a saw and its delayed copy so its width can move, holds, and only the sign has turned. A new ADR for the sign alone seemed more than it needs.
+
+**What to try in the app:**
+
+- Play Thin Pulse and look at the Oscillator Scope: the narrow blip now points up. Turn Pulse Width: the high part widens with the knob. PWM Bass and PWM Morph sound as before.
+- Read the words of Slow Beats, Rolling Fifth, Perfect Fifth, Square on Square, Self-Oscillation, Deep Sweep, Clang Alarm, Trill, Rave Stab, Ride and Init, and play each against them.
+- Hover the LFO plot, Hold, and the LFO Destination picker for the reworded tips; turn the Synth Geek Layer on and read the Pulse's formula under the hood.

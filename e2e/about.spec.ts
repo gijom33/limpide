@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
+import { steady } from './helpers';
 import { BEAD_ON, holding, WELCOMED } from './startState';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -192,7 +193,8 @@ test.describe('Bead in About (issue 163)', () => {
       await expect(card(page)).toBeVisible();
       await expect(credits(page)).toHaveCount(0);
       await expect(bead(page)).toHaveAttribute('aria-expanded', 'true');
-      for (const words of ['water drop', 'tickle', 'Display', 'B, E, A, D']) await expect(card(page)).toContainText(words);
+      // A finger as well as the mouse, and the throw, the best trick on a tablet (issue 260).
+      for (const words of ['water drop', 'tickle', 'finger', 'thrown', 'Display', 'B, E, A, D']) await expect(card(page)).toContainText(words);
       await expect(card(page).getByRole('listitem').first()).toBeVisible();
       await expect(card(page).getByRole('link', { name: 'All its secrets' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide/blob/main/docs/bead.md');
       await card(page).getByRole('button', { name: 'Back' }).click();
@@ -293,11 +295,11 @@ test.describe('About holds the page still (issue 209)', () => {
       const at = await centre(part);
       await page.mouse.move(at.x, at.y);
       for (const dy of [600, -200, 600]) await page.mouse.wheel(0, dy);
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(300); // a time: a scroll the wheel set off would be under way; none must come
       expect(await page.evaluate(() => scrollY), 'the wheel').toBe(y);
     }
     for (const key of ['PageDown', 'ArrowDown', 'End']) await page.keyboard.press(key);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: a scroll the keys set off would be under way; none must come
     expect(await page.evaluate(() => scrollY), 'the keys').toBe(y);
     await about(page).getByRole('button', { name: 'Close About' }).click();
     await expect(about(page)).toBeHidden();
@@ -327,7 +329,7 @@ test.describe('About holds the page still (issue 209)', () => {
       await touch('touchStart', from.y);
       for (let i = 1; i <= 10; i++) await touch('touchMove', from.y - (by * i) / 10);
       await touch('touchEnd', from.y - by);
-      await page.waitForTimeout(400); // any fling done
+      await steady(page, about(page).locator('.about-credits')); // any fling done
     };
 
     test('a finger dragged on About scrolls nothing behind it; the credits scroll inside it; its × leaves the page there', async ({ page }) => {
@@ -382,4 +384,14 @@ test('About and the page’s description say what Limpide shows, the title still
   await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', line);
   await page.getByRole('heading', { level: 1 }).getByRole('button', { name: 'Limpide' }).click();
   await expect(page.getByRole('dialog', { name: 'Limpide' }).locator('.about-tagline')).toHaveText(line);
+});
+
+test('About’s Play the Demo, clicked, leaves no tip open (issue 252)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'About', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Play the Demo', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
+  // None on the Demo button (WebKit may show a hover tip under the pointer where About was).
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Turn a knob or flip a switch while it plays' })).toHaveCount(0);
 });

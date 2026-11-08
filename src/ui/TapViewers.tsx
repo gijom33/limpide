@@ -6,6 +6,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { createSilence } from '../viewers/rest';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
+import { writeHooks } from '../viewers/testHooks';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { Tooltip } from './Tooltip';
 import { VIEWER_TIPS } from './tips';
@@ -72,11 +73,12 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
       const glowSame = view().glow === glow;
       glow = view().glow;
       const settled = silence((silent || paused()) && glowSame, performance.now()) > GLOW_MS;
-      drawScope(settled);
-      drawSpectrum(settled);
-      // Written once every draw of the frame has read the page (issue 221).
+      const scopeHooks = drawScope(settled);
+      const spectrumHooks = drawSpectrum(settled);
+      // Written once every draw of the frame has read the page (issue 221), only what changed (issue 257).
       return () => {
-        if (scopeRef.current!.dataset.db !== String(db)) scopeRef.current!.dataset.db = String(db);
+        writeHooks(scopeRef.current!.dataset, { ...scopeHooks, db: String(db) });
+        writeHooks(spectrumRef.current!.dataset, spectrumHooks);
       };
     });
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote]);

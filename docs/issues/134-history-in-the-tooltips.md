@@ -47,13 +47,13 @@ Claude's recommendations, each accepted ("ok", "OK with all"), on the research's
 - CONTEXT.md, if History needs an entry
 
 **Acceptance criteria:**
-- [ ] With the Synth Geek Layer on, each control the research drafts a well-sourced line for shows History last in its tip; off, nothing changes
-- [ ] Every line is one sentence of at most about 160 characters, with no "first" unless quoted, and FM's line as decision 9 says
-- [ ] A unit test: every History line names a source graded A or B in the research file
-- [ ] About links "History's sources"
-- [ ] On a 375 px phone a History line shows whole in the touch-and-hold tip
-- [ ] The tooltip specs cover it; the fact-checker's pass before the release; the owner reads the lines
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~With the Synth Geek Layer on, each control the research drafts a well-sourced line for shows History last in its tip; off, nothing changes~~ (not checked at the time)
+- [ ] ~~Every line is one sentence of at most about 160 characters, with no "first" unless quoted, and FM's line as decision 9 says~~ (not checked at the time)
+- [ ] ~~A unit test: every History line names a source graded A or B in the research file~~ (not checked at the time)
+- [ ] ~~About links "History's sources"~~ (not checked at the time)
+- [ ] ~~On a 375 px phone a History line shows whole in the touch-and-hold tip~~ (not checked at the time)
+- [ ] ~~The tooltip specs cover it; the fact-checker's pass before the release; the owner reads the lines~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Under the hood's formulas ([133](./133-the-maths-layer-complete.md))
@@ -76,8 +76,8 @@ For each control and Section: who first built it or named it, when, on which ins
 - **Which tips:** the Filter and its Cutoff, Resonance, Filter Mode, Slope, Key Track, Velocity → Cutoff and Envelope Amount; one line for Attack, Decay, Sustain and Release on both Envelopes, shared by the Amp Envelope's heading; the Filter Envelope's own; the Oscillators, Waveform, Pulse Width, both Octaves, Semitone (and Tuning, the same line), Detune, Osc 2's Env Amount, FM, Ring, the Sub (its fader and its options), Noise and Noise colour, the Mixer; the Amp and Volume (one line), Voices; the LFO, Rate and Depth; Glide, Pitch bend range, Hold, MIDI; the three Spectrums and the Harmonic Markers. None on Freeze, Snapshot, Theme, Demo, the C16's, the Scopes, Retrigger, Sync or the Timeline.
 - **The test:** a unit test reads the research file, its source list and each fact's mark with what it cites, and fails on a line citing no source, an unlisted one, or one with no fact graded A or B; it also checks the length, one sentence, no "first", FM's order, the shared stages' line, and that each line is in some tip. The research file says so, so its two forms are kept when it is edited.
 - **About:** the credits gain a History row: "The Synth Geek Layer's History lines, each fact with its source and how sure it is: History's sources", linking the research file on GitHub. [The release steps](../releasing.md) now send the fact-checker to it for a new or changed line (decision 12). CONTEXT.md has a History entry.
-- **On a phone:** at 375 px the tallest tip with a History line, FM's, is 580 px high. A tip too tall for the room above and below its control now slides down from the top of the screen, over its control, so it shows whole, where before its top ran off the screen (Claude's call, open to the owner).
-- **Calls open to the owner** (all Claude's call):
+- **On a phone:** at 375 px the tallest tip with a History line, FM's, is 580 px high. A tip too tall for the room above and below its control now slides down from the top of the screen, over its control, so it shows whole, where before its top ran off the screen (Claude's call, let stand by the owner in 1.21.0).
+- **Calls let stand by the owner in 1.21.0** (all Claude's call):
   1. **The Minimoog's year is left out** everywhere: the research sources no date for it (its manual is undated, its accessory sheets July 1971), so "the Minimoog (1970)" of the drafts would rest on nothing.
   2. **FM's line names the DX7** as decision 9 says, without its year (decision 14), though the DX7 itself rests on a C source; its listed sources are the A and B ones (Prophet-5, Chowning's paper, the Yamaha licence of 1975). The fact-checker may want the DX7's primary found, or the line to end at "Yamaha's from 1975".
   3. **Lines reworded off the C facts** (decision 14): Filter Mode says Moog's low-, high- and band-pass of 1964 (no Oberheim SEM, no notch); Slope says Moog's four stages and ARP's "24Db per octave" (no SEM); Detune quotes the Minimoog's "nearly in unison" (no organ celeste); Velocity → Cutoff is the A-only alternative (no CS-80, no MIDI velocity); the stages' line is Buchla's and ARP's (no Ussachevsky); Octave drops the organ's feet; Ring keeps the two patents (no Stockhausen year, no Daleks).

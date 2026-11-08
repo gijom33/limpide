@@ -5,7 +5,7 @@ import { midiButton, midiPanel, openMidi, withFakeController } from './fakeMidi'
 // Issue 44: one header across the layouts, its controls the same at every width (the Wordmark and the Patch; the
 // keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song), and Tab meeting them as they stand on screen
 // (issue 104); the octave buttons stacked beside the piano. Up to 860 px three rows, the buttons on one, the piano's 17
-// keys at a finger's width, and the rows above the keyboard slide away on scrolling (issue 152). From 861 px one line:
+// keys at a finger's width (one octave on a phone), and the rows above the keyboard slide away on scrolling (issue 152). From 861 px one line:
 // the buttons right of the keyboard in columns of two (arrangement C), the piano growing into the room they leave
 // (issue 154).
 
@@ -131,8 +131,7 @@ test('from 861 px the buttons right of the keyboard stand as tall as the keys, 8
 });
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page, browserName }) => {
-    test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+  test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await page.locator('.piano button').first().waitFor();
@@ -178,8 +177,8 @@ for (const [size, [width, height]] of Object.entries(SIZES).filter(([s]) => s ==
     expect(h.whiteKey).toBeGreaterThanOrEqual(42);
     expect(h.whiteKey).toBeLessThanOrEqual(44);
     expect(h.piano.height).toBe(64);
-    // What is left over, under one key, opens between the Patch and the keyboard: the keyboard meets Hold 12 px away.
-    expect(h.hold.left - h.piano.right).toBeLessThanOrEqual(12);
+    // What is left over, under one key, opens between the Patch and the keyboard: the keyboard meets Hold 8 px away (issue 188).
+    expect(Math.abs(h.hold.left - h.piano.right - 8)).toBeLessThanOrEqual(1);
   });
 }
 
@@ -192,7 +191,7 @@ test('at the top octave the piano stops at G9 and still meets Hold, its keys as 
   const h = await header(page);
   expect(h.whiteKeys).toBeLessThan(before.whiteKeys);
   expect(h.whiteKey).toBeCloseTo(before.whiteKey, 1);
-  expect(h.hold.left - h.piano.right).toBeLessThanOrEqual(12);
+  expect(Math.abs(h.hold.left - h.piano.right - 8)).toBeLessThanOrEqual(1);
 });
 
 test('on the narrowest laptop windows the piano takes what the header leaves, its keys still 26 px or more', async ({ page }) => {

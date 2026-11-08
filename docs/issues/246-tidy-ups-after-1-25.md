@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-05, triage):
+Claude's calls, let stand by the owner in 1.25.0 (2026-11-05, triage):
 
 1. **Bead's choices' tidy-ups (items 4 to 6) go into [245](./245-beads-frame-read-decide-draw.md) instead if 245 is built first:** it reshapes the same code.
 2. **222's frame still deciding a few things inline** is left to 245, which takes the deciding out of the frame; nothing here.
@@ -60,7 +60,7 @@ Built (2026-11-05) on night/2026-11-05, after 228, 238, 241 to 245, test-first w
 10. **The three claims:** mended and tested. The Filter's `where` says its formula is the analogue one, and gives the browser's figures near the top (a low-pass at a 2 kHz Cutoff and a Q of 0.71, at 48 kHz: −44.8 against −36.1 dB at 12 dB, −89.5 against −72.2 at 24 dB; checked by hand). The Pulse's peak of 1 is said to be a ±1 Pulse's, and the one played is said to run from −2d to 2(1 − d), −0.5 to +1.5 at 25 %. FM's `where` says FM is kept smaller on high Notes, β with it.
 11. **The three flakes:** 211's and 204's tests are now scripted unit tests (245), frame by frame at a steady 60 frames a second, so load can no longer make them fail. In the script, Bead lands about half a second before the page stops, in 2 × 2 and on a phone. The 17 that the browser test measured were milliseconds, not pixels: 5654 against 5637.3 is one frame. A likely cause is a frame dropped under the whole suite's load, but it was not confirmed in a browser, since that test no longer runs there. The contrast check was not touched: it failed once and passed alone, so it counts as a load flake and its limits stay.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.26.0:**
 
 1. **A fold made on the "you are playing now" card in three and four across is the layout's,** so it is not remembered, like a fold made on the small card (230's call 2). This card has no fold button anyway.
 2. **The session's fold comes before storage's** while the page is open: a fold made in another tab shows from the next visit, not in this tab.

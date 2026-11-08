@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-03, triage):
+Claude's calls, let stand by the owner in 1.24.0 (2026-11-03, triage):
 
 1. **The ear check's fixes first,** measured as it measured: Talking Filter with Key Track about 0.5 on its band-pass (or a Cutoff near 1 kHz), Riser with Key Track 0.5; whichever keeps each Preset's sound in its usual range and mends the top.
 2. **Each Preset's words still true after,** the fact-checker's method.
@@ -35,7 +35,7 @@ Claude's calls, open to the owner (2026-11-03, triage):
 - [x] Talking Filter measured on C3, C4 and C5 against the rule above; C3 and C4 within 1 dB of now
 - [x] Riser measured on C2, C4, C6 and C7 held through its Attack: never silent before its release on C6
 - [x] Their descriptions still true; the Preset tests pass
-- [ ] Tried by the owner by ear
+- [ ] ~~Tried by the owner by ear~~ (not checked at the time)
 
 **Out of scope:**
 - Other Presets; the Filter's answer at the top (issue 195)
@@ -65,7 +65,7 @@ On release both still swell back and fade, as before. Riser's C6 sits 2.5 dB ove
 
 The tests: a new one, "two Presets high up (issue 226)", holds both rules: Talking Filter on C3, C4 and C5 never has one Harmonic over 80 % for more than 60 ms, C3 and C4 within 1 dB of the levels above; Riser on C6 and C7 never under −40 dBFS from half a second after the Note to its release, C2 within 1 dB and C4 within 0.1 dB of before, every Note under the limiter's knee. Issue 205's band-pass check now asks the fundamental and everything above 8 kHz to be more than 6 dB under the open saw at the band's widest (13.3 and 9.3 dB), as above 4 kHz the 1 kHz band is only 3.4 dB short (6.3 at 800 Hz). Issue 195's check of a high-pass falling silent at the top now plays Riser at Key Track 1, where it still reaches it. Issues 125, 195 and 205 have a dated line.
 
-### Calls made (Claude's call, open to the owner)
+### Calls made (Claude's call, let stand by the owner in 1.24.0)
 
 - **Both of the ear check's fixes for Talking Filter, not one:** Key Track 0.5 alone still left C5 one Harmonic for up to 100 ms (34 windows over 80 %); a Cutoff of 1 kHz alone up to 120 ms. Key Track 1 cleared C5 but made C3 2.3 dB louder (0.75: 1.8 dB), past the 1 dB the issue keeps. Key Track 0.5 with 1 kHz clears C5 with the most room of those tried (0.55 with 950 Hz is about as good), C3 +0.4 dB, C4 −0.7 dB. The vowels on C4 sit a little higher, about a third.
 - **Riser at Key Track 0.5, as the ear check proposed:** its low Notes move a little: C2's high-pass now rises from 100 Hz rather than 50, so C2 is 0.5 dB quieter at its loudest and up to 1.8 dB quieter early in its rise. Issue 125 chose Key Track 1 to keep C6 within its family; at 0.5 it is 2.5 dB over, inside the 3 dB the level test allows.

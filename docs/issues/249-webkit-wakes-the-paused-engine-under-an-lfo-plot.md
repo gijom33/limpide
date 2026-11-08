@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-06, triage):
+Claude's calls, let stand by the owner in 1.26.1 (2026-11-06, triage):
 
 1. **The cause is found first, with a loop that goes red:** the test run alone in WebKit on the Mac, many times, until it fails at a known rate; then whether the engine was woken (by what, and when) or only read before WebKit settled.
 2. **If the page wakes the engine, the page is mended:** an LFO plot moving in a long silence must not wake the sound in any browser, as 216 means; the test stays as it is.
@@ -44,6 +44,6 @@ Claude's calls, open to the owner (2026-11-06, triage):
 - **The cause: the test read too early; the page wakes nothing it should not.** Turning Depth (five PageUp keys) wakes the sound, as a knob does in 216: each key is one of the page's waking gestures, and the change reaches the engine's `applyPatch`, which wakes it too. In WebKit the resume settles some 30 to 60 ms after the keys, and until then the state still reads `suspended`. In the failing run the test's wait for the next pause read that stale `suspended` at once and went on, so it never waited for the second pause: the plot then moved with the sound running (keys at 3.27 s, `running` at 3.33 s, no suspend after). In the passing runs the first read already saw `running`, the second pause came about 3 s later (7.2 s), and the plot moved through it, so the plot itself never woke the engine.
 - **The mend (decision 3):** the test waits, inside the page, for the state to read `running` after the Depth turn (at most five seconds, then it fails saying the turn did not wake the sound), and only then waits for the pause. A comment in the test says why. The page is unchanged.
 - **Tests:** in WebKit on the Mac, the test 20 in 20 alone and 20 in 20 in its file (120 in 120 for the file, with four workers, at a load of 34 to 58); the file in Chromium 18 in 18; `tsc` and the lint clean.
-- **Claude's call, open to the owner:** "says so in its name's source" was read as the test's source: a comment that names issue 249. The test's name stays "(issue 216, the owner)", as the owner gave it.
+- **Claude's call, let stand by the owner in 1.26.1:** "says so in its name's source" was read as the test's source: a comment that names issue 249. The test's name stays "(issue 216, the owner)", as the owner gave it.
 
 **To try:** nothing changes in the app. In Safari, with an LFO's Depth up and the page left silent for 30 s, the sound pauses (the Viewers rest) while the LFO's plot goes on moving, as before.

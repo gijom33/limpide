@@ -10,7 +10,7 @@
 
 1. **The toggle reads "Filter".** Decided by the owner, 2026-10-31.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **The glossary keeps "Response Curve"** for what is drawn: the toggle's tip starts "Filter: the Response Curve, the Filter's gain at every frequency…", and its accessible name says both ("Filter's Response Curve"), so a screen reader and the Synth Geek Layer still meet the word.
 3. **Every place that names the toggle follows:** the Tutorials' and the Tour's words that say "Curve" in Display, the keyboard shortcut list if it names it, the tests.
@@ -33,7 +33,7 @@ Claude's call, open to the owner:
 - [x] Display shows Harmonics, Ideal, Filter, Guides, Maths; the Filter toggle draws the Response Curve as before
 - [x] A visitor's stored Curve setting still loads
 - [x] No Step, card or tip says "Curve" for the toggle
-- [ ] The overlay, tooltip and viewer-control specs updated; every test passes in Linux's fonts too
+- [ ] ~~The overlay, tooltip and viewer-control specs updated; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Renaming the Response Curve itself

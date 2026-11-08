@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner, 2026-10-31 (decision 3 of 109 stands: it still shows on a load and goes on the first change to the sound; these add to it):
+Claude's call, let stand by the owner in 1.20.0, 2026-10-31 (decision 3 of 109 stands: it still shows on a load and goes on the first change to the sound; these add to it):
 
 1. **It says what it is:** the Preset's name leads the line, in bold ("**Init** · The plain starting point: one saw through an open low-pass Filter."), so it reads as that sound's description, not a stray tip.
 2. **It closes:** a small close button (×) at its right end, with a tip and an accessible name ("Close the Preset's description"), and Escape while it shows. The box takes the pointer for its button only; a click elsewhere on it still goes through to the controls beneath, as now.
@@ -40,9 +40,9 @@ Decided by the owner, 2026-10-31 (evening), answering the night's question 1:
 - [x] Changing the Preset with the arrows (‹ ›) shows no box
 - [x] The close button and Escape take the box away; turning a knob or loading another Patch still does
 - [x] A click on the box away from its button still reaches the control beneath
-- [ ] At 375, 700, 1100, 1440 and 2000 px the box never reaches the Osc tabs or the Filter's Mode row; at three and four across it is at most two lines for every Preset
+- [ ] ~~At 375, 700, 1100, 1440 and 2000 px the box never reaches the Osc tabs or the Filter's Mode row; at three and four across it is at most two lines for every Preset~~ (not checked at the time)
   (Its first half holds at every width. Two lines holds at 1440 and 2000 px and from 1,280 px; at 1100 px the longest eight take three lines: see call 3 below.)
-- [ ] An e2e test covers closing it by button and by Escape; the design audit passes; every test passes in Linux's fonts too
+- [ ] ~~An e2e test covers closing it by button and by Escape; the design audit passes; every test passes in Linux's fonts too~~ (not checked at the time)
   (The tests and the audit pass in Chromium and WebKit on macOS; Linux's wider fonts are stood in for by wider letter-spacing in the layout test. GitHub's run on Linux is the real check.)
 
 **Out of scope:**
@@ -57,7 +57,7 @@ Built 2026-10-31, at night, on `night/2026-10-31` (two commits, `Issue 153: …`
 - **The arrows** (decision 5) load without it, and a screen reader hears the name alone.
 - Issue 109's build note has a dated line for what changed.
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.20.0):
 
 1. **A Controller's Preset pads and a keyboard's Program buttons show no box either**, as they are the arrows on hardware (they step through the Presets in order).
 2. **A screen reader hears the about line only when the box shows** (a pick in the panel); after the arrows, the name alone, as a sighted visitor sees it.

@@ -10,7 +10,7 @@ What is there today: up to 860 px the header is sticky, and scrolling down slide
 
 ## Decisions
 
-The idea is the owner's (decided by the owner, 2026-10-31); how it is done is Claude's call, open to the owner:
+The idea is the owner's (decided by the owner, 2026-10-31); how it is done is Claude's call, let stand by the owner in 1.20.0:
 
 1. **Three rows from 601 to 860 px,** as on a phone: the logo and the Patch picker (its name as wide as the row allows); the playing buttons on the left and the set-up buttons, the tempo among them, on the right; the keyboard.
 2. **The same collapsing:** scrolling down slides the top two rows away so only the keyboard stays; any scroll up brings them back, as on a phone.
@@ -33,11 +33,11 @@ The idea is the owner's (decided by the owner, 2026-10-31); how it is done is Cl
 - The design audit's widths
 
 **Acceptance criteria:**
-- [ ] At 601, 700 and 860 px: three header rows, the Patch name wider than today's
-- [ ] Scrolling down hides the top two rows; scrolling up brings them back; nothing below moves
-- [ ] A Tutorial Step, the Tour and the Demo bring their control into view under the collapsed or the full header
-- [ ] The phone (up to 600 px) and three across (from 861 px) unchanged
-- [ ] The design audit passes at every width; every test passes in Linux's fonts too
+- [ ] ~~At 601, 700 and 860 px: three header rows, the Patch name wider than today's~~ (not checked at the time)
+- [ ] ~~Scrolling down hides the top two rows; scrolling up brings them back; nothing below moves~~ (not checked at the time)
+- [ ] ~~A Tutorial Step, the Tour and the Demo bring their control into view under the collapsed or the full header~~ (not checked at the time)
+- [ ] ~~The phone (up to 600 px) and three across (from 861 px) unchanged~~ (not checked at the time)
+- [ ] ~~The design audit passes at every width; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - A section strip in 2 × 2
@@ -56,7 +56,7 @@ The idea is the owner's (decided by the owner, 2026-10-31); how it is done is Cl
 - **Tests** (`e2e/header.spec.ts`): at 601, 700 and 860 px three rows, the Patch name reaching the row's end and wider than before, every button on one row, a finger tall, Demo at the left and About at the right, the 17 keys, nothing over anything, no sideways scroll (red before the change at all three); the same widths, scrolling down hides the logo and the buttons, the header keeps its height and the Sections their place, scrolling up brings them back; at 601 and 860 px every Preset's name whole (it was Init, Kick, Bass and Acid at 601). `e2e/demo.spec.ts`: at 700 px, the Filter 60 px under the full header, the Demo's first scroll lands the Filter's top below it (red before: the page did not scroll for the Filter, only for a later part).
 - **Docs:** "Since then" lines on [112](./112-tempo-midi-clock-and-an-arpeggiator.md) (the 601 to 680 px padding), [105](./105-header-and-panels-on-every-screen.md) (the 2 × 2 Patch name and padding) and [157](./157-no-narrower-than-a-phone.md) (the shared narrow rule).
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.21.0:**
 1. **The Patch name as wide as the whole row**, as decision 1 says: at 860 px a 643 px button with the name in its middle. A cap (the phone's 240 px, which it already was at 860) would leave the row's right half empty and miss "wider than today's" at 860.
 2. **The tempo as the phone's:** the BPM button, icon over word, opening the small field with Tap. A field beside its Tap would be 32 px tall beside 44 px buttons, and the phone's already fits with room to spare (about 230 px at 601).
 3. **The design audit's widths stay as they were** (690 px for 2 × 2): the new header tests run its overlap rule at 601, 700 and 860 px, and the whole audit (contrast in both themes, targets) passed once at 601 and 860 px too, not kept as tests.

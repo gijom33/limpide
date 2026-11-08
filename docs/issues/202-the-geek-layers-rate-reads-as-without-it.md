@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-02:
 
 1. **The Rate reads the same with the Synth Geek Layer on as off:** Hz when free, the note value when synced, as today without the layer. This replaces 169's period readout.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 2. **The period stays under the hood:** the Rate's tip keeps 169's formula (T = 1 / f, or T = beats × 60 / BPM when synced) and 137's conversion with the live numbers, which already end in the period ("one cycle every 0.25 s"), so the layer still teaches it without changing the readout.
 3. **Depth and Key Track keep their Geek readouts** (169): the owner's words were about the Rate's values alone.
@@ -37,11 +37,11 @@ Claude's calls, open to the owner:
 - The Synth Geek Layer's entry in the glossary
 
 **Acceptance criteria:**
-- [ ] Geek on, a free Rate at 2 Hz reads "2.00 Hz", as with Geek off
-- [ ] Geek on, synced 1/4 at 120 BPM reads "1/4", as with Geek off, and does not change with the tempo
-- [ ] Geek on, the Rate's tip still gives the period and its formula, following the tempo when synced
-- [ ] Depth and Key Track read as 169 set
-- [ ] The engine tests of the period still pass, against the tip's numbers
+- [ ] ~~Geek on, a free Rate at 2 Hz reads "2.00 Hz", as with Geek off~~ (not checked at the time)
+- [ ] ~~Geek on, synced 1/4 at 120 BPM reads "1/4", as with Geek off, and does not change with the tempo~~ (not checked at the time)
+- [ ] ~~Geek on, the Rate's tip still gives the period and its formula, following the tempo when synced~~ (not checked at the time)
+- [ ] ~~Depth and Key Track read as 169 set~~ (not checked at the time)
+- [ ] ~~The engine tests of the period still pass, against the tip's numbers~~ (not checked at the time)
 
 **Out of scope:**
 - The other Synth Geek Layer readouts (167, 168, 170)
@@ -51,7 +51,7 @@ Claude's calls, open to the owner:
 
 With the Synth Geek Layer on, each LFO's Rate now reads as with it off: "2.00 Hz" free, "1/4" synced, and the tempo no longer moves the synced readout. The layer's readouts of Depth (the swing) and Key Track (the Cutoff at the Note) are unchanged. The period stays in the Rate's tip, under the hood: a synced Rate's keeps 137's conversion, ending in the period at the live tempo ("1/4 at 120 BPM: 120 ÷ 60 × 1 = 2 Hz, one cycle every 0.50 s."), and a free Rate's tip now works the period out at the Rate, "T = 1 / 2.00 Hz = 0.50 s now.", before its letters. 169's engine tests, which measure how often a square tremolo repeats, now check those tips' periods instead of the readout's. The glossary's entry for the Synth Geek Layer and the layer's own tip in Display say the period is in the tip.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 1. **A free Rate's tip works its period out live**, as the Envelope faders' tips work out τ (168): without it the free Rate's period, which its readout showed, would have been in no number on the page, only in its formula; and decision 4 holds the tip's numbers to the engine.
 2. **The tempo the readouts were worked out at is gone from them** (the only readout that needed it was the synced Rate's); the synced Rate's tip takes the tempo as before.

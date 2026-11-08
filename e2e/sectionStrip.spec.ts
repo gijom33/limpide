@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { steady } from './helpers';
 
 // On a phone the sections stack one under another; a strip under the header names them, shows where you are, and
 // jumps to each (issue 23).
@@ -88,14 +89,16 @@ test.describe('on a phone', () => {
     const logo = page.getByRole('heading', { level: 1, name: 'Limpide' });
     await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Amp' }).click();
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(500);
-    await page.waitForTimeout(1000); // well after the page has stopped
+    await steady(page, page.locator('header')); // the page stopped, and the header with it
     await expect(logo).not.toBeInViewport();
     // Nor does a jump back up: only a scroll of one's own brings the rows back. Pressed where it stands, as a finger
     // does: Playwright's click first scrolls the tab into view, and in WebKit that scroll ignores the strip's own scroll
     // margin under the page's scroll padding (issue 189), so it scrolls up and brings the rows back itself.
     const filterTab = (await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Filter' }).boundingBox())!;
+    const atAmp = await page.evaluate(() => scrollY);
     await page.mouse.click(filterTab.x + filterTab.width / 2, filterTab.y + filterTab.height / 2);
-    await page.waitForTimeout(1000);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeLessThan(atAmp); // up to the Filter
+    await steady(page, page.locator('header'));
     await expect(logo).not.toBeInViewport();
     const filter = (await page.getByRole('region', { name: 'Filter' }).boundingBox())!;
     const strip = (await page.getByRole('navigation', { name: 'Sections' }).boundingBox())!;

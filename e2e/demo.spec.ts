@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay, wholeDemoCard } from './helpers';
+import { openDisplay, steady, wholeDemoCard } from './helpers';
 
 const demo = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Demo' });
 const patchName = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Patch:/ });
@@ -19,7 +19,7 @@ test('the Demo plays its track, one Preset after another, making sound, and stop
   await page.keyboard.up('a');
   // The name alone: the Patch's plain words under it follow the Demo's last knob a moment after (issue 123).
   const name = await patchName(page).getAttribute('aria-label');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1500); // a time: the track, still going, would have moved on by now
   expect(await patchName(page).getAttribute('aria-label')).toBe(name); // the track has stopped moving
 });
 
@@ -36,7 +36,7 @@ test('turning a knob keeps the Demo playing, and the Demo leaves that knob where
   await page.mouse.up();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   const turned = await cutoff.getAttribute('aria-valuetext');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1000); // a time: the Demo, taking its knob back, would have by now
   await expect(cutoff).toHaveAttribute('aria-valuetext', turned!);
   await expect(patchName(page)).toContainText('Acid');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
@@ -396,10 +396,10 @@ test.describe('on a touch screen', () => {
     const heading = (await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().boundingBox())!;
     await swipe(page, heading.x + 5, heading.y + 300, heading.y + 50);
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(100); // the page did scroll
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: a stop the scroll set off would have come
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).tap(); // a knob takes the touch at once
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: a stop the touch set off would have come
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().tap(); // a tap anywhere else, once lifted
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
@@ -464,7 +464,7 @@ test('where the page fits its window, the Demo’s card adds no scroll bar: it s
   expect(await scrolls()).toBe(false); // the page fits, before the Demo
   await demo(page).click();
   await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
-  await page.waitForTimeout(300);
+  await steady(page, page.getByRole('region', { name: 'Demo' }));
   expect(await scrolls()).toBe(false);
 });
 
@@ -582,8 +582,7 @@ test('each part is a segment as wide as it is long, the playing one filling over
       return fill / track;
     });
   const early = await filled();
-  await page.waitForTimeout(1500);
-  expect(await filled()).toBeGreaterThan(early + 0.1); // 1.5 s of a 7.5 s part
+  await expect.poll(filled).toBeGreaterThan(early + 0.1); // a tenth more of the 7.5 s part: it fills as it plays
   await card.getByRole('button', { name: 'Play from part 3, Poly Pluck' }).click();
   await expect(card.getByRole('group', { name: 'Part 3 of 15' })).toBeVisible();
   expect(await filled()).toBeLessThan(0.2); // a jump starts the segment's fill again
@@ -632,7 +631,7 @@ for (const width of [601, 690, 1440]) {
   });
 }
 
-test('on a phone the segments are 44 px tall, with Previous part and Next part buttons of 44 × 44 px beside them, by pointer and by keyboard (issue 99)', async ({ page, browserName }) => {
+test('on a phone the segments are 44 px tall, with Previous part and Next part buttons of 44 × 44 px beside them, by pointer and by keyboard (issue 99)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await demo(page).click();
@@ -671,14 +670,11 @@ test('on a phone the segments are 44 px tall, with Previous part and Next part b
   await page.keyboard.press('Enter');
   await expect(card.getByRole('group', { name: 'Part 2 of 15' })).toBeVisible();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
-  // Tab reaches them in the order they stand: Previous, the parts (one stop), Next. (Not in WebKit, where Tab skips
-  // buttons unless Safari's settings ask for them.)
-  if (browserName !== 'webkit') {
-    await page.keyboard.press('Tab');
-    await expect(card.getByRole('group', { name: /^Part / }).locator('button:focus')).toHaveCount(1);
-    await page.keyboard.press('Tab');
-    await expect(next).toBeFocused();
-  }
+  // Tab reaches them in the order they stand: Previous, the parts (one stop), Next.
+  await page.keyboard.press('Tab');
+  await expect(card.getByRole('group', { name: /^Part / }).locator('button:focus')).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await expect(next).toBeFocused();
   // On the last part, Next is greyed out.
   await card.getByRole('button', { name: /^Play from part 15,/ }).click();
   await expect(next).toHaveAttribute('aria-disabled', 'true');

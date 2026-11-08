@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **Read better first:** values all within a few steps of 64 (or of 0 and 127) read as Relative even without a repeat; a value far from them reads as Absolute.
 2. **A mode for each Mapping in the MIDI panel** (Absolute or Relative), changed by hand where the guess is wrong.
@@ -28,9 +28,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The MIDI panel's Mapping list
 
 **Acceptance criteria:**
-- [ ] Unit tests: an accelerated encoder's stream learns as Relative; a fader nudged from 0 learns as Absolute
-- [ ] An e2e test changes a Mapping's mode in the panel and the knob then answers
-- [ ] The C16 layout's Mappings unchanged; every test passes in Linux's fonts too
+- [ ] ~~Unit tests: an accelerated encoder's stream learns as Relative; a fader nudged from 0 learns as Absolute~~ (not checked at the time)
+- [ ] ~~An e2e test changes a Mapping's mode in the panel and the knob then answers~~ (not checked at the time)
+- [ ] ~~The C16 layout's Mappings unchanged; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Buttons learned on Switches (inbox, the owner's call)
@@ -47,7 +47,7 @@ Built at night, 2026-11-02, test-first. [ADR-0020](../adr/0020-midi-learn-reads-
 - **The MIDI panel switches a knob's mode:** each knob's Mapping (a Parameter, a choice, the tempo) shows Absolute or Relative under its control, and a click changes it, remembered with the Mapping. Buttons keep their Momentary or Toggle word, and a first-layout knob still to be turned keeps its line.
 - The C16 layout's Mappings are unchanged (Relative, 64-centred); the panel shows them as Relative.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 1. **A lone 1 is a fader, not an encoder's click.** A single value of 1 is a fader nudged off the bottom (the Brief's criterion) or a two's-complement encoder's one click up, and nothing tells them apart. It now reads as Absolute, so an encoder clicked once in Learn is learned Absolute, and the panel puts it right. A lone 127 or 65 is still Relative.
 2. **A steady run of single steps is a fader,** wherever it is (40, 41, 42; 0, 1, 2; 62, 63, 64, 65, as before). An encoder speeding up one value at a time (65, 66, 67) reads as Absolute too; one turned briskly jumps by more and reads as Relative.

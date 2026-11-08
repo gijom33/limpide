@@ -8,6 +8,8 @@ import { placeTooltip } from './placeTooltip';
 
 export interface TipContent {
   title: string;
+  /** Why it does nothing here, where it is disabled (issue 252): shown first, under the title. */
+  why?: string;
   /** What it does, in plain words. */
   body: string;
   /** How to use it (optional). */
@@ -42,8 +44,24 @@ const EXPANDED = '[aria-expanded="true"]';
 // their tips, so no other tip lies over its rows (issue 188).
 const PANEL = '[data-panel]';
 
+// The keys that act on a control (press it, close it) rather than move the focus.
+const ACTING_KEYS = new Set(['Enter', ' ', 'Escape']);
 /**
- * Explains the control it wraps: after a short pause on hover, at once on keyboard focus, and on a touch screen
+ * Whether a focus now is the page's (issue 252): the last thing the person did was a press (mouse, finger or pen) or a
+ * key that acts (Enter, Space, Escape), so a focus that follows was moved by the page (a panel closing gives its
+ * button the focus back, the welcome gives it to the Demo button), not by the keyboard, and opens no tip, though the
+ * browser may draw it a keyboard ring. A key that moves the focus (Tab, an arrow) puts the keyboard back in charge.
+ * Listened to before the page's own handlers, which may stop the event.
+ */
+let focusMovedByPage = false;
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', () => (focusMovedByPage = true), { capture: true });
+  window.addEventListener('keydown', (e) => (focusMovedByPage = ACTING_KEYS.has(e.key)), { capture: true });
+}
+
+/**
+ * Explains the control it wraps: after a short pause on hover, at once on keyboard focus (not a focus the page moves
+ * after a press, Enter, Space or Escape, issue 252), and on a touch screen
  * when it is held still for half a second; Escape, leaving or pressing dismisses it (on touch, the next touch).
  * Linked to the control with aria-describedby so screen readers announce it too. `longPress` off where holding
  * is how the control is played (the piano). With Tooltips off, only a header button showing its icon alone opens one,
@@ -181,13 +199,14 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
         e.stopPropagation();
       }}
       onContextMenu={(e) => (press.current || pinned.current) && e.preventDefault()}
-      onFocus={(e) => e.target.matches(':focus-visible') && show(0)}
+      onFocus={(e) => e.target.matches(':focus-visible') && !focusMovedByPage && show(0)}
       onBlur={hide}
     >
       {children}
       {createPortal(
         <div id={id} role="tooltip" ref={tipRef} className="tooltip" hidden={!open || named || !enabled} style={place}>
           <strong>{content.title}</strong>
+          {content.why && <span className="tooltip-why">{`${content.why}.`}</span>}
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
           {keys && <span className="tooltip-keys">{keys}</span>}

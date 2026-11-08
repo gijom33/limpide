@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-03:
 
 1. **The Tour explains the other layers and the Tutorials:** the Synth Geek Layer, its History lines, and that each Tutorial rebuilds a Preset yourself.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 2. **At the Tour's end, after the Sections,** and where each is found: the Synth Geek Layer's switch in Display, the History lines in the tips with the layer on, the Tutorials in the Tutorial menu.
 3. **One closing card, or one card each,** is the implementer's choice, measured against the Tour's length; each card shows the control it names, as the Sections' cards do ([206](./206-the-tour-shows-the-control-and-the-viewer.md)).
@@ -65,7 +65,7 @@ Built on 2026-11-03, on night/2026-11-02.
   - The Tour's existing tests now count six cards.
   - Red first: the view test failed with the scroll taken out.
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.23.0):**
 
 1. **Two cards, not one or three:**
    - One for the Synth Geek Layer, with History inside it, since the History lines are found by the same toggle.
@@ -81,5 +81,7 @@ Built on 2026-11-03, on night/2026-11-02.
 - Take the Tour from About to its end. After the LFOs, the fifth card rings Display. Open Display: the ring moves to the Geek toggle, which is still off. The sixth rings the Tutorial button, and "Build a Bass" starts Bass.
 
 **Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; Bass comes after it.
+
+**Since then (2026-11-07, [260](./260-small-things-for-newcomers-after-1-26.md)):** the Tutorials card is no longer the last: it offers "Build a Sub Ladder" beside Next, and a seventh card, "Your turn", ends the Tour on something to play, its button "Play the Song". "That is the whole Tour" moved to it.
 - Try it on a phone too: after the LFOs card, the page comes back up to the header for each.
 - With Bead out at a laptop's size, Bead points at Display, then looks at the Tutorial button from its edge.

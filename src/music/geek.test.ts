@@ -36,11 +36,13 @@ describe('the Synth Geek Layer: levels in dB', () => {
     expect(levelDb(0)).toBe('−∞ dB');
   });
 
-  it('shows Q on Resonance and dB on the Mixer and the Amp’s Sustain, nothing elsewhere', () => {
+  it('shows Q on Resonance and dB on the Mixer’s levels, the Sustain and the Volume; none on Ring or the Cutoff', () => {
     const patch = defaultPatch();
     expect(geekReadout('resonance', 0, patch)).toBe('Q 0.71');
     expect(geekReadout('mixOsc2', 0.5, patch)).toBe('−6.0 dB');
     expect(geekReadout('ampSustain', 1, patch)).toBe('0.0 dB');
+    expect(geekReadout('volume', 0.5, patch)).toBe('−6.0 dB');
+    expect(geekReadout('mixRing', 0.5, patch)).toBeUndefined();
     expect(geekReadout('cutoff', 1000, patch)).toBeUndefined();
   });
 });
@@ -65,22 +67,74 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
   });
 
   it('reads Detune as its beating rate at the Note played, at A4 (said) before any', () => {
-    // 440 Hz × (2^(10/1200) − 1) = 2.549 Hz; at C4 (261.6 Hz) 1.516 Hz; an octave up on Osc 2, twice A4's.
+    // 440 Hz × (2^(10/1200) − 1) = 2.549 Hz; at C4 (261.6 Hz) 1.516 Hz.
     expect(geekReadout('osc2Detune', 10, patch)).toBe('2.55 Hz at A4');
     expect(geekReadout('osc2Detune', 10, patch, { note: 69 })).toBe('2.55 Hz beats');
     expect(geekReadout('osc2Detune', 10, patch, { note: 60 })).toBe('1.52 Hz beats');
     expect(geekReadout('osc2Detune', -10, patch, { note: 69 })).toBe('2.53 Hz beats');
-    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Octave: 1 }, { note: 69 })).toBe('5.10 Hz beats');
-    expect(geekReadout('osc2Detune', 50, { ...patch, osc2Octave: 2, osc2Semitone: 12 }, { note: 108 })).toBe('981 Hz beats');
     expect(geekReadout('osc2Detune', 0, patch, { note: 69 })).toBe('0.00 Hz beats');
+  });
+
+  // Issue 256: the beats of the lowest pair of Harmonics that nearly coincide, Osc 1's p-th and Osc 2's q-th.
+  it('reads the beats of the lowest pair of Harmonics that nearly coincide, whatever the interval (issue 256)', () => {
+    // An octave up: Osc 1's 2nd, 880 Hz, against Osc 2's 1st, 885.10 Hz.
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Octave: 1 }, { note: 69 })).toBe('5.10 Hz beats');
+    // An octave down: Osc 1's 1st, 440 Hz, against Osc 2's 2nd, 2 × 221.27 = 442.55 Hz.
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Octave: -1 }, { note: 69 })).toBe('2.55 Hz beats');
+    // Osc 1 an octave down instead: 2 × 220 Hz against 442.55 Hz.
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc1Octave: -1 }, { note: 69 })).toBe('2.55 Hz beats');
+    // The tempered fifth: Osc 1's 3rd, 1320 Hz, against Osc 2's 2nd, 2 × 659.26 = 1318.51 Hz; 10 cents up, 1326.15 Hz.
+    expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 7 }, { note: 69 })).toBe('1.49 Hz beats');
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Semitone: 7 }, { note: 69 })).toBe('6.15 Hz beats');
+    // The tempered major third: Osc 1's 5th, 2200 Hz, against Osc 2's 4th, 4 × 554.37 = 2217.46 Hz.
+    expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 4 }, { note: 69 })).toBe('17.5 Hz beats');
+  });
+
+  it('writes three figures as the rate rounds, never wider than its widest (issue 256)', () => {
+    // In unison at A4, 38.9 cents up beats 9.996 Hz: "10.0 Hz", not "10.00 Hz".
+    expect(geekReadout('osc2Detune', 38.9, patch, { note: 69 })).toBe('10.0 Hz beats');
+  });
+
+  it('says no beats where no pair is near enough to be heard beating (issue 256)', () => {
+    // A semitone: no pair up to the 8th Harmonics within a quarter-tone.
+    expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 1 }, { note: 69 })).toBe('no beats');
+    expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 1 })).toBe('no beats at A4');
+    // The major third an octave up, 34.9 Hz; 50 cents an octave up, 25.7 Hz: too fast to be heard as beats.
+    expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 4 }, { note: 81 })).toBe('no beats');
+    expect(geekReadout('osc2Detune', 50, patch, { note: 69 })).toBe('12.9 Hz beats');
+    expect(geekReadout('osc2Detune', 50, patch, { note: 81 })).toBe('no beats');
+    // Osc 2 three octaves up at the top of MIDI's Notes: its Harmonics past what is heard.
+    expect(geekReadout('osc2Detune', 50, { ...patch, osc2Octave: 2, osc2Semitone: 12 }, { note: 108 })).toBe('no beats');
+  });
+
+  it('counts only the Harmonics the Waveforms have (issue 256)', () => {
+    // Two Squares a fifth apart: Osc 2's even Harmonics are missing, so the 3rd and 2nd never meet.
+    expect(geekReadout('osc2Detune', 0, { ...patch, waveform: 'square', osc2Waveform: 'square', osc2Semitone: 7 }, { note: 69 })).toBe('no beats');
+    // Two Sines an octave apart: nothing but the fundamentals.
+    expect(geekReadout('osc2Detune', 10, { ...patch, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1 }, { note: 69 })).toBe('no beats');
+    // Osc 2 a Square an octave up: Osc 1's Saw has the 2nd, 880 Hz, to meet the Square's 1st.
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Waveform: 'square', osc2Octave: 1 }, { note: 69 })).toBe('5.10 Hz beats');
+    // A Pulse near a Square: its 2nd Harmonic 50 dB under the 1st, too faint to beat; at 40 %, 10 dB under, it beats.
+    const fifth = { ...patch, osc2Waveform: 'pulse', osc2Semitone: 7 } as const;
+    expect(geekReadout('osc2Detune', 0, { ...fifth, osc2PulseWidth: 0.499 }, { note: 69 })).toBe('no beats');
+    expect(geekReadout('osc2Detune', 0, { ...fifth, osc2PulseWidth: 0.4 }, { note: 69 })).toBe('1.49 Hz beats');
   });
 
   it('sizes each for its widest', () => {
     for (const id of ['osc2Octave', 'osc2Semitone', 'osc2Detune'] as const) expect(widestGeekReadout(id)).not.toHaveLength(0);
   });
 
+  it('gives Detune’s formula in the readout’s terms: the lowest pair of Harmonics that nearly coincide (issue 256)', () => {
+    expect(UNDER_THE_HOOD.osc2Detune.formula).toBe('Δf = |p f₁ − q f₂|');
+    expect(UNDER_THE_HOOD.osc2Detune.where).toContain('Osc 1’s pth and Osc 2’s qth');
+    expect(UNDER_THE_HOOD.osc2Detune.where).toContain('3/2 a fifth up');
+    expect(UNDER_THE_HOOD.osc2Detune.where).toContain('8th Harmonics');
+    expect(UNDER_THE_HOOD.osc2Detune.where).toContain('past 20 a second');
+    expect(UNDER_THE_HOOD.osc2Detune.where).toContain('no beats');
+  });
+
   it('gives Detune’s widest in its parts, the figure the name’s place shows apart from its words (issue 207)', () => {
-    expect(widestGeekReadout('osc2Detune')).toEqual([{ figure: '9999 Hz', words: 'beats' }]);
+    expect(widestGeekReadout('osc2Detune')).toEqual([{ figure: '20.0 Hz', words: 'beats' }, { figure: 'no beats', words: 'at A4' }]);
   });
 });
 
@@ -353,10 +407,10 @@ describe('the Geek tips’ loose claims, fact-checked for 1.25.0 (issue 246)', (
     expect(responseFormula('lowpass', 24).where).toMatch(/analogue.*2 kHz Cutoff.*−89\.5 dB at 16 kHz.*−72\.2/);
   });
 
-  it('says the formula is for a Pulse 2 high, and the one played low for d of each cycle and scaled to a peak of 1 (fact-checked for 1.26.0)', () => {
+  it('says the formula is for a Pulse 2 high, and the one played high for d of each cycle and scaled to a peak of 1 (issue 266)', () => {
     const { where } = harmonicFormula('pulse', 0.25);
     expect(where).toMatch(/aₙ: its amplitude for a Pulse 2 from its low to its high/);
-    expect(where).toMatch(/low for d of each cycle .* its peak is 1/);
+    expect(where).toMatch(/high for d of each cycle and low for the rest.* its peak is 1/);
   });
 
   it('says FM is kept smaller on high Notes', () => {

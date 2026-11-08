@@ -23,9 +23,9 @@ const setup = (storage = memoryStorage()) => {
 };
 
 describe('the Viewer settings store (issue 77)', () => {
-  it('starts as the Viewers always have: 2 cycles, 2 seconds, no Glow, the overlays by default, nothing frozen', () => {
+  it('starts at its defaults: 2 cycles, 2 seconds, Glow on the Scopes (issue 264), the overlays by default, nothing frozen', () => {
     const { viewers, sources } = setup();
-    expect(viewers.get()).toMatchObject({ cycles: 2, timelineSeconds: 2, glow: 'off', overlays: DEFAULT_OVERLAYS, viewer: { frozen: false, snapshot: null, tapSource: 'all' } });
+    expect(viewers.get()).toMatchObject({ cycles: 2, timelineSeconds: 2, glow: 'scopes', overlays: DEFAULT_OVERLAYS, viewer: { frozen: false, snapshot: null, tapSource: 'all' } });
     expect(sources).toEqual(['all']);
   });
 

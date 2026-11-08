@@ -2,8 +2,10 @@ import { type RefObject, useEffect, useRef } from 'react';
 import { type Looking, TOUR_LENGTH, type TourFind, type TourMove, type TourSection, tourCardAt } from '../tutorial/tour';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
+import { cardAside } from './cardAside';
+import { pinned } from './cardPlacement';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
-import { bringClear } from './docked';
+import { bringClear, fitsBeside } from './docked';
 import { scrollBehavior } from './glide';
 import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
@@ -22,8 +24,10 @@ interface Props {
   pageTheirs(): boolean;
   onBack(): void;
   onNext(): void;
-  /** The last card's way on: the first Tutorial, Sub Ladder (issue 210: the Tutorials' card; issue 233). */
+  /** The Tutorials' card's offer: the first Tutorial, Sub Ladder (issues 210, 233). */
   onFirstTutorial(): void;
+  /** The last card's way out: the Song, which ends the Tour (issue 260). */
+  onSong(): void;
   onClose(): void;
 }
 
@@ -55,14 +59,42 @@ export function tourGuide(index: number): Guide {
   return { ...shown, step: `tour ${index}`, made: false, finished: false };
 }
 
+/** How far the Tour has moved its card along the bottom, to stand beside what it shows (issue 254). */
+const ASIDE = '--card-aside';
+
+/**
+ * Moves the card along the bottom, the least, where it would cover what it shows (`elements`) and they do not all fit
+ * above it, to a place beside them all from which they all show (issue 254); else puts it back in the middle. A card
+ * the person has moved stays where they put it; a phone's, pinned to the bottom edge, never moves.
+ */
+function standAside(card: HTMLElement, elements: readonly Element[]) {
+  if (pinned(card)) {
+    card.style.removeProperty(ASIDE);
+    return;
+  }
+  if (card.hasAttribute('data-moved')) return;
+  const placed = parseFloat(card.style.getPropertyValue(ASIDE)) || 0;
+  const box = card.getBoundingClientRect();
+  const home = { left: box.left - placed, right: box.right - placed, top: box.top };
+  let aside = 0;
+  if (!fitsBeside(home, elements)) {
+    const shift = cardAside({ left: home.left, width: box.width }, elements.map((e) => e.getBoundingClientRect()), document.documentElement.clientWidth);
+    if (shift !== null && fitsBeside({ left: home.left + shift, right: home.right + shift, top: home.top }, elements)) aside = shift;
+  }
+  if (aside === placed) return;
+  if (aside) card.style.setProperty(ASIDE, `${aside}px`);
+  else card.style.removeProperty(ASIDE);
+}
+
 /**
  * Brings the card's Section into view: its controls shown (on their tab), and its Viewers and its controls between the
- * header and the card, together where they fit (issue 128, decision 10). Where the control moving and the Viewers do
- * not fit together, the page shows each in turn, as the card's clock says (`looking`, issue 206): the control as it
- * starts to move, with as many Viewers as fit beside it, then the Viewers, with the control if it fits; so where all
- * fit the page holds still. It glides, or jumps with reduced motion. The person's own scroll stops it for the rest of
- * the card (decision 5). The LFO card points at the Timeline (issue 158, decided by the owner): its Depth knob shows
- * with it, or in turn.
+ * header and the card, or beside the card where it does not cover them, together where they fit (issue 128, decision
+ * 10). Where the card would cover them and another place along the bottom lets them all show, it moves there (issue
+ * 254). Where the control moving and the Viewers still do not fit together, the page shows each in turn, as the card's
+ * clock says (`looking`, issue 206): the control as it starts to move, with as many Viewers as fit beside it, then
+ * the Viewers, with the control if it fits; so where all fit the page holds still. It glides, or jumps with reduced
+ * motion. The person's own scroll stops it for the rest of the card (decision 5). The LFO card points at the Timeline
+ * (issue 158, decided by the owner): its Depth knob shows with it, or in turn.
  */
 function useSectionInView(
   card: TourSection | undefined,
@@ -77,20 +109,26 @@ function useSectionInView(
   }, [moving, looking, pageTheirs]);
   const bring = useRef(() => {});
   useEffect(() => {
-    if (!card) return;
+    if (!card) {
+      // A card after the Sections, in the middle again (unless the person moved it).
+      if (docked.current && !docked.current.hasAttribute('data-moved')) docked.current.style.removeProperty(ASIDE);
+      return;
+    }
     const controls = card.moves.map((move) => ({ id: move.id, element: controlOf(move) }));
     for (const { element } of controls) if (element) reveal(element);
     const viewers = card.viewers.map((name) => document.querySelector(`[aria-label="${name}"]`)).filter((e) => e !== null);
     for (const viewer of viewers) viewer.setAttribute('data-tutorial-viewer', '');
     let shown = false;
     bring.current = () => {
+      if (!shown || !docked.current) return;
+      standAside(docked.current, [...controls.flatMap((c) => (c.element ? [c.element] : [])), ...viewers]);
       // The person scrolled: the page is theirs for the rest of this card (the Shows keep it, issue 243).
-      if (!shown || now.current.pageTheirs() || !docked.current) return;
+      if (now.current.pageTheirs()) return;
       const { moving, looking } = now.current;
       const elementsOf = (wanted: (id: TourMove['id']) => boolean) => controls.filter((c) => wanted(c.id) && c.element).map((c) => c.element!);
       const [mover, others] = [elementsOf((id) => id === moving), elementsOf((id) => id !== moving)];
       const elements = looking === 'control' ? [...mover, ...viewers, ...others] : [...viewers, ...mover, ...others];
-      bringClear(docked.current, elements, scrollBehavior());
+      bringClear(docked.current, elements, scrollBehavior(), { beside: true });
     };
     // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
@@ -215,10 +253,10 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
  * The Tour's card (issue 128), docked where a Tutorial's card docks: one Section of the page in the signal's order,
  * where the signal comes from and goes, what the Section does and what its Viewers show, while the synth turns its
  * controls; after the Sections, what else there is to find, and where (issue 210). Back and Next move between the
- * cards; the last offers the first Tutorial. It takes the focus on its Next when the Tour starts; turning the controls
- * never takes it.
+ * cards; the Tutorials' card offers the first Tutorial beside Next, and the last card, something to play, has the Song
+ * as its way out (issue 260). It takes the focus on its Next when the Tour starts; turning the controls never takes it.
  */
-export function TourCard({ index, moving, looking, freezing, naming, pageTheirs, onBack, onNext, onFirstTutorial, onClose }: Props) {
+export function TourCard({ index, moving, looking, freezing, naming, pageTheirs, onBack, onNext, onFirstTutorial, onSong, onClose }: Props) {
   const shown = tourCardAt(index);
   const section = shown.kind === 'section' ? shown.section : undefined;
   const last = index === TOUR_LENGTH - 1;
@@ -227,9 +265,10 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
   useRing(section, moving);
   useFindShown(shown.kind === 'find' ? shown.find : undefined);
 
-  const primary = last ? (
-    <button type="button" className="tool tool-primary" onClick={onFirstTutorial}>
-      Build a {TUTORIALS[0].preset}
+  const starts = shown.kind === 'find' ? shown.find.starts : undefined;
+  const primary = starts === 'song' ? (
+    <button type="button" className="tool tool-primary" onClick={onSong}>
+      Play the Song
     </button>
   ) : (
     <button type="button" className="tool tool-primary" onClick={onNext}>
@@ -237,10 +276,19 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
     </button>
   );
   const actions = {
-    before: index > 0 && (
-      <button type="button" className="tool" onClick={onBack}>
-        Back
-      </button>
+    before: (
+      <>
+        {index > 0 && (
+          <button type="button" className="tool" onClick={onBack}>
+            Back
+          </button>
+        )}
+        {starts === 'firstTutorial' && (
+          <button type="button" className="tool" onClick={onFirstTutorial}>
+            Build a {TUTORIALS[0].preset}
+          </button>
+        )}
+      </>
     ),
     after: last && (
       <button type="button" className="tool" onClick={onClose}>

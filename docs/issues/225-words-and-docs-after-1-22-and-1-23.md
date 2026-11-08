@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-03, triage):
+Claude's calls, let stand by the owner in 1.24.0 (2026-11-03, triage):
 
 1. **ADR-0007's line on Cycle Lock in a chord** is mended by a new ADR that supersedes that part of it, as accepted ADRs change only in their Status line; it records 180's decision 7 (a chord locks to its newest Note).
 2. **A slow Rate's figure keeps its digits:** under 0.1 Hz the tip shows enough to tell 0.0417 from 0.04 Hz, wherever the same formatter would else read wrong; the readouts that read "0.05 Hz" stay as they are.
@@ -61,7 +61,7 @@ On the night branch, each item checked against the code as it stands there:
 - **180's first box** stays ticked and now gives the figures: FM at 1.414, Ring at 2.38 and the triad at 136 %, 130 % and 67 % on the Amp Tap against the 10 %, merged at the owner's word.
 - **FM's History** keeps 1975 (decision 3: the stronger source's year): the archive's dated list of the signing (S15, A) against Yamaha's remembrance counting back "seven years" (S33, B). The research notes say why; the line still cites S33 for the DX7.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. The three-figure reading also applies to the free Rate's period tip, as decision 2 asks "wherever the same formatter would else read wrong"; trailing zeros dropped, so 0.05 Hz stays "0.05 Hz" and not "0.0500 Hz".
 2. Seven test names renamed where the inbox counted five: the two more (Glide, the Sub's Mix) tested the held fundamental too.
