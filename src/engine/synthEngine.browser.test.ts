@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
-import { lfoOffset, osc2Cents, type Pressure } from '../modulation/modulationModel';
+import { lfoOffset, NO_PRESSURE, osc2Cents, type Pressure } from '../modulation/modulationModel';
 import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
@@ -12,7 +12,7 @@ import { straightenLimiter } from '../test/straightLimiter';
 import { guideLevel } from '../viewers/guides';
 import { hoverReadout, interpolatedPeak } from '../viewers/readout';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
-import { createSynthEngine, OSCILLATOR_LEVEL, SAFETY_KNEE } from './synthEngine';
+import { createSynthEngine, OSCILLATOR_LEVEL, RENDER_QUANTUM, SAFETY_KNEE } from './synthEngine';
 
 const SR = 48000;
 
@@ -723,7 +723,7 @@ describe('two LFOs and their destinations', () => {
 // from the same LFO, so what holds here holds for all of them.
 describe('LFO edges (issue 66)', () => {
   const tremolo = { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1 } as const;
-  /** The tremolo's gain over the Amp Tap's window ending at `at` (a whole number of 128-frame quanta), and its times. */
+  /** The tremolo's gain over the Amp Tap's window ending at `at` (a whole number of render quanta), and its times. */
   const gainBefore = async (at: number, patch: Partial<Patch>) => {
     const moved = await tapsAt(at, { ...tremolo, ...patch }, 69);
     const { amp: still } = await tapsAt(at, { ...tremolo, ...patch, lfoAmount: 0 }, 69);
@@ -863,7 +863,7 @@ describe('a retriggered LFO hands over to its new cycle without a step (issue 26
     lfoDestination: 'volume', lfoWaveform: 'sine', lfoRate: 1, lfoRetrigger: 'note',
   } as const;
   // A quarter of a cycle after the first Note, the sine at its top, its restart at its centre; and a quarter of A4's
-  // cycle on, where the first Note is at its peak. The Amp Tap read 26 ms later, on a 128-frame quantum.
+  // cycle on, where the first Note is at its peak. The Amp Tap read 26 ms later, on a render quantum.
   const [FIRST, JOIN, READ] = [0.3, 0.55 + 1 / 1760, 0.576];
   /** The Amp Tap read at `read`, after the first Note and those joining it at `joins`. */
   const ampTap = async (lfoAmount: number, { joins = [JOIN], read: at = READ, patch = {} as Partial<Patch> } = {}) => {
@@ -1198,7 +1198,7 @@ describe('a band-pass not so much quieter (issue 231)', () => {
     const bandpass = { ...patch, filterMode: 'bandpass' } as const;
     engine.applyPatch(patch);
     engine.noteOn(A3, 1, 0);
-    const quantum = 128 / SR;
+    const quantum = RENDER_QUANTUM / SR;
     const at = (t: number, next: Patch) =>
       void ctx.suspend(Math.round(t / quantum) * quantum).then(() => {
         engine.applyPatch(next);
@@ -1222,13 +1222,14 @@ describe('a band-pass not so much quieter (issue 231)', () => {
   });
 });
 
-/** `note` held on `patch` from the start, each of `changes` applied at its time (to the render quantum), rendered. */
-async function switchedAt(seconds: number, patch: Partial<Patch>, changes: [number, Patch][], notes: number[]) {
+/** `note` held on `patch` from the start, each of `changes` applied at its time (to the render quantum), rendered; `made` is handed the context. */
+async function switchedAt(seconds: number, patch: Partial<Patch>, changes: [number, Patch][], notes: number[], made?: (ctx: OfflineAudioContext) => void) {
   const ctx = new OfflineAudioContext(1, Math.round(SR * seconds), SR);
+  made?.(ctx);
   const engine = createSynthEngine(ctx);
   engine.applyPatch({ ...defaultPatch(), ...patch });
   for (const note of notes) engine.noteOn(note, 1, 0);
-  const quantum = 128 / SR;
+  const quantum = RENDER_QUANTUM / SR;
   for (const [t, next] of changes)
     void ctx.suspend(Math.round(t / quantum) * quantum).then(() => {
       engine.applyPatch(next);
@@ -1272,7 +1273,7 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
     const own = Math.max(...alone.map((s) => steepestStep(s, 0.1, 0.6)));
     // From the low-pass to the loud band-pass, then on to another Mode a render quantum or two into the fade (the
     // band-pass a quarter or half of the sound), or to two more.
-    const quantum = 128 / SR;
+    const quantum = RENDER_QUANTUM / SR;
     const runs: [string, (typeof modes)[number][], number][] = [
       ['notch, a quantum in', ['bandpass', 'notch'], quantum],
       ['notch, two quanta in', ['bandpass', 'notch'], 2 * quantum],
@@ -1297,6 +1298,61 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
     expect(Math.abs(dB(rms(s, 0.4 * SR, 0.6 * SR) / rms(alone, 0.4 * SR, 0.6 * SR)))).toBeLessThan(0.5);
   });
 
+  // A change given a time ahead of the clock, past the fade's end, while the clock is still inside the fade: the side
+  // faded out still sounds, so it waits on the clock to settle, as the fade's own end does (issue 251).
+  it('settles a fade only once the clock has reached its end, not when a change is given a time past it', async () => {
+    const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, filterSlope: 24 } as const;
+    const bandpass = { ...patch, filterMode: 'bandpass' } as const;
+    const alone = await Promise.all([patch, bandpass].map((p) => switchedAt(0.4, p, [], [A3])));
+    const own = Math.max(...alone.map((s) => steepestStep(s, 0.1, 0.4)));
+    const ctx = new OfflineAudioContext(1, SR * 0.4, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    engine.noteOn(A3, 1, 0);
+    const quantum = RENDER_QUANTUM / SR;
+    const at = (t: number, then: () => void) =>
+      void ctx.suspend(Math.round(t / quantum) * quantum).then(() => {
+        then();
+        return ctx.resume();
+      });
+    // To the band-pass at 0.2 s; half way through its fade, aftertouch given a time 15 ms on, past the fade's end.
+    at(0.2, () => engine.applyPatch(bandpass));
+    at(0.205, () => engine.setPressure(NO_PRESSURE, 0.215));
+    const s = (await ctx.startRendering()).getChannelData(0);
+    expect(steepestStep(s, 0.195, 0.4) / own).toBeLessThanOrEqual(1.1);
+  });
+
+  // 1.26.1's statistics run heard a click there one run in twenty, under coverage: a change in that gap waited for the
+  // browser's word, and the fade it began then was written from a clock the render had run past (issue 251). Here each
+  // write made while the render runs is held up until it is 20 ms on, past a whole fade, as a loaded machine may hold
+  // it: such a fade would swap the Modes at one sample, every time.
+  it('fades in a change made in that gap at once, however late the browser says the fade ended', async () => {
+    const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, filterSlope: 24 } as const;
+    const [highpass, bandpass] = (['highpass', 'bandpass'] as const).map((filterMode) => ({ ...patch, filterMode }));
+    // The wave's own steepest step: the band-pass's as it plays from 0.2 s on, and the low-pass's held alone.
+    const [before, after] = await Promise.all([switchedAt(0.4, highpass, [[0.2, bandpass]], [A3]), switchedAt(0.4, patch, [], [A3])]);
+    const own = Math.max(steepestStep(before, 0.2107, 0.4), steepestStep(after, 0.1, 0.4));
+    const ramp = AudioParam.prototype.linearRampToValueAtTime;
+    let rendering: OfflineAudioContext | undefined;
+    AudioParam.prototype.linearRampToValueAtTime = function (this: AudioParam, value: number, end: number) {
+      if (rendering?.state === 'running') {
+        const [from, since] = [rendering.currentTime, performance.now()];
+        while (rendering.currentTime < from + 0.02 && performance.now() - since < 1000);
+      }
+      return ramp.call(this, value, end);
+    };
+    try {
+      // High-pass to band-pass at 0.2 s, then the low-pass 10.7 ms after: past MODE_FADE, before the timer's end.
+      const s = await switchedAt(0.4, highpass, [[0.2, bandpass], [0.2107, patch]], [A3], (ctx) => {
+        rendering = ctx;
+      });
+      expect(steepestStep(s, 0.2107, 0.4) / own).toBeLessThanOrEqual(1.1);
+      expect(Math.abs(dB(rms(s, 0.3 * SR, 0.4 * SR) / rms(after, 0.3 * SR, 0.4 * SR)))).toBeLessThan(0.5);
+    } finally {
+      AudioParam.prototype.linearRampToValueAtTime = ramp;
+    }
+  });
+
   it('leaves a held chord as it was before the fade and as the new Mode plays it after', async () => {
     const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, voices: 2 } as const;
     const chord = [A3, A3 + 7];
@@ -1319,7 +1375,7 @@ describe('an LFO synced to the tempo (issue 112)', () => {
     lfoSync: 'on', lfoNote: noteIndex('1/4'),
   } as const;
   const SECONDS = 2.6;
-  /** The Amp Tap's windows end at these moments (whole 128-frame quanta), each holding a beat or the change. */
+  /** The Amp Tap's windows end at these moments (whole render quanta), each holding a beat or the change. */
   const CAPTURES = [0.32, 0.72, 0.84, 0.96, 1.28, 1.52, 1.72, 2.16, 2.24, 2.56];
   /**
    * The tremolo's gain and its times, with the tempo 120 BPM counted from 0.2 s and the Note at 0; at 0.8 s, `then`
@@ -1457,7 +1513,7 @@ describe('a synced free LFO changes speed without a jump (review 14)', () => {
   } as const;
   const synced = { ...tremolo, lfoSync: 'on', lfoNote: noteIndex('1/8') } as const;
   // A quarter into a 1/8's cycle at 120 BPM (4 Hz) from 0, on a quantum: the 1/16's beat puts it half way round.
-  const AT = (211 * 128) / SR;
+  const AT = (211 * RENDER_QUANTUM) / SR;
   /** A3 held from 0.05 s at 120 BPM counted from 0, `change` done at AT; the limiter straight. */
   const play = async (patch: Partial<Patch>, change: (e: ReturnType<typeof createSynthEngine>) => void) => {
     const ctx = new OfflineAudioContext(1, SR * 1.6, SR);
@@ -1672,8 +1728,8 @@ describe('aftertouch (issue 132)', () => {
   const glided = (elapsed: number) => 1 - Math.exp(-elapsed / 0.016);
   const A6 = 93; // 1760 Hz: a sine's crossings measure its pitch within a few milliseconds
   const sine: Partial<Patch> = { waveform: 'sine', cutoff: 20000, resonance: 0, volume: 0.4, ampAttack: 0.001, ampSustain: 1, lfoAmount: 0, lfo2Amount: 0 };
-  /** The time at the end of the `n`th 128-sample block, where a render can stop. */
-  const block = (n: number) => (n * 128) / SR;
+  /** The time at the end of the `n`th render quantum, where a render can stop. */
+  const block = (n: number) => (n * RENDER_QUANTUM) / SR;
   /**
    * A6 held, `act` on the engine; the Amp Tap's last `read` seconds before each of `times`, and the model at the middle
    * of them. The Tap, not the output: the limiter's oversampling delays the output a few milliseconds.
@@ -2994,7 +3050,7 @@ describe('a Note reaching a Voice still sounding dips first, so it does not clic
    * the Gate at its moment, as the page does, rather than all ahead.
    */
   async function dipAtTheTaps(live: boolean) {
-    const quantum = 128 / SR; // where an offline context can suspend
+    const quantum = RENDER_QUANTUM / SR; // where an offline context can suspend
     const [off, on, end] = [112 * quantum, 120 * quantum, 126 * quantum];
     const ctx = new OfflineAudioContext(1, SR * 0.5, SR);
     const engine = createSynthEngine(ctx);

@@ -154,7 +154,7 @@ const MASTER_LEVEL = 0.45;
  */
 const MODE_FADE = 0.01;
 /** The frames the browser renders at a time: a scheduled node's `ended` comes once its last one is rendered. */
-const RENDER_QUANTUM = 128;
+export const RENDER_QUANTUM = 128;
 
 /** The bend wheel's steps are smoothed over this time constant, in seconds. */
 const BEND_SMOOTHING = 0.004;
@@ -839,8 +839,9 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     const share = ctx.createGain();
     share.gain.value = 0;
     level.connect(share);
-    // Whether the Mixer reaches it, and what reaches the Amp from it: its level, its share, or nothing.
-    return { stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
+    // The shared side it plays (its Mode and curves); whether the Mixer reaches it, and what reaches the Amp from it:
+    // its level, its share, or nothing.
+    return { of: sharedSide, stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
   });
   type Side = (typeof sides)[number];
   // The Taps listening to what the Filter sends the Amp: they follow its wiring.
@@ -1119,32 +1120,35 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
      * side's shared `toQ`, faded at the top (issue 195).
      */
     setSides(slope: FilterSlope, t: number) {
-      sides.forEach((side, s) => {
-        const mode = shared.sides[s].mode;
-        if (!mode) return;
+      for (const side of sides) {
+        const mode = side.of.mode;
+        if (!mode) continue;
         const flat = filterStages(mode, slope, 0);
         side.stages.forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
         write(side.resonanceFade.gain, isPeaked(mode) ? -1 : 0, t);
         write(side.levelFade.gain, fadesOutAtTheTop(mode) ? -1 : 0, t);
-      });
+      }
     },
 
     /**
-     * Fade over to side `to` from `t` (issue 248), from `startShare`, its share of the sound then, to all of it: both
-     * sides wired, each through its share, until `settle`.
+     * Both sides wired, each through its share of the sound, as a fade has them (issue 248): seamless whenever it is
+     * done, as the shares hold where they are until the fade's ramps (`rampShares`) start.
      */
-    fadeTo(to: number, t: number, startShare: number) {
-      sides.forEach((side, s) => {
-        wire(side, true, side.share);
-        side.share.gain.cancelScheduledValues(t);
-        side.share.gain.setValueAtTime(s === to ? startShare : 1 - startShare, t);
-        side.share.gain.linearRampToValueAtTime(s === to ? 1 : 0, t + MODE_FADE);
-      });
+    wireForFade() {
+      for (const side of sides) wire(side, true, side.share);
     },
-    /** Once the fade to side `to` is over: it alone wired, directly, and the other side not at all, with new stages. */
-    settle(to: number) {
-      sides.forEach((side, s) => {
-        if (s === to) return wire(side, true, side.level);
+    /** The shares' ramps of a fade over to the side playing `to`, from `t`: its own from `startShare` to all of it. */
+    rampShares(to: FilterSide, t: number, startShare: number) {
+      for (const side of sides) {
+        side.share.gain.cancelScheduledValues(t);
+        side.share.gain.setValueAtTime(side.of === to ? startShare : 1 - startShare, t);
+        side.share.gain.linearRampToValueAtTime(side.of === to ? 1 : 0, t + MODE_FADE);
+      }
+    },
+    /** Once the fade to `to` is over: its side alone wired, directly, and the other not at all, with new stages. */
+    settleOn(to: FilterSide) {
+      sides.forEach((side) => {
+        if (side.of === to) return wire(side, true, side.level);
         wire(side, false);
         side.stages.forEach((node, k) => {
           node.disconnect();
@@ -1170,6 +1174,96 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   return voice;
 }
 type Voice = ReturnType<typeof createVoice>;
+
+/**
+ * The Filter's crossfade on a change of Mode (issue 248): which of its two `sides` is heard, the fade under way, and its
+ * rules. A change goes to the side not heard, and every Voice fades over to it, so no side changes Mode while it is
+ * heard. While a fade is under way, a change back to the Mode faded from turns the fade round from where it is; any
+ * other waits for the fade's end, and the last one asked for fades in then. A fade is under way until it has settled:
+ * till then the side faded out keeps its old Mode, silent once the fade is over by the clock (the 1.26.1 review). It is
+ * settled by the audio clock, never by a time ahead of it (issue 251): at its end (`atClock`), or by the next change
+ * once the clock has passed its end, as the side faded out is then silent (1.26.1's statistics run).
+ */
+function createModeFade(
+  ctx: BaseAudioContext,
+  sides: readonly [FilterSide, FilterSide],
+  voices: readonly Voice[],
+  atClock: (t: number, then: () => void) => void,
+  setSideCurves: (slope: FilterSlope, t: number) => void,
+) {
+  /** The side that is not `side`. */
+  const other = (side: FilterSide) => (side === sides[0] ? sides[1] : sides[0]);
+  // The side heard, or faded to; when its fade began, and its share of the sound then.
+  let heard = sides[0];
+  let fade = { start: -MODE_FADE, startShare: 1 };
+  // The latest fade's number: a fade's end acts only while its fade is still the latest, so beginning a fade, or settling
+  // one early, gives up the end of the one before. Whether the latest has settled.
+  let latest = 0;
+  let settled = true;
+  // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
+  let pending: FilterMode | undefined;
+  let slope: FilterSlope = 12;
+  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades or waits to. */
+  const heardShare = (t: number) =>
+    t >= fade.start + MODE_FADE ? 1 : fade.startShare + ((1 - fade.startShare) * Math.max(0, t - fade.start)) / MODE_FADE;
+  const fadeOver = () => ctx.currentTime >= fade.start + MODE_FADE;
+  /** Every Voice settles on the side heard, the side faded out unwired: the latest fade is over. */
+  const settle = () => {
+    for (const v of voices) v.settleOn(heard);
+    settled = true;
+  };
+  /**
+   * Every Voice fades over to `to` from `at`, from its share of the sound then; with no `at`, from just after the clock
+   * as read once every Voice is wired for it, the last thing before the fade's ramps are written (issue 251): the sound
+   * goes on meanwhile, as an offline render does not wait, and a side wired for it holds where it is until they start.
+   * When the browser says the fade is over, if it is still the latest, a Mode asked for meanwhile fades in next; or else
+   * the side faded out is unwired.
+   */
+  const beginFade = (to: FilterSide, at?: number) => {
+    for (const v of voices) v.wireForFade();
+    const t = at ?? ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate;
+    const share = heardShare(t);
+    const startShare = to === heard ? share : 1 - share;
+    heard = to;
+    fade = { start: t, startShare };
+    settled = false;
+    for (const v of voices) v.rampShares(to, t, startShare);
+    const fading = ++latest;
+    atClock(t + MODE_FADE, () => {
+      if (fading !== latest) return;
+      settle();
+      if (!pending) return;
+      // The side faded out, unwired with new stages, takes the Mode.
+      other(heard).mode = pending;
+      pending = undefined;
+      for (const v of voices) v.setSides(slope, ctx.currentTime);
+      setSideCurves(slope, ctx.currentTime);
+      beginFade(other(heard));
+    });
+  };
+  return {
+    /** A change of Filter Mode to `mode` at `t`, the Patch's Slope then `nextSlope`. */
+    toMode(mode: FilterMode, nextSlope: FilterSlope, t: number) {
+      slope = nextSlope;
+      if (!heard.mode) heard.mode = mode;
+      if (!settled && fadeOver()) {
+        // Settled now, its end's own settling and any Mode waiting given up for this one.
+        ++latest;
+        settle();
+        pending = undefined;
+      }
+      if (!settled) {
+        pending = heard.mode === mode || other(heard).mode === mode ? undefined : mode;
+        if (other(heard).mode === mode) beginFade(other(heard), t);
+        return;
+      }
+      if (heard.mode === mode) return;
+      other(heard).mode = mode;
+      beginFade(other(heard), t);
+    },
+  };
+}
+
 
 /**
  * The instrument: up to MAX_VOICES Voices (Oscillator → Filter → Amp each) summed into one master and safety
@@ -1259,20 +1353,6 @@ export function createSynthEngine(
     resonanceIn.connect(makeUp);
     return { resonanceQ, toQ, makeUp, curveFrom: createChangeDetector<readonly [FilterMode, FilterSlope]>(), curveStages: [0, 0] };
   }) as [FilterSide, FilterSide];
-  // The side heard, or faded to (issue 248); when its fade began, and its share of the sound then.
-  let heard = 0;
-  let fade = { start: -MODE_FADE, startShare: 1 };
-  // The latest fade's number: a fade's end acts only while its fade is still the latest, so beginning a fade, or settling
-  // one early, gives up the end of the one before. Whether the latest has settled: until then the side faded out keeps
-  // its old Mode, though silent once the fade is over by the clock (the 1.26.1 review and statistics run).
-  let latestFade = 0;
-  let settled = true;
-  // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
-  let pending: FilterMode | undefined;
-  let slopeNow: FilterSlope = 12;
-  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades or waits to. */
-  const heardShare = (t: number) =>
-    t >= fade.start + MODE_FADE ? 1 : fade.startShare + ((1 - fade.startShare) * Math.max(0, t - fade.start)) / MODE_FADE;
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
   const twinStagesFrom = createChangeDetector<readonly [FilterMode, FilterSlope, number]>();
   const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
@@ -1610,67 +1690,15 @@ export function createSynthEngine(
       side.toQ.forEach((g, k) => write(g.gain, side.curveStages[k], t));
     }
   };
-  /** Every Voice settles on side `to`, the side faded out unwired: the latest fade is over. */
-  const settleOn = (to: number) => {
-    for (const v of voices) v.settle(to);
-    settled = true;
-  };
-  /**
-   * Every Voice fades over to side `to` from `t`, from its share of the sound then. When the browser says the fade is
-   * over, if it is still the latest, a Mode asked for meanwhile fades in next; or else the side faded out is unwired.
-   */
-  const fadeTo = (to: number, t: number) => {
-    const share = heardShare(t);
-    const startShare = to === heard ? share : 1 - share;
-    heard = to;
-    fade = { start: t, startShare };
-    settled = false;
-    for (const v of voices) v.fadeTo(to, t, startShare);
-    const fading = ++latestFade;
-    atClock(t + MODE_FADE, () => {
-      if (fading !== latestFade) return;
-      settleOn(to);
-      if (!pending) return;
-      // The side faded out, unwired with new stages, takes the Mode; its fade starts a little after now, as the sound
-      // may have gone on past the clock read here by the time the fade is written (an offline render does not wait).
-      sides[1 - heard].mode = pending;
-      pending = undefined;
-      for (const v of voices) v.setSides(slopeNow, ctx.currentTime);
-      setSideCurves(slopeNow, ctx.currentTime);
-      fadeTo(1 - heard, ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate);
-    });
-  };
-  /**
-   * A change of Filter Mode at `t` (issue 248): the side not heard takes the new Mode, and every Voice fades over to it,
-   * so no side changes Mode while it is heard. While a fade is under way, a change back to the Mode faded from turns
-   * the fade round from where it is; any other waits for the fade's end, and the last one asked for fades in then. Once
-   * the fade is over by the clock, though the browser has not yet said so, a change settles it and fades in at once.
-   */
-  const toMode = (mode: FilterMode, t: number) => {
-    if (!sides[heard].mode) sides[heard].mode = mode;
-    if (!settled && t >= fade.start + MODE_FADE) {
-      // The fade is over by the clock: settled now, its end's own settling and any Mode waiting given up for this one.
-      ++latestFade;
-      settleOn(heard);
-      pending = undefined;
-    }
-    if (!settled) {
-      pending = sides[heard].mode === mode || sides[1 - heard].mode === mode ? undefined : mode;
-      if (sides[1 - heard].mode === mode) fadeTo(1 - heard, t);
-      return;
-    }
-    if (sides[heard].mode === mode) return;
-    sides[1 - heard].mode = mode;
-    fadeTo(1 - heard, t);
-  };
+  // The Filter's crossfade between its sides on a change of Mode (issue 248).
+  const modeFade = createModeFade(ctx, sides, voices, atClock, setSideCurves);
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through: only those it changes, or with `whole`
    * every one (issue 218).
    */
   const applyToSound = (next: Patch, t: number, { whole = false } = {}) => {
-    slopeNow = next.filterSlope;
-    toMode(next.filterMode, t);
+    modeFade.toMode(next.filterMode, next.filterSlope, t);
     for (const v of voices) v.apply(next, t, { whole });
     // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
     const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
