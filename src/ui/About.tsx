@@ -149,7 +149,9 @@ export function About({
               </button>
             </div>
             <p>Limpide’s water drop, its tail the logo’s stroke: it lives on the page, on a section’s top edge, and makes no sound.</p>
-            <p>It dances to what you play, answers every knob and fader you turn, giggles when you tickle it with the mouse and sprays droplets when clicked.</p>
+            <p>It dances to what you play, answers every knob and fader you turn, giggles when you tickle it with the mouse and sprays droplets when clicked or tapped.</p>
+            {/* A finger as well as the mouse, and the throw, the best trick on a tablet (issue 260). */}
+            <p>Press it and move, with the mouse or a finger, to pick it up; let go and it is thrown, to land with a splash on a section’s edge.</p>
             <p>Left alone a while, it does a funny turn now and then:</p>
             <ul>
               <li>a glass of water, then a burp</li>

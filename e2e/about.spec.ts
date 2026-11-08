@@ -192,7 +192,8 @@ test.describe('Bead in About (issue 163)', () => {
       await expect(card(page)).toBeVisible();
       await expect(credits(page)).toHaveCount(0);
       await expect(bead(page)).toHaveAttribute('aria-expanded', 'true');
-      for (const words of ['water drop', 'tickle', 'Display', 'B, E, A, D']) await expect(card(page)).toContainText(words);
+      // A finger as well as the mouse, and the throw, the best trick on a tablet (issue 260).
+      for (const words of ['water drop', 'tickle', 'finger', 'thrown', 'Display', 'B, E, A, D']) await expect(card(page)).toContainText(words);
       await expect(card(page).getByRole('listitem').first()).toBeVisible();
       await expect(card(page).getByRole('link', { name: 'All its secrets' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide/blob/main/docs/bead.md');
       await card(page).getByRole('button', { name: 'Back' }).click();
