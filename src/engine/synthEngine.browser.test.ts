@@ -2456,6 +2456,17 @@ describe('FM and Ring under the top, and no offset (issue 103)', () => {
       expect(await foldedDb(preset(name), C7)).toBeLessThan(-60);
     });
 
+  // LFO 2's vibrato swung the top partial Ring kept for C6 past 24 kHz at the top of each swing: −57 dB (review 14,
+  // issue 267). Measured over 85 ms windows, half a swing at 5.5 Hz, so its tops are not averaged away.
+  for (const note of [C6, C7])
+    it(`keeps Ring Lead on ${note === C6 ? 'C6' : 'C7'} from folding back at the top of its vibrato: under −60 dB past 24 kHz`, async () => {
+      const s = await play(preset('Ring Lead'), note, 0.8, HIGH);
+      const size = 16384;
+      let worst = -Infinity;
+      for (let from = HIGH * 0.05; from + size <= s.length; from += size / 2) worst = Math.max(worst, energyAboveDb(s, HIGH, 24000, from, size));
+      expect(worst).toBeLessThan(-60);
+    });
+
   it('hears what lies past 24 kHz when there is some: a plain Saw on C7 (control case)', async () => {
     expect(await foldedDb({ ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1 }, C7)).toBeGreaterThan(-40);
   });
