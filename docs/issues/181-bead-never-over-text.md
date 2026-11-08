@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-02). Built on its own branch with [192](./192-beads-cover-checks-complete.md), tried and approved by the owner: "181 and 192 look ok, you can merge"; merged into main the same day, ships with the next release
+**Status:** done (2026-11-02). Built on its own branch with [192](./192-beads-cover-checks-complete.md), tried and approved by the owner: "181 and 192 look ok, you can merge"; merged into main the same day, released in 1.22.0
 
 **Since then:** the text is also read again at once as a cover opens, closes or moves with the page, or the window resizes, and a tenth of a second after a scroll inside the page as well as of the window; its walk passes over what is not text whole (issue [220](./220-bead-keeps-its-covers-as-the-page-changes.md), 2026-11-03).
 

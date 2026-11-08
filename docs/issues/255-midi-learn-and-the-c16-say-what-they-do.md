@@ -8,7 +8,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. Left: the owner tries it on the C16. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; released in 1.27.0. Left: the owner tries it on the C16. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 **Added in triage (2026-11-07, from [review 12](../reviews/2026-11-07/12-ripple-hunter.md) over the whole app, decided by the owner (2026-11-07, "Yes to both")):**
 

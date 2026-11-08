@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish of the tests ([131](./131-v1.md)): Claude's call, let stand by the owner in 1.26.2 (2026-11-07; the triage's questions did not name it). The other half, Bead behind one module, is dropped (the inbox).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; released in 1.27.0. In v1 as polish of the tests ([131](./131-v1.md)): Claude's call, let stand by the owner in 1.26.2 (2026-11-07; the triage's questions did not name it). The other half, Bead behind one module, is dropped (the inbox).
 
 ## Agent Brief
 

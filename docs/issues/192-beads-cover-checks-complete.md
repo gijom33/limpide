@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-02). Built on its own branch with [181](./181-bead-never-over-text.md), tried and approved by the owner: "181 and 192 look ok, you can merge"; merged into main the same day, ships with the next release
+**Status:** done (2026-11-02). Built on its own branch with [181](./181-bead-never-over-text.md), tried and approved by the owner: "181 and 192 look ok, you can merge"; merged into main the same day, released in 1.22.0
 
 ## Decisions
 

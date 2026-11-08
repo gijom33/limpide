@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-02). Built on its own branch and merged into main the same day, approved by the owner: "OK I like the implement of 180, you can merge"; ships with the next release. In v1, decided by the owner (2026-11-02); measured ([research](../research/180-steadier-scopes.md)) and grilled the same day
+**Status:** done (2026-11-02). Built on its own branch and merged into main the same day, approved by the owner: "OK I like the implement of 180, you can merge"; released in 1.22.0. In v1, decided by the owner (2026-11-02); measured ([research](../research/180-steadier-scopes.md)) and grilled the same day
 
 ## Decisions
 
