@@ -299,7 +299,7 @@ for (const size of SIZE_NAMES) {
     const { width, height } = SIZES[size];
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await page.locator('.piano button').first().waitFor();
+    await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
     const opened: string[] = [];
     for (const { name, button, panel } of HEADER_PANELS) {
       if (!(await button(page).isVisible())) continue; // the Tempo opens a panel up to 860 px only
@@ -326,7 +326,7 @@ for (const size of SIZE_NAMES) {
 test('a narrow Tempo through a tablet’s turn and back: closed, then opened again under the header, and Tab out closes it (issue 188)', async ({ page }) => {
   await page.setViewportSize({ width: 820, height: 1180 });
   await page.goto('/');
-  await page.locator('.piano button').first().waitFor();
+  await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
   const panel = page.getByRole('group', { name: 'Tempo' });
   const open = page.locator('header').getByRole('button', { name: /^Tempo: / });
   await open.click();

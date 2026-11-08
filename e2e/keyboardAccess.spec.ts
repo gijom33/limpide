@@ -173,7 +173,7 @@ test('the new Preset is announced after Next Preset, and with its about line whe
 test('Tab reaches every header button, the panels’ buttons and a Preset, in Safari too (issue 253)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await page.locator('.piano button').first().waitFor();
+  await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
   const focusedName = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.textContent?.trim() ?? '');
   const stops: string[] = [];
   for (let i = 0; i < 60; i++) {

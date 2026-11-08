@@ -598,7 +598,7 @@ for (const [preset, before, option, note] of [
     await page.getByRole('button', { name: option, exact: true }).click();
     await expect(card(page)).toContainText(note);
     await expect(display).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('.display-panel')).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Viewer controls' })).toHaveCount(0);
     // Its Viewer between the header and the card, and nothing over it.
     await expect.poll(() => standing(page, '[data-tutorial-viewer]')).toBe('clear');
     const viewer = page.locator('[data-tutorial-viewer]');
