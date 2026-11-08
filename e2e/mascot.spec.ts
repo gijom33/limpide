@@ -1255,16 +1255,18 @@ test("dropped just beside LFO 1's plot, a Sine at 2.5 Hz, the fastest it rides, 
   // Two seconds of the ride, five rises and five falls, frame by frame: on its board, its foot on the line.
   const seen = await onTheBoard(page, 1, 2000);
   const told = JSON.stringify(seen.slice(0, 40).map((f) => ({ ...f, off: Math.round(f.off * 10) / 10 })));
-  expect(seen.length, told).toBeGreaterThan(20);
+  // Enough frames to judge: GitHub's Linux WebKit draws about ten a second in Playwright's image, 20 in the two.
+  expect(seen.length, told).toBeGreaterThanOrEqual(16);
   // About half a pixel off on average here, in both browsers. The line is up to 70° steep, so a few milliseconds
   // between Bead's reading of the clock and its plot's, in the same frame, can be pixels: a frame in twenty may be
-  // further off, none by a third of the wave's swing (24 px each way).
+  // further off (two at the fewest), none by a third of the wave's swing (24 px each way).
   const offs = seen.map((f) => Math.abs(f.off));
-  expect(offs.filter((off) => off > 3).length / offs.length, told).toBeLessThanOrEqual(0.05);
+  // Two such frames at the fewest, where twenty frames are all there are (GitHub's Linux WebKit).
+  expect(offs.filter((off) => off > 3).length, told).toBeLessThanOrEqual(Math.max(2, offs.length * 0.05));
   expect(Math.max(...offs), told).toBeLessThanOrEqual(8);
   // Leaning with the wave, forward going down it and back going up, as steep as it leans, 35°, where the line is steeper.
   const steep = seen.filter((f) => Math.abs(f.slope) > 20);
-  expect(steep.length, told).toBeGreaterThan(10);
+  expect(steep.length, told).toBeGreaterThanOrEqual(8);
   expect(steep.filter((f) => Math.sign(f.lean) === Math.sign(f.slope)).length / steep.length, told).toBeGreaterThan(0.8);
   expect(steep.filter((f) => Math.abs(f.slope) > 40 && Math.abs(f.lean) > 30).length, told).toBeGreaterThan(0);
   // Not shaking: its lean turns from forward to back no more often than the line under it does.
