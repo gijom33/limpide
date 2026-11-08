@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-08) on night/2026-11-08, for the owner to try. In v1 as polish, as 250 and 251 were; Claude's call, open to the owner (2026-11-07).
+**Status:** done (2026-11-08). Built (2026-11-08) on night/2026-11-08 and merged into main on 2026-11-08, approved by the owner: "All good! Go for it."; ships with the next release. In v1 as polish, as 250 and 251 were; Claude's call, open to the owner (2026-11-07).
 
 ## The items
 

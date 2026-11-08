@@ -8,7 +8,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-08) on night/2026-11-08, for the owner to try; item 3 waits for the owner's yes. In v1 as polish; Claude's call, open to the owner (2026-11-08). Item 3 changes the owner's instructions to Claude.
+**Status:** ready-for-human · bug. Items 1 and 2 built (2026-11-08) on night/2026-11-08 and merged into main on 2026-11-08, approved by the owner: "All good! Go for it."; ships with the next release. Left: item 3, waiting for the owner's yes. In v1 as polish; Claude's call, open to the owner (2026-11-08). Item 3 changes the owner's instructions to Claude.
 
 ## Agent Brief
 

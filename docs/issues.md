@@ -3,7 +3,7 @@
 Every issue in [docs/issues](issues), with its Status’s first words; the issue tracker’s guide is [docs/agents/issue-tracker.md](agents/issue-tracker.md).
 Generated from the issue files by `npm run issues`: edit an issue, not this page.
 
-## Open (21)
+## Open (19)
 
 | # | Issue | Status |
 | --: | --- | --- |
@@ -25,11 +25,9 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 258 | [Preset levels across the keyboard](issues/258-preset-levels-across-the-keyboard.md) | ready-for-human · bug |
 | 262 | [v2 ideas from the 1.26.1 round](issues/262-v2-ideas-from-the-1-26-1-round.md) | needs-triage · enhancement |
 | 267 | [A click, a fold-back and a bite](issues/267-a-click-a-fold-back-and-a-bite.md) | ready-for-human · bug |
-| 268 | [tidy-ups after 1.27.0](issues/268-tidy-ups-after-1-27-0.md) | ready-for-human · enhancement |
 | 269 | [words and a level after 1.27.0](issues/269-words-and-a-level-after-1-27-0.md) | ready-for-human · bug |
-| 270 | [Bead rides an LFO up to 2.5 Hz](issues/270-bead-rides-up-to-2-5-hz.md) | ready-for-human · enhancement |
 
-## Done, closed, superseded or ongoing (249)
+## Done, closed, superseded or ongoing (251)
 
 | # | Issue | Status |
 | --: | --- | --- |
@@ -282,3 +280,5 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 264 | [Glow on the Scopes by default](issues/264-glow-on-the-scopes-by-default.md) | done (2026-11-07) |
 | 265 | [Words and comments that lag 1.26](issues/265-words-and-comments-that-lag-1-26.md) | done (2026-11-07) |
 | 266 | [Preset and tip words that hold, and Pulse Width as the glossary says](issues/266-preset-and-tip-words-that-hold.md) | done (2026-11-07) |
+| 268 | [tidy-ups after 1.27.0](issues/268-tidy-ups-after-1-27-0.md) | done (2026-11-08) |
+| 270 | [Bead rides an LFO up to 2.5 Hz](issues/270-bead-rides-up-to-2-5-hz.md) | done (2026-11-08) |

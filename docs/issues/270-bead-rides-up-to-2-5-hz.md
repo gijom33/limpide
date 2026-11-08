@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-08) on night/2026-11-08, for the owner to try. In v1 as polish of 197's rides, as 264 was of 229's Glow; Claude's call, open to the owner (2026-11-08). The bound is the owner's (decided by the owner, 2026-11-08). Built after 1.27.0, for the next release.
+**Status:** done (2026-11-08). Built (2026-11-08) on night/2026-11-08 and merged into main on 2026-11-08, approved by the owner: "All good! Go for it."; ships with the next release. In v1 as polish of 197's rides, as 264 was of 229's Glow; Claude's call, open to the owner (2026-11-08). The bound is the owner's (decided by the owner, 2026-11-08).
 
 ## Decisions
 
