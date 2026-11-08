@@ -9,7 +9,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 ## Agent Brief
 
@@ -35,7 +35,7 @@
 - [x] A test: in MIDI Learn at 861, 1100 and 1440 px, LFO 2's values are not under the Learn bar (or can be scrolled clear)
 - [x] A test with Web MIDI missing: the two buttons are disabled, look so, and say why
 - [x] A test: the two Envelope rows' tops within 1 px of each other at 861, 1100, 1440 and 2560 px
-- [ ] Every test passes in both engines and in Linux's fonts
+- [ ] ~~Every test passes in both engines and in Linux's fonts~~ (both engines in the shift's suite (2026-11-07); Linux's fonts are checked by the next release's branch run)
 
 **Out of scope:** the tips' words; the Learn bar's contents.
 

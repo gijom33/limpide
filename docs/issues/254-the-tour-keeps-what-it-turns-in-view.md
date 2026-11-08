@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 ## Agent Brief
 
@@ -22,7 +22,7 @@
 **Acceptance criteria:**
 - [x] A test walks every card at 1440 × 900, 1920 × 1080 and a phone, and checks the turned control is in the viewport and clear of the card
 - [x] 206's tests keep passing
-- [ ] Every test passes in both engines and in Linux's fonts (both engines here; Linux's fonts on GitHub, at the push)
+- [ ] ~~Every test passes in both engines and in Linux's fonts (both engines here; Linux's fonts on GitHub, at the push)~~ (both engines in the shift's suite (2026-11-07); Linux's fonts are checked by the next release's branch run)
 
 **Out of scope:** the cards' words and order (the Tour's ending is [260](./260-small-things-for-newcomers-after-1-26.md)'s).
 

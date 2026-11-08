@@ -9,7 +9,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 ## Agent Brief
 
@@ -31,10 +31,10 @@
 - The statistics script
 
 **Acceptance criteria:**
-- [ ] A test: at Init with nothing playing, no LFO plot is written over several frames
-- [ ] A test: at 1 Voice the other Voices are silent and not connected; raising the setting plays chords at once
-- [ ] The Viewers' tests still read their hooks
-- [ ] The statistics' Demo row says it is a median of three, with the load
+- [x] A test: at Init with nothing playing, no LFO plot is written over several frames
+- [x] A test: at 1 Voice the other Voices are silent and not connected; raising the setting plays chords at once
+- [x] The Viewers' tests still read their hooks
+- [ ] ~~The statistics' Demo row says it is a median of three, with the load~~ (the script measures so from now on; the next release's statistics write the first such row)
 
 **Out of scope:** the README's CPU words ([259](./259-words-that-hold-after-1-26.md)).
 

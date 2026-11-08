@@ -15,7 +15,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
 
 ## Agent Brief
 
@@ -35,9 +35,9 @@
 - Code comments and test names
 
 **Acceptance criteria:**
-- [ ] Each item done, the report's quotes no longer found
-- [ ] The design audit's states listed, the new ones passing
-- [ ] Every test passes, renamed tests included
+- [x] Each item done, the report's quotes no longer found
+- [x] The design audit's states listed, the new ones passing
+- [x] Every test passes, renamed tests included
 
 **Out of scope:** the Preset and tip claims about sound ([266](./266-preset-and-tip-words-that-hold.md)); the two MIDI Learn bugs review 12 found ([255](./255-midi-learn-and-the-c16-say-what-they-do.md)).
 

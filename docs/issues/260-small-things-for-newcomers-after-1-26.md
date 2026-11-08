@@ -10,7 +10,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's five small ideas).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's five small ideas).
 
 ## Agent Brief
 
@@ -34,9 +34,9 @@
 - The Song's card or caption
 
 **Acceptance criteria:**
-- [ ] Tests for each, on a phone where the item is a phone's
-- [ ] The Tour's and the Tutorials' tests keep passing, their words checked by the short-words rule
-- [ ] Every test passes in both engines and in Linux's fonts
+- [x] Tests for each, on a phone where the item is a phone's
+- [x] The Tour's and the Tutorials' tests keep passing, their words checked by the short-words rule
+- [ ] ~~Every test passes in both engines and in Linux's fonts~~ (both engines in the shift's suite (2026-11-07); Linux's fonts are checked by the next release's branch run)
 
 **Out of scope:** the Tour's other cards (their words for a ten-year-old are v2, [262](./262-v2-ideas-from-the-1-26-1-round.md)); the control the Tour turns ([254](./254-the-tour-keeps-what-it-turns-in-view.md)).
 

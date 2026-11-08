@@ -9,7 +9,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's process answers: these four kept, the others dropped).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's process answers: these four kept, the others dropped).
 
 ## Agent Brief
 
@@ -30,7 +30,7 @@
 - The README and the issue-tracker guide
 
 **Acceptance criteria:**
-- [ ] The open-calls list exists, each line linked; the owner goes through it (a human step)
+- [ ] ~~The open-calls list exists, each line linked; the owner goes through it (a human step)~~ (the list exists and is linked, kept by a script; the owner's pass through it is the owner's own step)
 - [x] No done issue has an unticked box without a strike and a reason
 - [x] The index is generated and a check fails when it is stale
 - [x] The README names the night shift

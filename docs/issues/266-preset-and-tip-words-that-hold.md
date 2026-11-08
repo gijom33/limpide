@@ -17,7 +17,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
 
 ## Decisions
 
@@ -48,7 +48,7 @@ Decided by the owner (2026-11-07, "Yes to both"):
 - [x] A test: a 10 % pulse is above its middle for 10 % of the cycle; Harmonics' levels unchanged from before
 - [x] The claim tests cover items 2 to 12
 - [x] The Scope's and the Tutorials' tests pass with the pulse the right way up
-- [ ] The fact-checker, at the next release, finds these claims true
+- [ ] ~~The fact-checker, at the next release, finds these claims true~~ (the next release's fact-checker, after this was built)
 
 **Out of scope:** the Presets' levels ([258](./258-preset-levels-across-the-keyboard.md)); Felt Piano's Velocity claim (258's).
 

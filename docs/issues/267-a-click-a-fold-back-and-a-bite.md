@@ -8,7 +8,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both"). The owner's ear on Trance Gate, Ring Lead and Zap Pluck.
+**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. Left: the owner's ear on Trance Gate, Ring Lead and Zap Pluck. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
 
 ## Agent Brief
 

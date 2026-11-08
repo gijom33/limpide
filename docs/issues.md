@@ -3,7 +3,7 @@
 Every issue in [docs/issues](issues), with its Status’s first words; the issue tracker’s guide is [docs/agents/issue-tracker.md](agents/issue-tracker.md).
 Generated from the issue files by `npm run issues`: edit an issue, not this page.
 
-## Open (31)
+## Open (18)
 
 | # | Issue | Status |
 | --: | --- | --- |
@@ -21,25 +21,12 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 187 | [Song Position Pointer](issues/187-song-position-pointer.md) | needs-triage · enhancement |
 | 203 | [A phase for Osc 2](issues/203-a-phase-for-osc-2.md) | needs-triage · enhancement |
 | 208 | [What the tests miss](issues/208-what-the-tests-miss.md) | needs-triage · enhancement |
-| 251 | [tidy-ups after 1.26.1](issues/251-tidy-ups-after-1-26-1.md) | ready-for-human · enhancement |
-| 252 | [Nothing left over the controls](issues/252-nothing-left-over-the-controls.md) | ready-for-human · bug |
-| 253 | [Keyboard and screen reader after 1.26](issues/253-keyboard-and-screen-reader-after-1-26.md) | ready-for-human · bug |
-| 254 | [The Tour keeps what it turns in view](issues/254-the-tour-keeps-what-it-turns-in-view.md) | ready-for-human · bug |
 | 255 | [MIDI Learn and the C16 say what they do](issues/255-midi-learn-and-the-c16-say-what-they-do.md) | ready-for-human · bug |
-| 256 | [Detune's beats at every interval](issues/256-detunes-beats-at-every-interval.md) | ready-for-human · bug |
-| 257 | [Cheaper at rest after 1.26](issues/257-cheaper-at-rest-after-1-26.md) | ready-for-human · bug |
 | 258 | [Preset levels across the keyboard](issues/258-preset-levels-across-the-keyboard.md) | ready-for-human · bug |
-| 259 | [Words that hold after 1.26](issues/259-words-that-hold-after-1-26.md) | ready-for-human · bug |
-| 260 | [Small things for newcomers after 1.26](issues/260-small-things-for-newcomers-after-1-26.md) | ready-for-human · enhancement |
-| 261 | [How the work is recorded, after 1.26](issues/261-how-the-work-is-recorded-after-1-26.md) | ready-for-human · enhancement |
 | 262 | [v2 ideas from the 1.26.1 round](issues/262-v2-ideas-from-the-1-26-1-round.md) | needs-triage · enhancement |
-| 263 | [The e2e tests wait on state](issues/263-the-e2e-tests-wait-on-state.md) | ready-for-human · enhancement |
-| 264 | [Glow on the Scopes by default](issues/264-glow-on-the-scopes-by-default.md) | ready-for-human · enhancement |
-| 265 | [Words and comments that lag 1.26](issues/265-words-and-comments-that-lag-1-26.md) | ready-for-human · bug |
-| 266 | [Preset and tip words that hold, and Pulse Width as the glossary says](issues/266-preset-and-tip-words-that-hold.md) | ready-for-human · bug |
 | 267 | [A click, a fold-back and a bite](issues/267-a-click-a-fold-back-and-a-bite.md) | ready-for-human · bug |
 
-## Done, closed, superseded or ongoing (236)
+## Done, closed, superseded or ongoing (249)
 
 | # | Issue | Status |
 | --: | --- | --- |
@@ -279,3 +266,16 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 248 | [A crossfade on a change of Filter Mode](issues/248-a-crossfade-on-a-change-of-filter-mode.md) | done (2026-11-07) |
 | 249 | [WebKit wakes the paused engine under an LFO plot](issues/249-webkit-wakes-the-paused-engine-under-an-lfo-plot.md) | done (2026-11-07) |
 | 250 | [tidy-ups after 1.26](issues/250-tidy-ups-after-1-26.md) | done (2026-11-07) |
+| 251 | [tidy-ups after 1.26.1](issues/251-tidy-ups-after-1-26-1.md) | done (2026-11-07) |
+| 252 | [Nothing left over the controls](issues/252-nothing-left-over-the-controls.md) | done (2026-11-07) |
+| 253 | [Keyboard and screen reader after 1.26](issues/253-keyboard-and-screen-reader-after-1-26.md) | done (2026-11-07) |
+| 254 | [The Tour keeps what it turns in view](issues/254-the-tour-keeps-what-it-turns-in-view.md) | done (2026-11-07) |
+| 256 | [Detune's beats at every interval](issues/256-detunes-beats-at-every-interval.md) | done (2026-11-07) |
+| 257 | [Cheaper at rest after 1.26](issues/257-cheaper-at-rest-after-1-26.md) | done (2026-11-07) |
+| 259 | [Words that hold after 1.26](issues/259-words-that-hold-after-1-26.md) | done (2026-11-07) |
+| 260 | [Small things for newcomers after 1.26](issues/260-small-things-for-newcomers-after-1-26.md) | done (2026-11-07) |
+| 261 | [How the work is recorded, after 1.26](issues/261-how-the-work-is-recorded-after-1-26.md) | done (2026-11-07) |
+| 263 | [The e2e tests wait on state](issues/263-the-e2e-tests-wait-on-state.md) | done (2026-11-07) |
+| 264 | [Glow on the Scopes by default](issues/264-glow-on-the-scopes-by-default.md) | done (2026-11-07) |
+| 265 | [Words and comments that lag 1.26](issues/265-words-and-comments-that-lag-1-26.md) | done (2026-11-07) |
+| 266 | [Preset and tip words that hold, and Pulse Width as the glossary says](issues/266-preset-and-tip-words-that-hold.md) | done (2026-11-07) |

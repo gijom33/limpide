@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish of the tests ([131](./131-v1.md)): Claude's call, let stand by the owner in 1.26.2 (2026-11-07; the triage's questions did not name it). The other half, Bead behind one module, is dropped (the inbox).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish of the tests ([131](./131-v1.md)): Claude's call, let stand by the owner in 1.26.2 (2026-11-07; the triage's questions did not name it). The other half, Bead behind one module, is dropped (the inbox).
 
 ## Agent Brief
 
@@ -22,8 +22,8 @@
 - The e2e specs and their shared helpers
 
 **Acceptance criteria:**
-- [ ] The count of fixed sleeps falls, each one left commented with why
-- [ ] The whole Playwright suite green locally in both engines, and on GitHub's branch run
+- [x] The count of fixed sleeps falls, each one left commented with why
+- [ ] ~~The whole Playwright suite green locally in both engines, and on GitHub's branch run~~ (green locally in both engines in the shift's suite (2026-11-07), four load flakes passing alone; GitHub's branch run comes with the next release)
 
 **Out of scope:** the app's code.
 

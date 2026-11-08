@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 ## Agent Brief
 
@@ -23,8 +23,8 @@
 - Its words on a phone
 
 **Acceptance criteria:**
-- [ ] Unit tests: unison +10 ¢, an octave down +10 ¢, Semitone +7 at 0 ¢ and +10 ¢, against renders of the two Oscillators' beating
-- [ ] The readout's words fit where they do now, phones included
+- [x] Unit tests: unison +10 ¢, an octave down +10 ¢, Semitone +7 at 0 ¢ and +10 ¢, against renders of the two Oscillators' beating
+- [x] The readout's words fit where they do now, phones included
 
 **Out of scope:** the other Geek readouts (review 19's table waits for the owner, [262](./262-v2-ideas-from-the-1-26-1-round.md)).
 

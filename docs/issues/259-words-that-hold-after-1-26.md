@@ -10,7 +10,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** done (2026-11-07). Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 ## Agent Brief
 
@@ -32,8 +32,8 @@
 - The README
 
 **Acceptance criteria:**
-- [ ] The word checks of the release steps (ripple hunter, fact-checker) find no claim left that the code or the history contradicts
-- [ ] About's tests still pass
+- [ ] ~~The word checks of the release steps (ripple hunter, fact-checker) find no claim left that the code or the history contradicts~~ (the next release's word checks, after this was built)
+- [x] About's tests still pass
 
 **Out of scope:** the copyright wording ([111](./111-the-repository-front-page-and-community-files.md)'s decision 4, for a lawyer); the statistics' figure itself ([257](./257-cheaper-at-rest-after-1-26.md)).
 
