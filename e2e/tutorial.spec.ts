@@ -232,7 +232,7 @@ test('Wobble’s Sync Step passes when Sync is switched on by hand, then the Rat
   await rate.focus();
   await page.keyboard.press('ArrowUp'); // 1/8 D, the next note value: within 5 % of the travel, but not the one asked
   await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D/);
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(600); // a time: longer than a Step takes to count
   await expect(action(page, 'Next')).toBeDisabled();
   await page.keyboard.press('ArrowUp');
   await expect(rate).toHaveAttribute('aria-valuetext', '1/4 T, 3.00 Hz');
@@ -318,7 +318,7 @@ test('Next before a Step is made says what to do, the first time only (issue 190
   await action(page, 'Next').click();
   await expect(progress(page)).toHaveText('Step 2 of 15');
   await action(page, 'Next').click({ force: true });
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: a second hint would show by now
   await expect(hint).toHaveCount(0); // once is enough
   await expect(progress(page)).toHaveText('Step 2 of 15');
 });
@@ -554,7 +554,7 @@ test('a knob already within reach when its Step comes waits for a touch, then co
   await expect(progress(page)).toHaveText('Step 10 of 15');
   const decay = ringed(page).getByRole('slider');
   await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(800); // a time: longer than a Step takes to count
   await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
   await expect(action(page, 'Next')).toBeDisabled();
   await decay.focus();

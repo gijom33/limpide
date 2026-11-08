@@ -19,7 +19,7 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
   await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true'); // the Viewers show it too
 
   await page.keyboard.up('KeyA'); // the Note ends, but the frozen Viewers still show it
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(800); // a time: past the Note's 400 ms Release, live it would have faded
   expect(await level(page)).toBeGreaterThan(-40);
 
   await page.keyboard.press('Space');
@@ -115,7 +115,7 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
   await cutoff.focus();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(400); // a time: the new Note and Cutoff reach the sound; frozen, nothing is drawn
 
   expect(await pixels()).toEqual(frozen);
   await page.keyboard.up('KeyG');

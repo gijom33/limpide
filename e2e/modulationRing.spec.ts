@@ -125,7 +125,7 @@ test('with reduced motion asked for, the ring stays and the moving dot does not 
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await page.keyboard.down('KeyA');
   await expect(ring(cutoff)).toBeVisible();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: the Note sounding, a dot would show by now
   await expect(dot(cutoff)).toBeHidden();
   await page.keyboard.up('KeyA');
 });
@@ -190,7 +190,7 @@ test('Velocity draws a grey ring beyond the Envelope’s, and neither moves befo
   await expect(dot(cutoff)).toBeVisible();
   for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // held: still
   await page.keyboard.up('KeyA');
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(150); // a time: into the Release, the dot still heard
   await expect(dot(cutoff)).toBeVisible(); // still heard
   for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // released: still
 });

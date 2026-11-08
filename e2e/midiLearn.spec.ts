@@ -239,7 +239,7 @@ test('a knob shows when hardware moves it, and while Pickup waits for the knob t
   await play(page, cc(20, 14));
   await expect(knob).toHaveAttribute('data-pickup', 'up'); // its dashed ring
   await expect(cutoff(page)).toHaveAccessibleDescription(/^Pickup: turn your Controller’s knob up to this value to take it over\./);
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(600); // a time: past Learn's 500 ms settle, Pickup still waits
   await expect(knob).toHaveAttribute('data-pickup', 'up'); // still waiting, the knob still short of it
   await play(page, cc(20, 127)); // swept past the value: picked up
   await expect(knob).toHaveAttribute('data-midi', 'moved');

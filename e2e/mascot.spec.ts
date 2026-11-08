@@ -180,7 +180,7 @@ test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D,
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(0);
   await play(page, 'jdsh');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(500); // a time: the wrong order, given time, still brings nothing
   await expect(mascot(page)).toHaveCount(0);
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(1);
@@ -200,7 +200,7 @@ test('it comes in any octave, from the piano too, and the Demo never calls it', 
   await expect(mascot(page)).toHaveCount(1);
   await play(page, 'jdhs'); // sent away
   await page.getByRole('button', { name: 'Demo', exact: true }).click();
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(3000); // a time: three seconds of the Demo's Notes, none of which calls it
   await expect(mascot(page)).toHaveCount(0);
 });
 
@@ -222,7 +222,7 @@ for (const [size, viewport, section] of [
       const { bottom, inside } = await footing(page, section);
       expect({ bottom, inside }).toEqual({ bottom: 0, inside: true });
       expect(await covered(page, true)).toEqual([]);
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(500); // a time: the reads half a second apart, through its stroll
     }
     await page.keyboard.up('f');
   });
@@ -546,7 +546,7 @@ test('it adds under a millisecond to each frame the Viewers draw, or under their
   const perFrame = async () => {
     await page.keyboard.down('f'); // F4 held, so the Viewers draw a sound
     await page.evaluate(() => Object.assign(window, { works: [] }));
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(2000); // a time: the frames of two seconds, measured
     await page.keyboard.up('f');
     return page.evaluate(() => {
       const works = [...(window as unknown as { works: number[] }).works].sort((a, b) => a - b);
@@ -592,9 +592,21 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
         radio('Bead off').click();
         await new Promise((done) => setTimeout(done, 400));
         radio('Bead on').click();
+        // From now, frame by frame: melted, then drawn afresh, a new Bead (or ten seconds, and the checks below say
+        // what came).
+        const melting = document.querySelector('.mascot');
+        (window as unknown as { goneAndBack: Promise<void> }).goneAndBack = new Promise((done) => {
+          const end = performance.now() + 10_000;
+          const frame = (now: number) => {
+            const there = document.querySelector('.mascot');
+            if ((there && there !== melting) || now > end) done();
+            else requestAnimationFrame(frame);
+          };
+          requestAnimationFrame(frame);
+        });
       });
       await page.keyboard.press('Escape');
-      await page.waitForTimeout(3000); // gone, and come up again
+      await page.evaluate(() => (window as unknown as { goneAndBack: Promise<void> }).goneAndBack);
       await expect(mascot(page)).toHaveCount(1);
       const drawn = () =>
         page.locator('.mascot-drop').evaluate((el) => {
@@ -631,15 +643,15 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
     await page.goto('/');
     await listening(page);
     await play(page, 'jdhs');
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(4000); // a time: switched off, it would have come by now
     await expect(mascot(page)).toHaveCount(0);
     await play(page, 'jdhs'); // played again just before a reload: the Notes stored nothing either
     await page.reload();
     await listening(page);
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(4000); // a time: after a reload, it would have come by now
     await expect(mascot(page)).toHaveCount(0);
     await play(page, 'jdhs');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(500); // a time: the Notes, were they heard, would have brought it
     await expect(mascot(page)).toHaveCount(0);
     await openDisplay(page);
     await expect(beadSwitch(page).getByRole('radio', { name: 'Bead off' })).toHaveAttribute('aria-checked', 'true');
@@ -652,7 +664,7 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
     await expect(mascot(page)).toHaveCount(0);
     await page.keyboard.press('Escape');
     await play(page, 'jdhs');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(500); // a time: the Notes, were they heard, would have brought it
     await expect(mascot(page)).toHaveCount(0);
   });
 });
@@ -686,7 +698,7 @@ test.describe('out by default (issue 150)', () => {
       await page.goto('/');
       const welcome = page.getByRole('dialog', { name: 'Limpide' });
       await expect(welcome).toBeVisible();
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(4000); // a time: with the welcome up, it would have come by now
       await expect(mascot(page)).toHaveCount(0);
       await welcome.getByRole('button', { name: 'Close About' }).click();
       await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
@@ -1023,7 +1035,7 @@ test('the theme switched: it shades its eyes once Display is closed', async ({ p
   await bringBead(page);
   await openDisplay(page);
   await page.getByRole('radio', { name: 'Light', exact: true }).click();
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(300); // a time: Display still open, it would have shaded its eyes by now
   await expect(mascot(page)).not.toHaveAttribute('data-doing', 'shades');
   await page.getByRole('button', { name: 'Display' }).click();
   await expect(mascot(page)).toHaveAttribute('data-doing', 'shades');
@@ -1262,7 +1274,7 @@ test.describe('never under a card (issue 164)', () => {
     const panel = page.getByRole('region', { name: 'Viewer controls' });
     await expect(panel).toBeVisible();
     await page.mouse.move(2, 894); // off every control, so no tip opens
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: for it to set off from under the panel before it is read settled
     await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
     const under = await page.evaluate(() => {
       const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
@@ -1289,7 +1301,7 @@ test.describe('never under a card (issue 164)', () => {
       const tops = [...Array.from({ length: Math.floor(height / 200) + 1 }, (_, i) => i * 200), height];
       for (const top of [...tops, ...[...tops].reverse()]) {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top);
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(300); // a time: for it to set off for the new scroll before it is read settled
         // Once it has fallen or flown there and landed: standing, or hovering under the header; or, the Tour pointing
         // the way to its card's control, clinging beside it (issue 151).
         await settles(page, /^(standing|hovering|clinging)$/);
@@ -1414,7 +1426,7 @@ test.describe('never over text where it rests (issue 181)', () => {
     let level = 0;
     for (let y = 0; y <= 14; y += 2) {
       await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
-      await page.waitForTimeout(700);
+      await page.waitForTimeout(700); // a time: past its twice-a-second read of the text under it
       await settles(page);
       const seen = await restsOverText(page, 800);
       expect(seen.over, `scrolled to ${y}`).toEqual([]);

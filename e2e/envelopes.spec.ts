@@ -80,7 +80,7 @@ test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, rev
   const seen: number[] = [];
   for (let i = 0; i < 12; i++) {
     seen.push(await level());
-    await page.waitForTimeout(60);
+    await page.waitForTimeout(60); // a time: twelve reads 60 ms apart span the LFO's dips
   }
   await page.keyboard.up('KeyA');
   // At full Depth the LFO (2 Hz) dips the sound to silence and back, twice a second; the Envelope drawn stays at its

@@ -19,7 +19,7 @@ test('the Demo plays its track, one Preset after another, making sound, and stop
   await page.keyboard.up('a');
   // The name alone: the Patch's plain words under it follow the Demo's last knob a moment after (issue 123).
   const name = await patchName(page).getAttribute('aria-label');
-  await page.waitForTimeout(1500);
+  await page.waitForTimeout(1500); // a time: the track, still going, would have moved on by now
   expect(await patchName(page).getAttribute('aria-label')).toBe(name); // the track has stopped moving
 });
 
@@ -36,7 +36,7 @@ test('turning a knob keeps the Demo playing, and the Demo leaves that knob where
   await page.mouse.up();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   const turned = await cutoff.getAttribute('aria-valuetext');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1000); // a time: the Demo, taking its knob back, would have by now
   await expect(cutoff).toHaveAttribute('aria-valuetext', turned!);
   await expect(patchName(page)).toContainText('Acid');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
@@ -396,10 +396,10 @@ test.describe('on a touch screen', () => {
     const heading = (await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().boundingBox())!;
     await swipe(page, heading.x + 5, heading.y + 300, heading.y + 50);
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(100); // the page did scroll
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: a stop the scroll set off would have come
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).tap(); // a knob takes the touch at once
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: a stop the touch set off would have come
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().tap(); // a tap anywhere else, once lifted
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');

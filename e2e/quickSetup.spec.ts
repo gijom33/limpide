@@ -51,7 +51,7 @@ test('Quick Setup walks through every control played live, the Filter’s first 
   await expect(setup(page)).toBeHidden();
 
   // It all works straight away: button 1 toggles Hold, knob 1 opens the Cutoff.
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(600); // a time: past Learn’s 500 ms settle for the control just learned
   await play(page, ...button(1));
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
   const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
@@ -69,7 +69,7 @@ test('a fader that pauses mid-move and moves on never fills the next step', asyn
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
   await page.waitForTimeout(700); // longer than Learn waits for a control to settle
   await play(page, cc(33, 20), cc(33, 30), cc(33, 40), cc(33, 50));
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(700); // a time: past Learn's settle again, the pause filled nothing
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
   await expect(setup(page)).toContainText(`6 of ${STEPS}`);
   await play(page, ...fader(2));

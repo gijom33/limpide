@@ -118,7 +118,7 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await tooltips.getByRole('radio', { name: 'Off', exact: true }).click();
   await page.keyboard.press('Escape');
   await cutoff.hover();
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(700); // a time: twice the hover's 350 ms, so a tip on would be open
   await expect(open).toHaveCount(0);
   await page.keyboard.press('Shift'); // the keyboard in use, so focus shows as it would from Tab
   for (const control of [cutoff, page.getByRole('button', { name: 'Demo', exact: true })]) {

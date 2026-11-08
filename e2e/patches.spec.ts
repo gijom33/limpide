@@ -186,7 +186,7 @@ test('the octave buttons change no sound: a Preset keeps its about line, and no 
   await expect(anyWords(page)).toHaveCount(0);
   await pick(page, 'Init');
   await up.click();
-  await page.waitForTimeout(2 * WORDS_EVERY);
+  await page.waitForTimeout(2 * WORDS_EVERY); // a time: past the words' interval
   await expect(description(page)).toBeVisible();
   await expect(anyWords(page)).toHaveCount(0);
   await nudge(page); // a change to the sound

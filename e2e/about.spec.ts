@@ -295,11 +295,11 @@ test.describe('About holds the page still (issue 209)', () => {
       const at = await centre(part);
       await page.mouse.move(at.x, at.y);
       for (const dy of [600, -200, 600]) await page.mouse.wheel(0, dy);
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(300); // a time: a scroll the wheel set off would be under way; none must come
       expect(await page.evaluate(() => scrollY), 'the wheel').toBe(y);
     }
     for (const key of ['PageDown', 'ArrowDown', 'End']) await page.keyboard.press(key);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(300); // a time: a scroll the keys set off would be under way; none must come
     expect(await page.evaluate(() => scrollY), 'the keys').toBe(y);
     await about(page).getByRole('button', { name: 'Close About' }).click();
     await expect(about(page)).toBeHidden();

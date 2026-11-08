@@ -83,7 +83,7 @@ test('the Song, hidden then shown and its octave moved at once, plays the next N
     (document.querySelector('[aria-label="Octave up"]') as HTMLButtonElement).click();
     return window.__limpideNotes!.length;
   });
-  await page.waitForTimeout(2500);
+  await page.waitForTimeout(2500); // a time: past the 2 s the Notes were handed ahead, all of them handed again by now
   const notes = await page.evaluate(() => window.__limpideNotes!);
   const [handedHidden, handedAfter] = [notes.slice(0, before), notes.slice(before)];
   const shownAt = handedHidden[handedHidden.length - 1].handed;
