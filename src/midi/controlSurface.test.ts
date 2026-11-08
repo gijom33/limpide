@@ -747,7 +747,7 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     expect(r.positions.cutoff).toBeGreaterThan(0.5); // a step up
   });
 
-  it('lets a Mapping learned from any Controller answer every Controller', () => {
+  it('lets a Mapping learned away from no layout answer every Controller', () => {
     const r = rig();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 74 }, target: cutoff, mode: 'relative-centred' });
     r.surface.handle(cc(74, 65), C16);

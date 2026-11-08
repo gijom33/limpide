@@ -78,7 +78,7 @@ export type ButtonMode = 'trigger' | 'toggle';
  * that layout loads until upgradeC16Layout replaces it, and going with it. A button either sends a press and a release ('trigger': it acts
  * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message). A
  * Mapping of a known Controller's built-in layout carries its tag and answers that Controller alone (issue 145); any
- * other answers every Controller. Which input a Mapping answers is the Controller module's to say.
+ * other answers every Controller, but the one it was learned away from (`except`, issue 255). Which input a Mapping answers is the Controller module's to say.
  */
 export interface Mapping {
   control: Control;

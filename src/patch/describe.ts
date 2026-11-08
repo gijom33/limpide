@@ -44,7 +44,7 @@ const HEARD = 0.1;
 const NOISE_HEARD = 0.04;
 /** Resonance from here up is named: a peak you hear at the Cutoff. */
 const RESONANT = 0.6;
-/** Resonance at its top (98 % and up): the Filter self-oscillates. */
+/** Resonance at its top (98 % and up): the Harmonic nearest the Cutoff rings out over the rest; on Noise, a tone at the Cutoff (issue 266). */
 const SINGING = 0.98;
 /** FM from here up is named: an index of 0.12, its first sidebands about −25 dB. */
 const FM_HEARD = 0.03;
@@ -213,7 +213,7 @@ function filterParts(patch: Patch, sound: Sound): Part[] {
   const level = (words: string) => parts.push({ words, order: 1, rank: 1 });
   switch (patch.filterMode) {
     case 'lowpass':
-      // Resonance all the way up: the Filter sings a tone of its own at the Cutoff (the Self-Oscillation Preset).
+      // Resonance all the way up: the Harmonic nearest the Cutoff rings out over the rest; on Noise, a tone at the Cutoff (issue 266).
       if (patch.resonance >= SINGING) level('through a singing Filter');
       else if (h < 1.5) level(resonant ? 'through a very low resonant Filter' : 'muffled');
       else if (h < 4) level(resonant ? 'through a low resonant Filter' : 'filtered low');

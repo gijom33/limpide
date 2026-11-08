@@ -68,7 +68,7 @@ export const setAside = (names: readonly string[]): Set<string> => new Set(doubl
 /** A known Controller by its tag. */
 export const knownById = (id: ControllerId): KnownController => KNOWN[id];
 
-/** The known Controller a Mapping answers alone (its layout's); undefined when it answers every Controller. */
+/** The known Controller a Mapping answers alone (its layout's); undefined when it is no layout's, answering every Controller or, with `except`, every one but that. */
 export const answeredBy = (mapping: Mapping): KnownController | undefined => (mapping.device ? KNOWN[mapping.device] : undefined);
 
 /**

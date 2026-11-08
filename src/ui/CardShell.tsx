@@ -75,7 +75,7 @@ interface Props {
   made?: boolean;
   closeLabel: string;
   onClose(): void;
-  /** The way forward (Next, Start, Finish), in the top row while the card is folded, else among the actions. */
+  /** The way forward (Next, Start, Finish, the Tour's last card's Play the Song), in the top row while the card is folded, else among the actions. */
   primary: ReactNode;
   /** The words, announced as each new text comes. */
   children: ReactNode;

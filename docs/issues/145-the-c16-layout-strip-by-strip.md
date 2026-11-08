@@ -62,6 +62,8 @@
 - [x] The card shows every place of the data and prints on one page, A4 and Letter (an e2e print-size check)
 - [x] Every test passes in Linux's fonts too (the card's spec in Playwright's Linux image; GitHub's Ubuntu runs all at the push)
 
+**Since then (2026-11-07, [255](./255-midi-learn-and-the-c16-say-what-they-do.md)):** a Mapping made with MIDI Learn or Quick Setup answers any input, but one learned from another input on a control the C16 layout had answers every Controller but the C16, so the C16's knob it took drives nothing; one learned from the C16 itself still answers any input. ADR-0017's Status line records it.
+
 **Out of scope:**
 - Aftertouch's place ([132](./132-aftertouch.md)), a Tap button ([112](./112-tempo-midi-clock-and-an-arpeggiator.md), [136](./136-following-midi-clock.md)), the faders of bank D
 - Sending lights back to the C16

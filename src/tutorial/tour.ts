@@ -192,7 +192,7 @@ export const TOUR_FINDS: TourFind[] = [
   },
   {
     title: 'Your turn',
-    look: 'Now play the piano’s keys, or press the ringed Song for a tune to play over.',
+    look: 'Now play the piano’s keys, or press the ringed Song and shape its sound.',
     says: [
       'On a computer the letter keys play too, from A.',
       'That is the whole Tour. As the Song plays, flip the Presets with › beside the sound’s name, or turn a knob, and hear the sound change under the tune.',

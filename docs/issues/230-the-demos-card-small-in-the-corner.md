@@ -18,6 +18,8 @@ Claude's calls, accepted by the owner, 2026-11-04 ("Yes, tonight"):
 3. **Collapsed is the card's fold, made small:** folded in three and four across, the Demo's card is only as wide as its top row needs (the Demo's part name, ⌃, Stop and ×), the parts' segments a thin line under them, about 340 × 60 px, 12 px from the window's bottom and right edges, as the docked cards keep from the edges now.
 4. **It opens folded there,** each time the Demo starts in three or four across, whatever fold was remembered; ⌃ unfolds it to the whole card, which grows up and to the left from the corner, and ⌄ folds it back into the corner. In 2 × 2 and on a phone the card and its remembered fold stay as now.
 5. **The Demo's card only:** the Tour's and a Tutorial's cards point at controls and Viewers and keep their place and room as now ([212](./212-no-room-for-a-card-three-and-four-across.md), decision 6).
+
+**Since then (2026-11-07, [254](./254-the-tour-keeps-what-it-turns-in-view.md)):** on wide windows the Tour's card moves along the bottom where it would cover what its card shows and another place along the bottom shows it all (347 px on the Filter's and the Amp's cards at 1920 × 1080); elsewhere it stays in the middle. A Tutorial's card keeps its place and room as before.
 6. **Still moved by its top row,** as cards can be from 2 × 2 up; a card moved stays where it was put until the Demo is closed.
 
 Measured before writing (2026-11-04, the welcome closed, Chromium): a 340 × 60 card 12 px from the bottom right corner covers only the Envelope Timeline's right end and its section's edge, no control, at 1000 × 737, 1280 × 800 and 1440 × 900 (three across) and 1920 × 1080 (four across, where the corner is the bottom of LFO & Envelopes' column).

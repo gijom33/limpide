@@ -435,7 +435,7 @@ export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: T
     layout: TIPS.c16Layout,
     card: TIPS.c16Card,
     positions:
-      'The C16’s knobs are sending positions, so they turn the wrong way below the middle: in the C16’s companion editor, set every knob to Relative #1. Print C16 card shows how to set each button too.',
+      'The C16’s knobs are sending positions, so a knob below its middle only turns a control down, and above it only up: in the C16’s companion editor, set every knob to Relative #1. Print C16 card shows how to set each button too.',
   },
 };
 

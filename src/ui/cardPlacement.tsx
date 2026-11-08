@@ -14,8 +14,8 @@ const foldsThisSession = new Map<CardKind, boolean>();
  * A docked card (the Demo's, a Tutorial's, the Tour's) the person can fold to its top row and, from the 2 × 2 layout up, drag
  * by that row to see what it covers (the owner's decisions, issue 59, 2026-10-27). The fold is remembered for each
  * kind of card; the place is not: the card opens where the stylesheet docks it each time (the bottom's middle; the
- * Demo's, from three across, the bottom right corner: issue 230). A double-click on the top row puts it back. On a
- * phone the card spans the bottom edge and only folds.
+ * Demo's, from three across, the bottom right corner: issue 230). A double-click on the top row puts it back there, or,
+ * on the Tour, where the Tour placed it on that card (issue 254). On a phone the card spans the bottom edge and only folds.
  *
  * The person's fold is read again each time a card opens: kept for the session too, so where storage cannot be
  * written (a private window) it lasts the session (issue 246).

@@ -32,6 +32,8 @@ Made while building it (2026-10-30), each Claude's call, let stand by the owner 
 15. Four cards, no fifth: the LFOs card is the last, its words ending "That is the whole chain. Now build a sound yourself", with "Build a Bass" and "Done" in place of Next. A closing card where nothing moves would break decision 8.
 
 **Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; Bass comes after it.
+
+**Since then (2026-11-07, [260](./260-small-things-for-newcomers-after-1-26.md)):** the Tutorials card is no longer the last: it offers "Build a Sub Ladder" beside Next, and a seventh card, "Your turn", ends the Tour on something to play, its button "Play the Song". "That is the whole Tour" moved to it.
 16. Each card starts with every control the Tour turns back on Init's values, so each Section's change is heard alone; other controls the person turned stay as they are.
 17. The moves: the Waveform Saw, Square, Sine, Square, 2.4 s each; the Cutoff 2 kHz down to 150 Hz and back, 4 s each way, then Resonance 20 % to 80 % and back, 3 s each way; the Amp's Attack 10 ms to 0.8 s and back, then its Release 0.4 s to 2 s and back, 4 s each way; LFO 1's Depth (a Sine at 2 Hz on the Cutoff, Init's) 0 to 60 %, held 3 s, and back. Knobs move evenly along their travel.
 18. Each card has its own phrase, for what it shows: held Notes for the Waveform, running octaves for the Filter, Notes with rests for the Amp (so the Release is heard), long Notes for the LFO. It plays from the first card to the end; there is no Listen button.
@@ -97,4 +99,4 @@ Made while building it (2026-10-30), each Claude's call, let stand by the owner 
 
 **Changed since (2026-11-05, [242](./242-three-shows-hand-over-alike.md)):** starting the Song during the Tour ends it, as its close does, the person's Patch given back, and the Song plays on it. Before, the Tour carried on silently and its next card stopped the Song.
 
-**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the Patch coming back closed is checked in the browser at cards 1 and 6; the rest are the Shows' unit tests.
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the Patch coming back closed is checked in the browser at cards 1 and 7; the rest are the Shows' unit tests.

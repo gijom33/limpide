@@ -67,6 +67,6 @@ Each item put right where review 12's report placed it; where a word was a test'
 **What to try in the app:**
 
 - Switch to the light theme and start a Tutorial and the Tour: the Start and Next buttons' words are now near-black on the orange; the dark theme looks as before.
-- Narrow a window below 320 px (or zoom a phone) and take the Tour: "1 of 6" sits under the card's name.
+- Narrow a window below 320 px (or zoom a phone) and take the Tour: "1 of 7" sits under the card's name.
 - Hover Display's button: its tip names Keys, Tips, Bead and Theme too. Turn the Synth Geek Layer on: the Volume reads dB, Ring stays in %.
 - Read the LFO & Envelopes and Envelope Timeline tips with a keyboard that sends aftertouch.

@@ -57,7 +57,7 @@ test('Learn says which C16 place it took, and a C16 knob it took turns nothing t
 
 test('a C16 whose knobs send positions is told, in the MIDI panel, to set them to Relative #1 (issue 255)', async ({ page }) => {
   await withFakeController(page, C16);
-  const notice = 'The C16’s knobs are sending positions, so they turn the wrong way below the middle: in the C16’s companion editor, set every knob to Relative #1.';
+  const notice = 'The C16’s knobs are sending positions, so a knob below its middle only turns a control down, and above it only up: in the C16’s companion editor, set every knob to Relative #1.';
   await play(page, cc(9, 65), cc(9, 63)); // Relative #1, as the card says
   await openMidi(page);
   await expect(midiPanel(page)).not.toContainText(notice);

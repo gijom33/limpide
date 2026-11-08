@@ -440,7 +440,8 @@ test('in the sections 2 × 2, where a card’s controls and Viewers all fit, the
 });
 
 // Issue 210: after the Sections, the Tour tells of the Synth Geek Layer and its History, then the Tutorials, each card
-// ringing the control where it is found; it switches nothing on, and plays nothing over its words.
+// ringing the control where it is found; it switches nothing on, and plays nothing over its words. Then, the last,
+// something to play, the Song ringed (issue 260).
 
 /** Whether the element `locator` finds is on screen, above the card and uncovered: the header's rows back for it. */
 const shownAbove = (locator: Locator) =>
@@ -454,7 +455,7 @@ const shownAbove = (locator: Locator) =>
 
 const geekOn = (page: Page) => page.locator('main[data-geek]');
 
-test('after the Sections, a card for the Synth Geek Layer and its History, then the Tutorials, each ringing where it is (issue 210)', async ({ page }) => {
+test('after the Sections, a card for the Synth Geek Layer and its History, then the Tutorials, then Your turn, each ringing where it is (issues 210, 260)', async ({ page }) => {
   test.setTimeout(60000);
   await page.goto('/');
   await startFromAbout(page);
@@ -605,9 +606,11 @@ for (const [layout, width, height] of [['three across', 1440, 900], ['four acros
       expect(await missedOver(page, { viewers: section.viewers, ms: cycleLength(section) * 1000, wide }), `card ${i + 1}, ${section.title}`).toEqual([]);
       await action(page, 'Next').click();
     }
-    // The last two cards ring a button of the header, which they bring into view.
+    // The last three cards ring a button of the header, which they bring into view.
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
     await action(page, 'Next').click();
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Song', exact: true }))).toBe('shown');
   });
 }

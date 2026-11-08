@@ -35,14 +35,14 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(viewers.get()).toBe(first);
     viewers.dispatch({ type: 'setCycles', cycles: 4 });
     viewers.dispatch({ type: 'setTimelineSeconds', seconds: 3 });
-    viewers.dispatch({ type: 'setGlow', glow: 'scopes' });
+    viewers.dispatch({ type: 'setGlow', glow: 'all' });
     viewers.dispatch({ type: 'toggleFreeze' });
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'guides' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'geek' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'geek' });
     viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
     viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
-    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, glow: 'scopes', viewer: { frozen: true }, overlays: { guides: true, geek: true, ideal: false } });
+    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, glow: 'all', viewer: { frozen: true }, overlays: { guides: true, geek: true, ideal: false } });
     expect(viewers.get()).not.toBe(first);
   });
 
@@ -50,7 +50,7 @@ describe('the Viewer settings store (issue 77)', () => {
     const { storage, viewers } = setup();
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'curve' });
     viewers.dispatch({ type: 'setCycles', cycles: 4 });
-    viewers.dispatch({ type: 'setGlow', glow: 'scopes' });
+    viewers.dispatch({ type: 'setGlow', glow: 'all' });
     viewers.dispatch({ type: 'setTimelineSeconds', seconds: 3 });
     viewers.dispatch({ type: 'setFrequencyScale', scale: 'linear' });
     viewers.dispatch({ type: 'setLevelScale', scale: 'linear' });
@@ -61,7 +61,7 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(next.get()).toMatchObject({
       cycles: 4,
       timelineSeconds: 3,
-      glow: 'scopes',
+      glow: 'all',
       overlays: { curve: false },
       viewer: { frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', frozen: false, snapshot: null },
     });

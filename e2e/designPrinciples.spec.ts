@@ -6,7 +6,7 @@ import { openDisplay, sliderName, wholeDemoCard } from './helpers';
 /**
  * The design principles' measurable rules (docs/design-principles.md, issue 17), on the screen states in `STATES`
  * below: the page with each of the Oscillators' four tabs; the Patches, Display and MIDI panels and About open; Glow
- * on; a Preset's description and the Patch's plain words; and the Tutorial's, the Tour's and the Demo's cards.
+ * on All; a Preset's description and the Patch's plain words; and the Tutorial's, the Tour's and the Demo's cards.
  *
  * Where look B departs from a rule on purpose, a waiver below says where and why, and sets a floor just under what
  * is measured today: anything new that breaks a rule fails the test, and so does a waived element that gets worse.
@@ -146,9 +146,9 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   {
-    // Glow on (issues 180, 199), as All (issue 229): the Display panel with it chosen, every Scope and Spectrum drawing
-    // its fading traces.
-    name: 'Glow on',
+    // Glow on All (issues 180, 199, 229): the Display panel with it chosen, every Scope and Spectrum drawing its fading
+    // traces; the other states see it on the Scopes alone, the default (issue 264).
+    name: 'Glow on All',
     // Chosen by the keyboard and then left, as the panel is seen at rest: no segment hovered or focused.
     open: async (page) => {
       await page.getByRole('button', { name: 'Display', exact: true }).click();

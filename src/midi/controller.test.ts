@@ -36,7 +36,7 @@ describe('which Mappings answer which Controller (ADR-0017, issue 149)', () => {
   const c16 = knownController(C16_USB);
   const other = knownController(KEYSTEP);
 
-  it('a Mapping made by MIDI Learn or Quick Setup answers every Controller', () => {
+  it('a Mapping made by MIDI Learn or Quick Setup, learned away from no layout, answers every Controller', () => {
     expect(answers(learned, c16)).toBe(true);
     expect(answers(learned, other)).toBe(true);
     expect(answeredBy(learned)).toBeUndefined();

@@ -95,7 +95,7 @@ interface Synth {
   silence?(): void;
   /**
    * A known Controller's knob, Relative in its layout, sent a position (a C16 left in its factory settings, its knobs
-   * then turning the wrong way below the middle): told once a visit, for the MIDI panel to say how to set it (issue 255).
+   * then turning a control only down below their middle and only up above it): told once a visit, for the MIDI panel to say how to set it (issue 255).
    */
   sendsPositions?(known: KnownController): void;
 }
