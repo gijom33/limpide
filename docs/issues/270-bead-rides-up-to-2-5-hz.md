@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-08). Built (2026-11-08) on night/2026-11-08 and merged into main on 2026-11-08, approved by the owner: "All good! Go for it."; ships with the next release. In v1 as polish of 197's rides, as 264 was of 229's Glow; Claude's call, open to the owner (2026-11-08). The bound is the owner's (decided by the owner, 2026-11-08).
+**Status:** done (2026-11-08). Built (2026-11-08) on night/2026-11-08 and merged into main on 2026-11-08, approved by the owner: "All good! Go for it."; released in 1.28.0. In v1 as polish of 197's rides, as 264 was of 229's Glow; Claude's call, open to the owner (2026-11-08). The bound is the owner's (decided by the owner, 2026-11-08).
 
 ## Decisions
 
