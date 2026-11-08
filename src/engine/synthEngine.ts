@@ -322,24 +322,31 @@ const NEVER = 1e9;
 
 /**
  * How long a retriggered LFO's new oscillator takes over from the one it replaces (issue 267): the old fades out as the
- * new fades in. Handed over at one sample, a Note joining others still sounding stepped their LFO there, a click on
- * the Volume (Trance Gate's strummed chord, review 14), and a restarted square or saw starts on its jump, at its
- * middle, for a sample. Half a millisecond is gentler than the LFOs' own softened jumps, and over a millisecond before
- * the model's LFO is checked against the sound.
+ * new fades in. Every Voice shares the LFO, so a Note joining others still sounding restarts theirs as well: the fade
+ * keeps that from stepping them, a click on the Volume, and hides a restarted square's or saw's first samples, on its
+ * jump. Half a millisecond is gentler than the LFOs' own softened jumps, and over before the model's LFO is checked
+ * against the sound.
  */
-export const LFO_HANDOVER = 0.0005;
+const LFO_HANDOVER = 0.0005;
+
+/** A node of a takeover: when it starts, whether it fades in then, and when the restart that ends it comes. */
+interface TakeoverSpan {
+  start: number;
+  fadesIn: boolean;
+  ends: number;
+}
 
 /**
  * The oscillators behind one that can start its cycle again (issue 94): an OscillatorNode cannot be reset, so at each
  * restart a new one takes over. A restart handed over ahead of now leaves the node it replaces running until then;
- * one earlier still stops every node at its own moment, so one node sounds at a time however restarts arrive (issue
- * 101). An ended node is cut off by `cut`. With `fade` (an LFO's, issue 267), each node feeds the sound through its
- * own gain, and a node taking over fades in over `fade.seconds` while the one sounding then fades out: for that
- * moment, two sound.
+ * one earlier still stops every node at its own moment, so however restarts arrive (issue 101) one node sounds at a
+ * time, but for a fade. An ended node is cut off by `cut`. With `fade` (an LFO's, issue 267), each node feeds the
+ * sound through its own gain, and a node taking over fades in over `fade.seconds` while the one sounding then fades
+ * out: for that moment, the two sound together.
  */
 function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void, fade?: { seconds: number; gain: (node: OscillatorNode) => AudioParam }) {
-  // Each node not yet ended: when it starts, whether it fades in then, and when the restart that ends it comes.
-  const running = new Map<OscillatorNode, { start: number; fadesIn: boolean; ends: number }>();
+  // Each node not yet ended.
+  const running = new Map<OscillatorNode, TakeoverSpan>();
   const add = (node: OscillatorNode, at: number, fadesIn: boolean) => {
     running.set(node, { start: at, fadesIn, ends: Infinity });
     node.onended = () => {
@@ -354,13 +361,14 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
     }
   };
   /** The node ends at the restart at `t`: at once, or faded out from `t` if it sounds by then. */
-  const end = (node: OscillatorNode, span: { start: number; fadesIn: boolean; ends: number }, t: number) => {
+  const end = (node: OscillatorNode, span: TakeoverSpan, t: number) => {
     span.ends = t;
     if (!fade || span.start >= t) {
       node.stop(t); // one not yet started never sounds, and ends all the same
       return;
     }
-    // From the level its own fade-in has reached at `t`, along that fade-in (its end, or a fade-out after `t`, called off).
+    // Everything it was to do from `t` called off (the end of its fade-in, a fade-out for a later restart), it ramps on
+    // along its fade-in to the level reached at `t`, then down to nothing.
     const gain = fade.gain(node);
     gain.cancelScheduledValues(t);
     gain.linearRampToValueAtTime(span.fadesIn ? Math.min(1, (t - span.start) / fade.seconds) : 1, t);
@@ -957,12 +965,13 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * is taken at the top of the LFOs' swing of its pitch, so a vibrato does not take the top product past (issue 267).
    */
   const harmonicsOn = (frequency: number): number[] => {
-    const p = patch;
-    if (!p?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
-    const most = (destination: LfoDestination) => destinationSwings(p, destination).reduce((sum, swing) => sum + swing, 0);
-    const cents = [most('pitch') * 100, most('pitch') * 100 + most('osc2Pitch') * 100 + most('detune')];
+    const knobs = patch;
+    if (!knobs?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
+    /** How far both LFOs together take a Destination up, at the top of their swings. */
+    const upTo = (destination: LfoDestination) => destinationSwings(knobs, destination).reduce((sum, swing) => sum + swing, 0);
+    const cents = [upTo('pitch') * 100, upTo('pitch') * 100 + upTo('osc2Pitch') * 100 + upTo('detune')];
     const hz = pitchOverNote.map((r, i) => frequency * r * 2 ** (cents[i] / 1200));
-    const rich = [p.waveform, p.osc2Waveform].map((w) => w !== 'sine');
+    const rich = [knobs.waveform, knobs.osc2Waveform].map((w) => w !== 'sine');
     const top = playedTop(ctx.sampleRate);
     const reach = (i: number) => (rich[i] ? Math.max(top / 2, hz[i]) : hz[i]);
     return [0, 1].map((i) => (rich[i] ? Math.min(WAVE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : WAVE_HARMONICS));
@@ -1360,11 +1369,12 @@ export function createSynthEngine(
    * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
    * with it, at the same phase; restarts handed over for after `t` are called off in both. A chord's Notes, asked for
    * at the same moment, restart it once, where the first of them starts: those that dip first (issue 102) start 3 ms
-   * into its cycle, rather than it jumping 3 ms into the others'.
+   * into its cycle, rather than it jumping 3 ms into the others'. So do Notes asked within one handover of the first
+   * (LFO_HANDOVER, issue 267): handed over again mid-fade, three cycles would sound, their shares summing under 1.
    */
   const restartLfo = (i: number, l: Lfo, asked: number, t: number) => {
     const chord = lfoChords[i];
-    if (chord && chord.asked === asked && chord.t <= t) return;
+    if (chord && asked >= chord.asked && asked - chord.asked < LFO_HANDOVER && chord.t <= t) return;
     lfoChords[i] = { asked, t };
     const start = LFO_START[l.waveform];
     if (!shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, start))) return;

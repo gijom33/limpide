@@ -865,15 +865,16 @@ describe('a retriggered LFO hands over to its new cycle without a step (issue 26
   // A quarter of a cycle after the first Note, the sine at its top, its restart at its centre; and a quarter of A4's
   // cycle on, where the first Note is at its peak. The Amp Tap read 26 ms later, on a 128-frame quantum.
   const [FIRST, JOIN, READ] = [0.3, 0.55 + 1 / 1760, 0.576];
-  const ampTap = async (lfoAmount: number) => {
-    const ctx = new OfflineAudioContext(1, SR * 0.7, SR);
+  /** The Amp Tap read at `read`, after the first Note and those joining it at `joins`. */
+  const ampTap = async (lfoAmount: number, { joins = [JOIN], read: at = READ, patch = {} as Partial<Patch> } = {}) => {
+    const ctx = new OfflineAudioContext(1, SR * 0.9, SR);
     const engine = createSynthEngine(ctx);
-    engine.applyPatch({ ...defaultPatch(), ...tremolo, lfoAmount });
+    engine.applyPatch({ ...defaultPatch(), ...tremolo, voices: 3, ...patch, lfoAmount });
     engine.setTapSource('all');
     engine.noteOn(69, 1, FIRST);
-    engine.noteOn(76, 1, JOIN);
+    joins.forEach((t, k) => engine.noteOn([76, 81][k], 1, t));
     const amp = new Float32Array(engine.taps.amp.fftSize);
-    const read = ctx.suspend(READ).then(() => {
+    const read = ctx.suspend(at).then(() => {
       engine.taps.amp.getFloatTimeDomainData(amp);
       void ctx.resume();
     });
@@ -896,6 +897,22 @@ describe('a retriggered LFO hands over to its new cycle without a step (issue 26
     let steepest = 0;
     for (let k = 1; k < gains.length; k++) steepest = Math.max(steepest, Math.abs(gains[k].gain - gains[k - 1].gain) / (gains[k].i - gains[k - 1].i));
     expect(steepest).toBeLessThan(0.03);
+  });
+
+  // Two Notes a quarter of a millisecond apart, inside one handover: handed over twice, three cycles would sound at once
+  // for a moment, their share of the LFO summing to as little as three quarters. A square at 8 Hz in its upper half, a
+  // gain of 1, restarts on its upper half: Trance Gate's chord joined while the gate is open. (At 1 Hz its softened
+  // jump, where a restart starts it, is itself half a millisecond wide.)
+  it('restarts once for Notes asked within one handover: a square on Volume restarted in its upper half stays at 1', async () => {
+    // Thirteen cycles of A4 after JOIN, so the first Note is at its peak again: a quarter into the square's cycle.
+    const [join, read] = [JOIN + 13 / 440, 0.6];
+    const options = { joins: [join, join + 0.00025], read, patch: { lfoWaveform: 'square', lfoRate: 8 } as Partial<Patch> };
+    const [moved, still] = [await ampTap(1, options), await ampTap(0, options)];
+    const from = Math.round((join - 0.005 - read) * SR) + still.length;
+    const peak = Math.max(...still.subarray(from).map(Math.abs));
+    const gains: number[] = [];
+    for (let i = from; i < still.length; i++) if (Math.abs(still[i]) > 0.3 * peak) gains.push(moved[i] / still[i]);
+    expect(Math.min(...gains)).toBeGreaterThan(0.99);
   });
 });
 
@@ -2505,7 +2522,7 @@ describe('FM and Ring under the top, and no offset (issue 103)', () => {
   // LFO 2's vibrato swung the top partial Ring kept for C6 past 24 kHz at the top of each swing: −57 dB (review 14,
   // issue 267). Measured over 85 ms windows, half a swing at 5.5 Hz, so its tops are not averaged away.
   for (const note of [C6, C7])
-    it(`keeps Ring Lead on ${note === C6 ? 'C6' : 'C7'} from folding back at the top of its vibrato: under −60 dB past 24 kHz`, async () => {
+    it(`keeps Ring Lead on ${note === C6 ? 'C6' : 'C7'} from folding back at the top of its vibrato: under −60 dB past 24 kHz (issue 267)`, async () => {
       const s = await play(preset('Ring Lead'), note, 0.8, HIGH);
       const size = 16384;
       let worst = -Infinity;
