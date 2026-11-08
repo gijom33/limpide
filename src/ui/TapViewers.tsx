@@ -6,7 +6,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { createSilence } from '../viewers/rest';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
-import { writeHooks } from '../viewers/testHooks';
+import { writeTestHooks } from '../viewers/testHooks';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { Tooltip } from './Tooltip';
 import { VIEWER_TIPS } from './tips';
@@ -77,8 +77,8 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
       const spectrumHooks = drawSpectrum(settled);
       // Written once every draw of the frame has read the page (issue 221), only what changed (issue 257).
       return () => {
-        writeHooks(scopeRef.current!.dataset, { ...scopeHooks, db: String(db) });
-        writeHooks(spectrumRef.current!.dataset, spectrumHooks);
+        writeTestHooks(scopeRef.current!.dataset, { ...scopeHooks, db: String(db) });
+        writeTestHooks(spectrumRef.current!.dataset, spectrumHooks);
       };
     });
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote]);

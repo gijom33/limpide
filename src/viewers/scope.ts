@@ -7,7 +7,7 @@ import { createGuideGlide } from './guides';
 import { createRest } from './rest';
 import { scopeScale } from './scopeScale';
 import { scopeWindow } from './scopeWindow';
-import type { Hooks } from './testHooks';
+import type { TestHooks } from './testHooks';
 import type { ViewSettings } from './viewSettings';
 
 // LIMITING stays up this long after the last sample past the limiter's knee, so a brief one can be read.
@@ -72,7 +72,7 @@ export function createScope(
    * `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). Hands back what
    * it drew as the canvas's test hooks, for the frame's write (issue 257): none at rest.
    */
-  return function draw(silent: boolean): Hooks | undefined {
+  return function draw(silent: boolean): TestHooks | undefined {
     const { frozen } = view().viewer;
     const f = frozenFundamental(frozen, fundamental);
     // Guides at the level the Mixer sends (issue 159), on every Scope: inside them the Filter only removed energy;
@@ -91,7 +91,7 @@ export function createScope(
       settings.cycles, glowing, settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
     ];
     if (rest(silent, inputs)) return undefined;
-    const hooks: Hooks = {};
+    const hooks: TestHooks = {};
 
     if (!frozen) analyser.getFloatTimeDomainData(samples);
     const { g, width, height } = prepareCanvas(canvas);

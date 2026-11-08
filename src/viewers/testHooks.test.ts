@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { writeHooks } from './testHooks';
+import { writeTestHooks } from './testHooks';
 
 /** A dataset that counts what is written to it. */
 function watchedDataset(start: Record<string, string> = {}) {
@@ -22,21 +22,21 @@ function watchedDataset(start: Record<string, string> = {}) {
 describe('a Viewer’s test hooks (issue 257)', () => {
   it('writes each hook that changed, and only those', () => {
     const { dataset, writes } = watchedDataset({ glow: '3', markers: '7' });
-    writeHooks(dataset, { glow: '3', markers: '8', period: '2.27 ms' });
+    writeTestHooks(dataset, { glow: '3', markers: '8', period: '2.27 ms' });
     expect(writes).toEqual(['markers=8', 'period=2.27 ms']);
     expect({ ...dataset }).toEqual({ glow: '3', markers: '8', period: '2.27 ms' });
   });
 
   it('writes nothing for a frame the same as the last', () => {
     const { dataset, writes } = watchedDataset({ glow: '3' });
-    writeHooks(dataset, { glow: '3', readout: undefined });
-    writeHooks(dataset, undefined); // a Viewer at rest draws nothing, and hands back nothing
+    writeTestHooks(dataset, { glow: '3', readout: undefined });
+    writeTestHooks(dataset, undefined); // a Viewer at rest draws nothing, and hands back nothing
     expect(writes).toEqual([]);
   });
 
   it('takes away a hook the frame has no value for', () => {
     const { dataset, writes } = watchedDataset({ readout: '440 Hz' });
-    writeHooks(dataset, { readout: undefined });
+    writeTestHooks(dataset, { readout: undefined });
     expect(writes).toEqual(['-readout']);
     expect('readout' in dataset).toBe(false);
   });
