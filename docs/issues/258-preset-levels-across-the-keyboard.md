@@ -8,7 +8,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. Left: the owner's ear on the changed Presets (the list below). In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
+**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. Left: the owner's ear on the changed Presets (the list below), Felt Piano's among them: its Velocity on the Cutoff went from 0.8 to 0.2, where call 5 says its sound stays (the 1.27.0 code review, 2026-11-07). In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes" to the triage's eight v1 issues).
 
 **Added in triage (2026-11-07, from [review 14](../reviews/2026-11-07/14-ear-stand-in.md) over all 142 Presets, decided by the owner (2026-11-07, "Yes to both")):** its full table is this issue's baseline.
 
