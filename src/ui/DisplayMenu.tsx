@@ -10,7 +10,7 @@ import { Tooltip } from './Tooltip';
  * `shut` closes it from outside (a Tutorial's Display Step made on a phone, issue 260), the focus on an option going
  * back to its button, as Escape takes it.
  */
-export function DisplayMenu({ active, shut = 0, children }: { active: boolean; shut?: number; children: ReactNode }) {
+export function DisplayMenu({ active, shut, children }: { active: boolean; shut: number; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { wrapper, button } = useHeaderPanel(open, setOpen);
   useEffect(() => {

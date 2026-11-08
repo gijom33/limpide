@@ -55,4 +55,6 @@ Claude's calls, open to the owner:
 4. **A Step may now come back to a control with a new target** (Osc 1's Waveform five times): the test that each Step asks for something new now checks a control and its target together, never the same pair twice.
 5. The Tour's button is named after the first Tutorial ("Build a Sub Ladder"), as it was after Bass.
 
+**Since then (2026-11-07, [260](./260-small-things-for-newcomers-after-1-26.md)):** "Build a Sub Ladder" is on the Tour's Tutorials card, now the sixth of seven, beside Next; the last card's button plays the Song.
+
 **To try in the app:** take the Tour to its last card and press Build a Sub Ladder (or pick Sub Ladder in the Tutorial menu); play a held Note at each wave Step and watch the Oscillator Spectrum and Ideal's circles; at the last Step, hear the saw and the square as one Note; the end card should offer Bass next. On a phone, check each note reads whole.

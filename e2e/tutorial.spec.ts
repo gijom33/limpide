@@ -415,7 +415,7 @@ test('on a phone the card shows two lines; a tap on the text, or on +, shows it 
 // Issue 260 (review 16, finding 2): on a phone the row of buttons wrapped Next alone to the left of a second row while
 // the Step was not made, then took it to the first row's end once "Do it for me" went: a thumb that learnt where it was
 // met empty space. It keeps one place, the row's right end, before and after.
-for (const [width, height] of [[390, 844], [375, 812]] as const) {
+for (const [width, height] of [[390, 844], [375, 812], [320, 568]] as const) {
   test(`at ${width} × ${height} Next keeps one place before and after each Step is made (issue 260)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await open(page, 'Bass');
@@ -582,6 +582,7 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
 // Issue 260 (review 16, finding 3): on a phone the Display panel covers the page, so a Display Step made by hand left
 // it over the circles or the trace its note speaks of, until Next. Made, the Step closes it, and its Viewer is in view.
 for (const [preset, before, option, note] of [
+  ['Sub Ladder', 3, 'Ideal', 'A circle sits on each Harmonic'],
   ['Bass', 3, 'Ideal', 'Circles mark where'],
   ['Acid', 1, 'Snapshot', 'a faint trace'],
 ] as const) {

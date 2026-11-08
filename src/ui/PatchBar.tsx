@@ -41,7 +41,8 @@ interface Props {
 /**
  * The Song's line (issue 260): in the about line's place, under the sound's name and its ›, it invites flipping the
  * Presets or turning a knob as the Song plays. One line at every width (issue 156's rule): where the longest words do
- * not fit, shorter ones, measured. Seen, not said: the Song's tip says as much to a screen reader.
+ * not fit, shorter ones, measured. Its forms are written here, not in `shortForms`' table of names: they are a
+ * sentence's. Seen, not said: the Song's tip says as much to a screen reader.
  */
 function SongInvite() {
   const line = useOneLine<HTMLParagraphElement>('song');

@@ -205,10 +205,14 @@ export function TutorialCard({ tutorial, index, done, differs, next, listening, 
   const made = step ? done[index] : false;
   const card = useRef<HTMLElement>(null);
   useRing(step, made, card);
-  // On a phone the Display panel covers the page: a Display Step made closes it, so the circles or the trace its note
-  // speaks of are in view (issue 260). Wider, the panel leaves the Viewers beside it, open for the next change.
+  // On a phone the Display panel covers the page: a Display Step, as it is made, closes it, so the circles or the trace
+  // its note speaks of are in view (issue 260); coming back to one made already leaves it. Wider, the panel leaves the
+  // Viewers beside it, open for the next change.
+  const shown = useRef({ step, made });
   useEffect(() => {
-    if (step && made && inDisplay(step) && pinned(card.current)) onShutDisplay();
+    const before = shown.current;
+    shown.current = { step, made };
+    if (step && made && before.step === step && !before.made && inDisplay(step) && pinned(card.current)) onShutDisplay();
   }, [step, made, onShutDisplay]);
   const goToControl = useWayToControl(step, card);
 

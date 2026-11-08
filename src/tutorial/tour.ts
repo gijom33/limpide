@@ -146,9 +146,9 @@ export const TOUR: TourSection[] = [
 ];
 
 /**
- * A card after the Sections (issue 210): something else there is to find, said in a few lines, and the control on the
- * page where it is found, which the card shows and the synth leaves as it is: an option in Display's panel (its button
- * standing for it while the panel is shut), or a button in the header.
+ * A card after the Sections (issue 210): something else there is to find, or to play (issue 260), said in a few lines,
+ * and the control on the page where it is found, which the card shows and the synth leaves as it is: an option in
+ * Display's panel (its button standing for it while the panel is shut), or a button in the header.
  */
 export interface TourFind {
   title: string;
@@ -158,6 +158,11 @@ export interface TourFind {
   says: string[];
   /** The control it shows. */
   shows: { kind: 'display'; overlay: Overlay } | { kind: 'header'; name: 'Tutorial' | 'Song' };
+  /**
+   * What its own button starts: the first Tutorial, offered beside Next; or the Song, the card's way out in place of
+   * Next, which ends the Tour (issue 260).
+   */
+  starts?: 'firstTutorial' | 'song';
 }
 
 /**
@@ -183,22 +188,24 @@ export const TOUR_FINDS: TourFind[] = [
       'To build one yourself, start with Sub Ladder: it plays each wave in turn and shows its own Harmonics.',
     ],
     shows: { kind: 'header', name: 'Tutorial' },
+    starts: 'firstTutorial',
   },
   {
     title: 'Your turn',
     look: 'Now play the piano’s keys, or press the ringed Song for a tune to play over.',
     says: [
-      'On a computer the letter keys play too, from A. The › beside the sound’s name loads the next Preset: try a few.',
-      'That is the whole Tour. Flip the Presets or turn a knob while the Song plays, and hear the sound change under the tune.',
+      'On a computer the letter keys play too, from A.',
+      'That is the whole Tour. As the Song plays, flip the Presets with › beside the sound’s name, or turn a knob, and hear the sound change under the tune.',
     ],
     shows: { kind: 'header', name: 'Song' },
+    starts: 'song',
   },
 ];
 
-/** How many cards the Tour has: a Section's each, then what else there is to find. */
+/** How many cards the Tour has: a Section's each, then what else there is to find, and to play. */
 export const TOUR_LENGTH = TOUR.length + TOUR_FINDS.length;
 
-/** The Tour's card at `index`: a Section's, then, after the Sections, what else there is to find. */
+/** The Tour's card at `index`: a Section's, then, after the Sections, what else there is to find, and to play. */
 export const tourCardAt = (index: number): { kind: 'section'; section: TourSection } | { kind: 'find'; find: TourFind } =>
   index < TOUR.length ? { kind: 'section', section: TOUR[index] } : { kind: 'find', find: TOUR_FINDS[index - TOUR.length] };
 

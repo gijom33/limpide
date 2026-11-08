@@ -1698,9 +1698,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .card-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
 .card-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
 .card-spacer { flex: 1 1 auto; }
-/* The way forward keeps the row's right end: wrapped alone to a second row (a phone's, while "Do it for me" shows), it
-   stays where it stands once the Step is made and it joins the first (issue 260). On the first row the spacer takes
-   the room before its margin can. */
+/* A Tutorial's and the Tour's way forward keeps the row's right end: wrapped alone to a second row (a phone's, while
+   "Do it for me" shows), it stays where it stands once the Step is made and it joins the first (issue 260). On the
+   first row the spacer takes the room before its margin can. */
 .card-actions .tool-primary { margin-left: auto; }
 /* The Step's control: a steady ring in the accent colour, and its target beside it, narrow enough that four faders'
    side by side stay apart, down to the 2 × 2 layout (issue 190). Its scroll margins are the room

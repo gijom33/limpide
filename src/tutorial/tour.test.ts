@@ -203,15 +203,19 @@ describe('After the Sections, what else there is to find (issue 210)', () => {
     expect(tutorials.look).toMatch(/Tutorial button.*Preset.*yourself/);
     expect(words(tutorials)).toMatch(/Init.*step by step/);
     expect(words(tutorials)).toMatch(/Sub Ladder/); // its button's, the first Tutorial (issue 233)
-    expect(words(tutorials)).not.toMatch(/whole Tour/); // not the last card any more (issue 260)
+    expect(words(tutorials)).not.toMatch(/whole Tour/); // the Tour goes on after it
   });
 
   it('ends on something to play: the piano, the letter keys, the Presets by ›, the Song, a knob (issue 260)', () => {
     expect(play.look).toMatch(/play.*piano.*Song/);
     expect(words(play)).toMatch(/letter keys/);
-    expect(words(play)).toMatch(/›.*Preset/);
+    expect(play.says.at(-1)).toMatch(/Song plays.*Presets with ›/); // once the Song has given the person's Patch back
     expect(words(play)).toMatch(/knob/);
     expect(play.says.at(-1)).toMatch(/whole Tour/);
+  });
+
+  it('offers the first Tutorial beside Next, and ends on the Song (issue 260)', () => {
+    expect(TOUR_FINDS.map((c) => c.starts)).toEqual([undefined, 'firstTutorial', 'song']);
   });
 
   it('shows the control each names: Display’s Geek switch, the header’s Tutorial button, its Song button', () => {

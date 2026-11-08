@@ -265,8 +265,8 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
   useRing(section, moving);
   useFindShown(shown.kind === 'find' ? shown.find : undefined);
 
-  const showing = shown.kind === 'find' ? shown.find.shows : undefined;
-  const primary = last ? (
+  const starts = shown.kind === 'find' ? shown.find.starts : undefined;
+  const primary = starts === 'song' ? (
     <button type="button" className="tool tool-primary" onClick={onSong}>
       Play the Song
     </button>
@@ -283,7 +283,7 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
             Back
           </button>
         )}
-        {showing?.kind === 'header' && showing.name === 'Tutorial' && (
+        {starts === 'firstTutorial' && (
           <button type="button" className="tool" onClick={onFirstTutorial}>
             Build a {TUTORIALS[0].preset}
           </button>
