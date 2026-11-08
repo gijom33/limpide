@@ -99,7 +99,7 @@ test('the View’s and the Axes’ settings are remembered across a reload, Free
   await page.goto('/');
   await openDisplay(page);
   const choose = (group: string, option: string) => page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: option, exact: true });
-  const settings = [['Frequency axis', 'Lin'], ['Level axis', 'Lin'], ['Scope cycles', '4'], ['Env Timeline length', '3s'], ['Viewers follow', 'Newest'], ['Glow', 'Scopes']] as const;
+  const settings = [['Frequency axis', 'Lin'], ['Level axis', 'Lin'], ['Scope cycles', '4'], ['Env Timeline length', '3s'], ['Viewers follow', 'Newest'], ['Glow', 'All']] as const;
   for (const [group, option] of settings) await choose(group, option).click();
   await page.getByRole('button', { name: 'Freeze' }).click();
   await page.reload();

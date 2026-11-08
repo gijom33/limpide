@@ -135,24 +135,29 @@ test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', a
   for (const scope of await scopes.all()) await expect(scope).not.toHaveAttribute('data-snapshot', 'true');
 });
 
-test('Glow is Off at first; Scopes, every Scope draws its last traces fading under the newest, and it is remembered (issues 180, 229)', async ({ page }) => {
+test('Glow is Scopes at first: every Scope draws its last traces fading under the newest, no Spectrum; Off is remembered (issues 180, 229, 264)', async ({ page }) => {
+  // Nothing stored for the Display, as on a first visit.
   await page.goto('/');
-  await openDisplay(page);
+  await openDisplay(page); // a click: the sound starts
   const glow = page.getByRole('group', { name: 'View', exact: true }).getByRole('radiogroup', { name: 'Glow' });
   const scopes = page.locator('canvas.scope');
+  const spectrums = page.locator('canvas.spectrum');
   await expect(scopes).toHaveCount(3);
+  await expect(spectrums).toHaveCount(3);
   await expect(glow.getByRole('radio')).toHaveText(['Off', 'Scopes', 'All']);
-  await expect(glow.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
-  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
-  // A quarter of a second of traces, one per 60th of a second at most: 15, fewer on a loaded machine.
-  await glow.getByRole('radio', { name: 'Scopes', exact: true }).click();
-  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
-  await page.reload();
-  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
-  await openDisplay(page);
   await expect(glow.getByRole('radio', { name: 'Scopes', exact: true })).toHaveAttribute('aria-checked', 'true');
+  // A quarter of a second of traces, one per 60th of a second at most: 15, fewer on a loaded machine.
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
+  for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', '0');
+  // Off, chosen, is kept: a reload comes back to it, not to Scopes.
   await glow.getByRole('radio', { name: 'Off', exact: true }).click();
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
+  await page.reload();
+  await openDisplay(page);
+  await expect(glow.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
+  await glow.getByRole('radio', { name: 'Scopes', exact: true }).click();
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
 });
 
 test('Glow reaches the Spectrums under All, not Scopes: a Filter swept by its Envelope leaves its past outlines, and frozen they stay (issues 199, 229)', async ({ page }) => {

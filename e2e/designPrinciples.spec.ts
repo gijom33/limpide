@@ -162,8 +162,9 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
       await expect(page.getByLabel('Amp Spectrum', { exact: true })).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
       await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
     },
+    // Back to Scopes, the default (issue 264), as every other state is seen.
     close: async (page) => {
-      await page.getByRole('radiogroup', { name: 'Glow' }).getByRole('radio', { name: 'Off', exact: true }).click();
+      await page.getByRole('radiogroup', { name: 'Glow' }).getByRole('radio', { name: 'Scopes', exact: true }).click();
       await page.getByRole('button', { name: 'Display', exact: true }).click();
     },
   },

@@ -16,6 +16,8 @@ Claude's calls, let stand by the owner in 1.24.0:
 
 2. **Their words on screen: Off, Scopes, All,** in Display's segmented control as its other choices are, the tip saying what each draws ("All: the Scopes' traces and the Spectrums' outlines").
 3. **Off by default,** as now.
+
+   **Since then (2026-11-07, [264](./264-glow-on-the-scopes-by-default.md)):** Glow starts on Scopes when nothing is stored; a stored choice, Off among them, is kept. The owner's idea; its calls are in 264.
 4. **A remembered On reads as All,** what On drew in 1.23.0; a remembered Off stays Off.
 
 ## Agent Brief
