@@ -468,7 +468,7 @@ describe("Bead's frame, riding a Sine at 2.5 Hz, the fastest it rides (issue 270
       for (const d of along) {
         expect(d.marks.moving).toBe('standing');
         expect(d.marks.board).toBe('on');
-        // Its foot on the line where it stands, though a frame's stroll along so steep a wave is pixels up or down it.
+        // Its foot on the line under where it stands this frame (a frame's stroll along so steep a wave is pixels up it).
         expect(Math.abs(offTheLine(d, plot, FAST))).toBeLessThanOrEqual(0.5);
         // Leaning as steep as the line, up to its steepest, 35°; past that, its steepest.
         expect(Math.abs(d.pose.tilt - Math.max(-35, Math.min(35, slope(d))))).toBeLessThanOrEqual(4);

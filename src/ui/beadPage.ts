@@ -137,7 +137,7 @@ export function pageReader({ engine, patch, covering, holder, asked }: {
         // drawing, inside its border, where its line is drawn: on a steep line a pixel across is pixels up (issue 270).
         [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)].map((el) => ({
           lfo: Number(el.dataset.lfo) as 1 | 2,
-          box: (el.querySelector('svg') ?? el).getBoundingClientRect(),
+          box: el.querySelector('svg')!.getBoundingClientRect(),
           tips: (el.getAttribute('aria-describedby') ?? '').split(' ').flatMap((id): Element[] => {
             const tip = id ? document.getElementById(id) : null;
             return tip ? [tip] : [];
