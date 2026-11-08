@@ -1,7 +1,7 @@
 import { destinationSwings, osc2Cents, osc2EnvelopeCents } from '../modulation/modulationModel';
 import { fmIndex, type Patch } from '../patch/patch';
 import { createCache } from './cache';
-import { harmonicSeries } from './harmonics';
+import { ENGINE_HARMONICS, harmonicSeries, pulseScale } from './harmonics';
 
 /**
  * The level of each Harmonic (index n) that every Oscillator but Osc 2 should put at the Oscillator Tap, before the
@@ -148,8 +148,6 @@ const SAMPLES_PER_HARMONIC = 16;
  * under Osc 1 and swung hard, the cycle's highest Harmonics are left out.
  */
 const MOST_CYCLE_SAMPLES = 2 ** 15;
-// The engine's Oscillators play this many Harmonics; the Ideal scales each wave as they are scaled.
-const ENGINE_HARMONICS = 1024;
 /** How many of Ring's products and FM's cycles are kept, for the Patches asked for most recently. */
 const KEPT_CYCLES = 16;
 const products = createCache<string, Float64Array>(KEPT_CYCLES);
@@ -178,12 +176,6 @@ function ringProduct(patch: Patch, n1: number, n2: number, harmonics: number): F
     for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
     return levels;
   });
-}
-
-/** How much the engine scales a saw less its delayed copy, so the pulse it makes has the pulse series' level. */
-function pulseScale(width: number): number {
-  const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];
-  return harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak);
 }
 
 /**
