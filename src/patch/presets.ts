@@ -419,8 +419,8 @@ group('Plucks & Mallets', [
     voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3, cutoff: 400, resonance: 0, keyTrack: 1, velocityCutoff: 0.5,
     filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.6, filterSustain: 0, ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 1.5,
   }],
-  ['Zap Pluck', 'A falling saw LFO on FM, restarted with each Note: every strike starts at full FM, a bright metallic zap, and melts to a pure sine as it decays, on eight Voices.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.5, cutoff: 8000, resonance: 0,
+  ['Zap Pluck', 'A falling saw LFO on FM, restarted with each Note: every strike starts at full FM, a bright metallic zap, and melts to a pure sine as it decays, on eight Voices. A 24 dB Filter at 2.5 kHz keeps the zap from biting on high Notes, whose sidebands climb with them.', {
+    volume: 0.81, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.5, filterSlope: 24, cutoff: 2500, resonance: 0.15,
     lfoWaveform: 'sawDown', lfoDestination: 'fm', lfoRate: 2, lfoAmount: 1, lfoRetrigger: 'note',
     ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.3,
   }],

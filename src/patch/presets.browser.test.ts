@@ -862,4 +862,43 @@ describe('a click, a fold-back and a bite (issue 267)', () => {
     const said = `joining ${joining.map((b) => b.toFixed(3)).join(', ')}, the gate's own ${own.toFixed(3)}`;
     for (const b of joining) expect(b, said).toBeLessThanOrEqual(own);
   });
+
+  /** The share of a window's energy above `frequency`, `size` samples from `from`. */
+  const shareAbove = (s: Float32Array, frequency: number, from: number, size: number) => {
+    const ratio = 10 ** (energyAboveDb(s, SR, frequency, from, size) / 10);
+    return ratio / (1 + ratio);
+  };
+  /**
+   * The largest share of a Note's energy above 5 kHz while its Gate is open (review 14's), held 1.2 s: over 85 ms
+   * windows half a window apart, those with a sound to measure.
+   */
+  const mostAbove5k = async (patch: Patch, note: number) => {
+    const s = await play(patch, [note], NOTE + 1.2, NOTE + 1.3);
+    const size = 4096;
+    let most = 0;
+    for (let from = Math.round(NOTE * SR); from + size <= (NOTE + 1.2) * SR; from += size / 2) {
+      const share = shareAbove(s, 5000, from, size);
+      if (Number.isFinite(share)) most = Math.max(most, share);
+    }
+    return most;
+  };
+
+  // Its FM sidebands climbed with the Note past a Cutoff fixed at 8 kHz: its strike on C6 92 % sidebands above 5 kHz,
+  // where the rest of its group keeps 11 % at most (Pick Pluck's pick, its Noise) and FM Bell 5 % (review 14 measured
+  // 72 % and 5.4 %).
+  it('Zap Pluck on C6 keeps no more of its energy above 5 kHz than the rest of Plucks & Mallets on C2, C4 and C6', async () => {
+    const rest = PRESETS.filter((p) => p.group === 'Plucks & Mallets' && p.name !== 'Zap Pluck');
+    const shares = await Promise.all(rest.flatMap((p) => [C2, C4, C6].map((note) => mostAbove5k(p.patch, note))));
+    const [zap, most] = [await mostAbove5k(preset('Zap Pluck'), C6), Math.max(...shares)];
+    expect(zap, `Zap Pluck ${(zap * 100).toFixed(1)} %, the rest at most ${(most * 100).toFixed(1)} %`).toBeLessThanOrEqual(most);
+  }, 120_000);
+
+  // On C4 its sidebands stay under the Filter: its zap as 1.26.2 played it, 11.4 % of its first 170 ms above 1.5 kHz,
+  // at −29.0 dBFS.
+  it('Zap Pluck keeps its zap on C4: its share above 1.5 kHz within 1 dB of 1.26.2’s, its level within 0.5 dB', async () => {
+    const s = await play(preset('Zap Pluck'), [C4], NOTE + 1.2, NOTE + 1.3);
+    const share = shareAbove(s, 1500, Math.round(NOTE * SR), 8192);
+    expect(Math.abs(10 * Math.log10(share / 0.114)), `${(share * 100).toFixed(1)} %`).toBeLessThanOrEqual(1);
+    expect(Math.abs(loudestDb(s) + 29.0), `${loudestDb(s).toFixed(2)} dBFS`).toBeLessThanOrEqual(0.5);
+  });
 });
