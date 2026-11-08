@@ -5,7 +5,7 @@ import { CardShell } from './CardShell';
 import { cardAside } from './cardAside';
 import { pinned } from './cardPlacement';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
-import { bringClear, fitsBeside } from './docked';
+import { bringClear, type CardBox, fitsBeside } from './docked';
 import { scrollBehavior } from './glide';
 import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
@@ -75,11 +75,12 @@ function standAside(card: HTMLElement, elements: readonly Element[]) {
   if (card.hasAttribute('data-moved')) return;
   const placed = parseFloat(card.style.getPropertyValue(ASIDE)) || 0;
   const box = card.getBoundingClientRect();
-  const home = { left: box.left - placed, right: box.right - placed, top: box.top };
+  /** Where the card stands moved `shift` along the bottom from the middle. */
+  const at = (shift: number): CardBox => ({ left: box.left - placed + shift, right: box.right - placed + shift, top: box.top });
   let aside = 0;
-  if (!fitsBeside(home, elements)) {
-    const shift = cardAside({ left: home.left, width: box.width }, elements.map((e) => e.getBoundingClientRect()), document.documentElement.clientWidth);
-    if (shift !== null && fitsBeside({ left: home.left + shift, right: home.right + shift, top: home.top }, elements)) aside = shift;
+  if (!fitsBeside(at(0), elements)) {
+    const shift = cardAside(at(0), elements.map((e) => e.getBoundingClientRect()), document.documentElement.clientWidth);
+    if (shift !== null && fitsBeside(at(shift), elements)) aside = shift;
   }
   if (aside === placed) return;
   if (aside) card.style.setProperty(ASIDE, `${aside}px`);

@@ -1,5 +1,5 @@
 import { MIXER_LEVELS } from '../patch/patch';
-import { type Control, type Mapping, sameControl, sameTarget, type Target } from './mappings';
+import { type Control, type Learned, type Mapping, sameControl, sameTarget, type Target } from './mappings';
 
 /** One Learn step of a Quick Setup: what to map, where it sits ("Filter Envelope"), and what to ask for. */
 export interface SetupStep {
@@ -45,7 +45,7 @@ export interface QuickSetupState {
 }
 
 export type QuickSetupEvent =
-  | { type: 'learned'; mapping: Mapping }
+  | { type: 'learned'; learned: Learned }
   | { type: 'skip' }
   | { type: 'back' }
   | { type: 'finish' }
@@ -75,7 +75,7 @@ export function quickSetupReducer(state: QuickSetupState, event: QuickSetupEvent
   };
   switch (event.type) {
     case 'learned': {
-      const { control, target } = event.mapping;
+      const { control, target } = event.learned.mapping;
       if (!sameTarget(target, state.steps[state.index].target)) return state;
       if (takenControls(state).some((c) => sameControl(c, control))) return state;
       return advance('mapped', control);

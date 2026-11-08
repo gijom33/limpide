@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { PickupWay } from '../midi/controlSurface';
 import { targetKey } from '../midi/describe';
 import type { Target } from '../midi/mappings';
 
@@ -9,7 +10,7 @@ import type { Target } from '../midi/mappings';
 export const LearnContext = createContext<{
   mapped: ReadonlySet<string>;
   selected: string | null;
-  pickups: ReadonlyMap<string, 'up' | 'down'>;
+  pickups: ReadonlyMap<string, PickupWay>;
 }>({ mapped: new Set(), selected: null, pickups: new Map() });
 
 /**

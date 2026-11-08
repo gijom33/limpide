@@ -4,7 +4,7 @@ import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch
 import { answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, isCentredStep, relativeDelta, relativeModeOf } from './encoderMode';
 import {
-  type ActionId, type Control, clash, controlKey, isRelative, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND,
+  type ActionId, type Control, clash, controlKey, isRelative, type KnobMode, knobModeOf, type Learned, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND,
   sameControl, sameTarget, type Target,
 } from './mappings';
 import type { MidiMessage } from './parser';
@@ -46,10 +46,12 @@ const ALL_NOTES_OFF = 123;
 /** What MIDI Learn and the Mappings see: Notes and control changes, the bend wheel among them (never aftertouch). */
 type ControlMessage = Exclude<MidiMessage, { type: 'pitchBend' } | { type: 'program' } | { type: 'pressure' }>;
 
+/** The way to turn a Controller's knob to catch the value Pickup waits at (issue 255). */
+export type PickupWay = 'up' | 'down';
+
 export type LearnState =
   | { phase: 'off' }
-  /** `took`: the Mappings the one just learned replaced, sharing its control or its target (issue 255). */
-  | { phase: 'armed'; target: Target | null; learned?: Mapping; took?: readonly Mapping[] }
+  | { phase: 'armed'; target: Target | null; learned?: Learned }
   | { phase: 'listening'; target: Target; control: Control };
 
 interface Synth {
@@ -77,7 +79,7 @@ interface Synth {
    * A Controller moved a Parameter ('moved'), or turned its knob without reaching it yet ('waiting', Pickup): `way`, the
    * way to turn it to catch the value, where Pickup knows it (issue 255).
    */
-  touched?(target: Target, state: 'moved' | 'waiting', way?: 'up' | 'down'): void;
+  touched?(target: Target, state: 'moved' | 'waiting', way?: PickupWay): void;
   /** MIDI Learn moved on: started, a target selected, a Mapping made, or stopped. */
   learnChanged?(state: LearnState): void;
   /** What a keyboard's own controls do while nothing is mapped to them (issue 52): the bend wheel (−1 to 1), the
@@ -167,7 +169,7 @@ export function createControlSurface(synth: Synth) {
     const took = store.list().filter((m) => clash(m, mapping) && !kept(m));
     store.set(mapping);
     keepOff(mapping.control);
-    setLearn({ phase: 'armed', target: null, learned: mapping, took });
+    setLearn({ phase: 'armed', target: null, learned: { mapping, took } });
   };
   // Controls the selected target must not be learned from (Quick Setup's other steps').
   let avoiding: readonly Control[] = [];

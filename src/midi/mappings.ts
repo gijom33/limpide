@@ -92,6 +92,12 @@ export interface Mapping {
   except?: ControllerId;
 }
 
+/** A Mapping MIDI Learn just made, and those it replaced, sharing its control or its target (`took`, issue 255). */
+export interface Learned {
+  mapping: Mapping;
+  took: readonly Mapping[];
+}
+
 /** A knob's Mapping as the MIDI panel shows it and switches it (issue 186): Absolute, or Relative of either kind. */
 export type KnobMode = 'absolute' | 'relative';
 /** Whether a Mapping's mode is a Relative knob's, of either kind. */

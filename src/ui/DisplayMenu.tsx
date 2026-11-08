@@ -1,23 +1,33 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, type Ref, useImperativeHandle, useState } from 'react';
 import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { SlidersIcon } from './icons';
 import { Tooltip } from './Tooltip';
 
+/** What the page asks of the Display panel from outside. */
+export interface DisplayMenuHandle {
+  /** Closes the panel, the focus on an option going back to its button, as Escape takes it. */
+  shut(): void;
+}
+
 /**
  * The display settings (Freeze, Snapshot, axes, overlays) behind one button, so they take no room while you
  * play. The panel stays open while you change several things; Escape, a click elsewhere or Tab out of it closes it. A dot on
- * the button shows when something is held (Freeze or a Snapshot), so a hidden setting is never a mystery. Each new
- * `shut` closes it from outside (a Tutorial's Display Step made on a phone, issue 260), the focus on an option going
- * back to its button, as Escape takes it.
+ * the button shows when something is held (Freeze or a Snapshot), so a hidden setting is never a mystery. The page
+ * closes it from outside through `ref` (a Tutorial's Display Step made on a phone, issue 260).
  */
-export function DisplayMenu({ active, shut, children }: { active: boolean; shut: number; children: ReactNode }) {
+export function DisplayMenu({ active, ref, children }: { active: boolean; ref: Ref<DisplayMenuHandle>; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { wrapper, button } = useHeaderPanel(open, setOpen);
-  useEffect(() => {
-    if (!shut) return;
-    if (wrapper.current?.contains(document.activeElement)) button.current?.focus();
-    setOpen(false);
-  }, [shut, wrapper, button]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      shut() {
+        if (wrapper.current?.contains(document.activeElement)) button.current?.focus();
+        setOpen(false);
+      },
+    }),
+    [wrapper, button],
+  );
 
   return (
     <div className="display-menu" ref={wrapper}>
