@@ -10,6 +10,7 @@ The page loads and the running app are measured in Chromium through Playwright, 
 
 | Version | Date | Machine | Browser |
 | --- | --- | --- | --- |
+| 1.27.0 | 2026-11-08 | Apple M2, 8 cores, 16 GB, macOS 27.0.1 | Chromium 156.0.8078.4, headless |
 | 1.26.2 | 2026-11-07 | Apple M2, 8 cores, 16 GB, macOS 27.0.1 | Chromium 156.0.8078.4, headless |
 | 1.26.1 | 2026-11-07 | Apple M2, 8 cores, 16 GB, macOS 27.0.1 | Chromium 156.0.8078.4, headless |
 | 1.26.0 | 2026-11-07 | Apple M2, 8 cores, 16 GB, macOS 27.0.1 | Chromium 156.0.8078.4, headless |
@@ -62,6 +63,7 @@ Counted in the files git tracks.
 
 | Version | App code | Tests | Tests written | Docs | Presets | Tutorials | Issues | Commits |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1.27.0 | 27,342 lines, 182 files (+718) | 31,617 lines, 183 files (+1,714) | 1,281 unit, 320 engine, 570 end-to-end (+99) | 18,089 lines, 407 files | 142 | 9 | 237 done, 21 open | 1,593 |
 | 1.26.2 | 26,624 lines, 177 files (+11) | 29,903 lines, 178 files | 1,234 unit, 288 engine, 550 end-to-end | 16,514 lines, 391 files | 142 | 9 | 224 done, 27 open | 1,508 |
 | 1.26.1 | 26,613 lines, 177 files (+220) | 29,903 lines, 178 files (+95) | 1,234 unit, 288 engine, 550 end-to-end (+5) | 16,204 lines, 379 files | 142 | 9 | 224 done, 15 open | 1,498 |
 | 1.26.0 | 26,393 lines, 177 files (+755) | 29,808 lines, 178 files (+1,384) | 1,231 unit, 284 engine, 552 end-to-end (+95) | 14,862 lines, 361 files | 142 | 9 | 221 done, 17 open | 1,458 |
@@ -117,6 +119,7 @@ Counted in the files git tracks.
 
 | Version | Unit tests | Engine tests | End-to-end tests | Coverage | Lint | Type errors |
 | --- | --- | --- | --- | --- | --- | --- |
+| 1.27.0 | 1,488 of 1,488 (+47) | 629 of 629 (+69) | 1,678 of 1,679 (+85) | 73.7% of lines, 67.2% of branches (−0.2 pt) | 0 errors, 0 warnings | 0 |
 | 1.26.2 | 1,441 of 1,441 | 560 of 560 | 1,594 of 1,594 | 73.9% of lines, 67.6% of branches | 0 errors, 0 warnings | 0 |
 | 1.26.1 | 1,441 of 1,441 (+3) | 559 of 560 (+11) | 1,594 of 1,594 (−12) | 73.9% of lines, 67.5% of branches (+0.4 pt) | 0 errors, 0 warnings | 0 |
 | 1.26.0 | 1,438 of 1,438 (+99) | 549 of 549 (+2) | 1,606 of 1,606 (+4) | 73.6% of lines, 67.4% of branches (+6.1 pt) | 0 errors, 0 warnings | 0 |
@@ -170,6 +173,7 @@ Counted in the files git tracks.
 
 | Version | JavaScript | CSS | Unit run | Engine run | End-to-end run | First paint | Largest paint | Blocking time |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1.27.0 | 958.5 kB (296.4 kB gzipped, +4.1 kB) | 72.4 kB (15.0 kB gzipped, +0.2 kB) | 7 s | 185 s | 1472 s (+190 s) | 324 ms (+20 ms) | 324 ms (+20 ms) | 0 ms |
 | 1.26.2 | 946.7 kB (292.3 kB gzipped) | 71.4 kB (14.8 kB gzipped) | 6 s | 187 s | 1283 s (−22 s) | 304 ms | 304 ms | 0 ms |
 | 1.26.1 | 946.6 kB (292.2 kB gzipped, +0.9 kB) | 71.4 kB (14.8 kB gzipped) | 6 s | 203 s | 1304 s (−101 s) | 304 ms (−16 ms) | 304 ms (−16 ms) | 0 ms |
 | 1.26.0 | 944.5 kB (291.4 kB gzipped, +0.9 kB) | 71.4 kB (14.8 kB gzipped) | 6 s | 197 s | 1405 s (−93 s) | 320 ms (−8 ms) | 320 ms (−8 ms) | 0 ms |
@@ -238,6 +242,7 @@ The page open on Init, nothing playing.
 
 | Version | Frames a second | Slowest frame | Main thread busy | CPU | Memory |
 | --- | --- | --- | --- | --- | --- |
+| 1.27.0 | 59.8 | 50 ms | 23.2% (+1.0 pt) | 43.0% (−11.4 pt) | 13.6 MB (+0.2 MB) |
 | 1.26.2 | 59.8 (−0.1) | 50 ms | 22.2% (−1.0 pt) | 54.4% (−3.5 pt) | 13.4 MB (−0.2 MB) |
 | 1.26.1 | 59.9 | 33 ms | 23.2% (+1.3 pt) | 57.9% (+3.0 pt) | 13.5 MB (+0.2 MB) |
 | 1.26.0 | 59.9 | 33 ms | 21.9% (+0.2 pt) | 54.8% (+1.2 pt) | 13.4 MB (−0.1 MB) |
@@ -286,6 +291,7 @@ The Demo playing from its start: each number the median of 3 runs, after a 60 s 
 
 | Version | Frames a second | Slowest frame | Main thread busy | CPU | Memory | Load |
 | --- | --- | --- | --- | --- | --- | --- |
+| 1.27.0 | 56.0 (+0.1) | 67 ms | 57.2% (+0.4 pt) | 98.9% (−8.9 pt) | 14.1 MB (−0.5 MB) | 3.88 |
 | 1.26.2 | 55.9 (−0.2) | 67 ms | 56.8% (+2.9 pt) | 107.8% (+4.6 pt) | 14.6 MB (−1.2 MB) | — |
 | 1.26.1 | 56.1 (+0.1) | 50 ms | 53.9% (−4.6 pt) | 103.2% (−9.1 pt) | 15.7 MB (+1.4 MB) | — |
 | 1.26.0 | 56.0 (−0.1) | 67 ms | 58.5% (+3.1 pt) | 112.3% (+8.9 pt) | 14.4 MB (−1.6 MB) | — |
@@ -334,6 +340,7 @@ Init with 8 Voices, eight keys held (A S D F G H J K, C4 to C5).
 
 | Version | Frames a second | Slowest frame | Main thread busy | CPU | Memory |
 | --- | --- | --- | --- | --- | --- |
+| 1.27.0 | 59.8 | 50 ms | 23.6% (−0.9 pt) | 53.6% (−4.9 pt) | 13.6 MB (+0.1 MB) |
 | 1.26.2 | 59.8 | 50 ms | 24.5% (−0.6 pt) | 58.5% (−0.8 pt) | 13.4 MB (+0.1 MB) |
 | 1.26.1 | 59.8 | 50 ms | 25.2% (−0.4 pt) | 59.3% (−1.9 pt) | 13.4 MB |
 | 1.26.0 | 59.8 | 50 ms | 25.5% (+1.1 pt) | 61.2% (+3.6 pt) | 13.4 MB (+0.1 MB) |
