@@ -249,6 +249,21 @@ test('a knob shows when hardware moves it, and while Pickup waits for the knob t
   await expect(knob).not.toHaveAttribute('data-midi', /./, { timeout: 2000 }); // the flash fades
 });
 
+test('the tempo, while Pickup waits for its knob, says so in its description, as a knob does (issue 268)', async ({ page }) => {
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  await startLearn(page);
+  await bpm.click();
+  await play(page, cc(21, 10), cc(21, 11), cc(21, 12), cc(21, 13)); // an Absolute knob, far below 120 BPM
+  await page.keyboard.press('Escape');
+  await play(page, cc(21, 14));
+  await expect(bpm).toHaveAttribute('data-pickup', 'up'); // its dashed ring
+  await expect(bpm).toHaveAccessibleDescription(/^Pickup: turn your Controller’s knob up to this value to take it over\./);
+  await play(page, cc(21, 127)); // swept past the value: picked up
+  await expect(bpm).not.toHaveAttribute('data-pickup', /./);
+  await expect(bpm).not.toHaveAccessibleDescription(/Pickup/);
+  await expect(bpm).toHaveAttribute('aria-valuenow', '240');
+});
+
 test('a Mapping learned on the bend wheel comes back after a reload (issue 255)', async ({ page }) => {
   await startLearn(page);
   await cutoff(page).click();

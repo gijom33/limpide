@@ -60,7 +60,7 @@
 3. **The words.** "bank B’s K1 no longer turns Cutoff", "every bank’s M4 no longer fires Hold", "· not the C16" in the MIDI panel. The Learn bar also names a person's own Mappings that were taken, not only the C16's.
 4. **The notice's test and its life.** "A position" means a value more than 15 from 64, the line Learn already uses for a 64-centred Relative step, sent by a C16 layout knob. One such value is enough. The notice stays until the page is reloaded, even after the knobs are set right. This assumes a C16 on Relative #1 never sends a value that far from 64; if its fastest turn does, the notice would show wrongly.
 5. **"With how."** The notice says to use the C16's companion editor, the only place known to set the knobs, and points to the card. It does not walk through the editor's own screens, which this project has not documented.
-6. **Pickup's cue.** A dashed ring in the section's colour, plus the way to turn in the slider's description. No ghost mark shows where the hardware knob is. The tempo, mapped Absolute, gets the dashed ring but no description.
+6. **Pickup's cue.** A dashed ring in the section's colour, plus the way to turn in the slider's description. No ghost mark shows where the hardware knob is. The tempo, mapped Absolute, gets the dashed ring but no description. Since 2026-11-08 ([268](./268-tidy-ups-after-1-27-0.md)) its description says so too, as a knob's does.
 
 ## What to try in the app
 
