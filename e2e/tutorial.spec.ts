@@ -412,6 +412,31 @@ test('on a phone the card shows two lines; a tap on the text, or on +, shows it 
   await expect.poll(height).toBeGreaterThan(folded);
 });
 
+// Issue 260 (review 16, finding 2): on a phone the row of buttons wrapped Next alone to the left of a second row while
+// the Step was not made, then took it to the first row's end once "Do it for me" went: a thumb that learnt where it was
+// met empty space. It keeps one place, the row's right end, before and after.
+for (const [width, height] of [[390, 844], [375, 812]] as const) {
+  test(`at ${width} × ${height} Next keeps one place before and after each Step is made (issue 260)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page, 'Bass');
+    await action(page, 'Start').click();
+    const next = action(page, 'Next');
+    const place = async () => {
+      const box = (await next.boundingBox())!;
+      return { x: Math.round(box.x), y: Math.round(box.y) };
+    };
+    for (let i = 1; i <= 3; i++) {
+      await expect(progress(page)).toHaveText(`Step ${i} of 15`);
+      await expect(action(page, 'Do it for me')).toBeVisible();
+      const before = await place();
+      await doIt(page);
+      await expect(action(page, 'Do it for me')).toBeHidden();
+      expect(await place(), `Step ${i}`).toEqual(before);
+      await next.click();
+    }
+  });
+}
+
 test('the header’s Tutorial button lists the Tutorials, ticks the finished, and starts the one picked (issue 59)', async ({ page }) => {
   await page.goto('/');
   const button = page.getByRole('button', { name: 'Tutorial', exact: true });
