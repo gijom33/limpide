@@ -321,23 +321,53 @@ function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, start: numbe
 const NEVER = 1e9;
 
 /**
+ * How long a retriggered LFO's new oscillator takes over from the one it replaces (issue 267): the old fades out as the
+ * new fades in. Handed over at one sample, a Note joining others still sounding stepped their LFO there, a click on
+ * the Volume (Trance Gate's strummed chord, review 14), and a restarted square or saw starts on its jump, at its
+ * middle, for a sample. Half a millisecond is gentler than the LFOs' own softened jumps, and over a millisecond before
+ * the model's LFO is checked against the sound.
+ */
+export const LFO_HANDOVER = 0.0005;
+
+/**
  * The oscillators behind one that can start its cycle again (issue 94): an OscillatorNode cannot be reset, so at each
  * restart a new one takes over. A restart handed over ahead of now leaves the node it replaces running until then;
  * one earlier still stops every node at its own moment, so one node sounds at a time however restarts arrive (issue
- * 101). An ended node is cut off by `cut`.
+ * 101). An ended node is cut off by `cut`. With `fade` (an LFO's, issue 267), each node feeds the sound through its
+ * own gain, and a node taking over fades in over `fade.seconds` while the one sounding then fades out: for that
+ * moment, two sound.
  */
-function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void) {
-  // Each node not yet ended, and when it starts and stops.
-  const running = new Map<OscillatorNode, { start: number; stop: number }>();
-  const add = (node: OscillatorNode, at: number) => {
-    running.set(node, { start: at, stop: Infinity });
+function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void, fade?: { seconds: number; gain: (node: OscillatorNode) => AudioParam }) {
+  // Each node not yet ended: when it starts, whether it fades in then, and when the restart that ends it comes.
+  const running = new Map<OscillatorNode, { start: number; fadesIn: boolean; ends: number }>();
+  const add = (node: OscillatorNode, at: number, fadesIn: boolean) => {
+    running.set(node, { start: at, fadesIn, ends: Infinity });
     node.onended = () => {
       running.delete(node);
       cut(node);
     };
     node.start(at);
+    if (fade && fadesIn) {
+      const gain = fade.gain(node);
+      gain.setValueAtTime(0, at);
+      gain.linearRampToValueAtTime(1, at + fade.seconds);
+    }
   };
-  add(first, start);
+  /** The node ends at the restart at `t`: at once, or faded out from `t` if it sounds by then. */
+  const end = (node: OscillatorNode, span: { start: number; fadesIn: boolean; ends: number }, t: number) => {
+    span.ends = t;
+    if (!fade || span.start >= t) {
+      node.stop(t); // one not yet started never sounds, and ends all the same
+      return;
+    }
+    // From the level its own fade-in has reached at `t`, along that fade-in (its end, or a fade-out after `t`, called off).
+    const gain = fade.gain(node);
+    gain.cancelScheduledValues(t);
+    gain.linearRampToValueAtTime(span.fadesIn ? Math.min(1, (t - span.start) / fade.seconds) : 1, t);
+    gain.linearRampToValueAtTime(0, t + fade.seconds);
+    node.stop(t + fade.seconds);
+  };
+  add(first, start, false);
   let restartAt = -1;
   return {
     /** Every node not yet ended: a new wave or rate reaches each. */
@@ -351,12 +381,8 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
     restart(t: number, make: () => OscillatorNode, { again = false } = {}) {
       if (t === restartAt && !again) return false;
       restartAt = t;
-      for (const [node, span] of running) {
-        if (span.stop <= t) continue;
-        node.stop(t); // one not yet started never sounds, and ends all the same
-        span.stop = t;
-      }
-      add(make(), t);
+      for (const [node, span] of running) if (span.ends > t) end(node, span, t);
+      add(make(), t, true);
       return true;
     },
     /**
@@ -367,10 +393,16 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
       for (const [node, span] of running) {
         if (span.start > t) {
           node.stop(t);
-          span.stop = t;
-        } else if (span.stop > t && span.stop !== Infinity) {
+          span.ends = t;
+        } else if (span.ends > t && span.ends !== Infinity) {
           node.stop(NEVER);
-          span.stop = Infinity;
+          if (fade) {
+            // Its fade-out called off, and the end of its own fade-in if that came after it.
+            const gain = fade.gain(node);
+            gain.cancelScheduledValues(span.ends);
+            if (span.fadesIn && span.start + fade.seconds >= span.ends) gain.linearRampToValueAtTime(1, span.start + fade.seconds);
+          }
+          span.ends = Infinity;
         }
       }
       if (restartAt > t) restartAt = -1;
@@ -613,6 +645,8 @@ const SILENT = 0.001;
  */
 interface LfoNodes {
   takeover: ReturnType<typeof createTakeover>;
+  /** Wires a new oscillator to the bus, through the gain its takeover fades (issue 267). */
+  feed(node: OscillatorNode): void;
   bus: WaveShaperNode;
   toCutoff: GainNode;
   toPitch: GainNode;
@@ -1172,7 +1206,14 @@ export function createSynthEngine(
     const osc = ctx.createOscillator();
     osc.frequency.value = PARAMS.lfoRate.default;
     const bus = lfoClamp(ctx);
-    osc.connect(bus);
+    // Each oscillator reaches the bus through its own gain, which hands it over to the next (issue 267).
+    const feeds = new WeakMap<OscillatorNode, GainNode>();
+    const feed = (node: OscillatorNode) => {
+      const gain = ctx.createGain();
+      node.connect(gain).connect(bus);
+      feeds.set(node, gain);
+    };
+    feed(osc);
     const [toCutoff, toPitch, toOsc2, toResonance, toVolume] = Array.from({ length: 5 }, () => {
       const g = ctx.createGain();
       g.gain.value = 0;
@@ -1183,7 +1224,16 @@ export function createSynthEngine(
       toResonance.connect(side.resonanceQ);
       toResonance.connect(side.makeUp);
     }
-    return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
+    const takeover = createTakeover(
+      osc,
+      ctx.currentTime,
+      (node) => {
+        node.disconnect();
+        feeds.get(node)?.disconnect();
+      },
+      { seconds: LFO_HANDOVER, gain: (node) => feeds.get(node)!.gain },
+    );
+    return { takeover, feed, bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
   };
   const resonanceIn = ctx.createConstantSource();
   resonanceIn.offset.value = -1;
@@ -1302,7 +1352,7 @@ export function createSynthEngine(
     setLfoWave(next, l.waveform);
     next.frequency.value = hz(l);
     lfoSetTo.set(next, { rate: hz(l), waveform: l.waveform });
-    next.connect(shared.lfos[i].bus);
+    shared.lfos[i].feed(next);
     return next;
   };
   /**

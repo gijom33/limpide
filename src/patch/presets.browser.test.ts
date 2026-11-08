@@ -831,3 +831,35 @@ describe('the Presets’ words review 13 checked hold (issue 266)', () => {
     expect(Math.max(...resonances)).toBeCloseTo(0.6, 1);
   });
 });
+
+// Issue 267: three of review 14's findings over all 142 Presets, beyond their levels.
+describe('a click, a fold-back and a bite (issue 267)', () => {
+  /** The largest bend (second difference) from `from` to `to` seconds: a click is one far past the sound's own. */
+  const bend = (s: Float32Array, from: number, to: number) => {
+    let most = 0;
+    for (let i = Math.round(from * SR) + 2; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - 2 * s[i - 1] + s[i - 2]));
+    return most;
+  };
+  /** C4, E4 and G4 struck `gap` seconds apart from NOTE and held, rendered for a second and more. */
+  const strum = async (patch: Patch, gap: number) => {
+    const ctx = new OfflineAudioContext(1, SR * 1.3, SR);
+    straightenLimiter(ctx);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    [C4, 64, 67].forEach((note, i) => engine.noteOn(note, 1, NOTE + i * gap));
+    return (await ctx.startRendering()).getChannelData(0);
+  };
+
+  // Each Note joining the chord restarted the gate under the Notes already sounding: 0.06 to 0.17, three to seven times
+  // the gate's own switches, for Notes 5 to 40 ms apart (review 14). Struck at once, it restarts once, under silence.
+  it.each([0.005, 0.01, 0.02, 0.04, 0.07, 0.1])('Trance Gate: a Note joining its chord %s s after the last bends it no more than the gate’s own switches', async (gap) => {
+    const s = await strum(preset('Trance Gate'), gap);
+    const last = NOTE + 2 * gap;
+    // The gate's own: the chord held, four of its sixteenths at 120 BPM.
+    const own = bend(s, last + 0.1, last + 0.6);
+    // Each joining Note's first 25 ms, which hold the restart (the limiter's oversampling puts the sound 4 ms late).
+    const joining = [1, 2].map((i) => bend(s, NOTE + i * gap, NOTE + i * gap + 0.025));
+    const said = `joining ${joining.map((b) => b.toFixed(3)).join(', ')}, the gate's own ${own.toFixed(3)}`;
+    for (const b of joining) expect(b, said).toBeLessThanOrEqual(own);
+  });
+});

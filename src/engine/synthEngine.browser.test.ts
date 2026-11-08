@@ -853,6 +853,52 @@ describe('where a retriggered LFO starts (issue 124)', () => {
   });
 });
 
+// Issue 267: a retriggered LFO's new cycle takes over from the old one over LFO_HANDOVER, not at a sample. Every Voice
+// shares the LFO, so a Note joining others still sounding restarts theirs too: at a sample, it stepped them there
+// (Trance Gate's strummed chord clicked, review 14). Measured as issue 66's are, on Volume at full Depth (a gain of
+// 0.5 + 0.5 × the LFO), at the Amp Tap listening to every Voice, both Notes the same in the render without the LFO.
+describe('a retriggered LFO hands over to its new cycle without a step (issue 267)', () => {
+  const tremolo = {
+    cutoff: 20000, resonance: 0, waveform: 'sine', ampAttack: 0.001, ampSustain: 1, voices: 2,
+    lfoDestination: 'volume', lfoWaveform: 'sine', lfoRate: 1, lfoRetrigger: 'note',
+  } as const;
+  // A quarter of a cycle after the first Note, the sine at its top, its restart at its centre; and a quarter of A4's
+  // cycle on, where the first Note is at its peak. The Amp Tap read 26 ms later, on a 128-frame quantum.
+  const [FIRST, JOIN, READ] = [0.3, 0.55 + 1 / 1760, 0.576];
+  const ampTap = async (lfoAmount: number) => {
+    const ctx = new OfflineAudioContext(1, SR * 0.7, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...tremolo, lfoAmount });
+    engine.setTapSource('all');
+    engine.noteOn(69, 1, FIRST);
+    engine.noteOn(76, 1, JOIN);
+    const amp = new Float32Array(engine.taps.amp.fftSize);
+    const read = ctx.suspend(READ).then(() => {
+      engine.taps.amp.getFloatTimeDomainData(amp);
+      void ctx.resume();
+    });
+    await ctx.startRendering();
+    await read;
+    return amp;
+  };
+
+  it('takes the Notes already sounding from the top of a sine on Volume to its centre over half a millisecond', async () => {
+    const [moved, still] = [await ampTap(1), await ampTap(0)];
+    // The gain from 5 ms before the joining Note, where the sound is far enough from zero to divide by.
+    const from = Math.round((JOIN - 0.005 - READ) * SR) + still.length;
+    const peak = Math.max(...still.subarray(from).map(Math.abs));
+    const gains: { i: number; gain: number }[] = [];
+    for (let i = from; i < still.length; i++) if (Math.abs(still[i]) > 0.3 * peak) gains.push({ i, gain: moved[i] / still[i] });
+    expect(gains[0].gain).toBeCloseTo(1, 2);
+    expect(Math.min(...gains.map((g) => g.gain))).toBeLessThan(0.55);
+    // From one sample measured to the next, per sample: a step of 0.5 handed over at a sample is 0.5; over half a
+    // millisecond, 0.02.
+    let steepest = 0;
+    for (let k = 1; k < gains.length; k++) steepest = Math.max(steepest, Math.abs(gains[k].gain - gains[k - 1].gain) / (gains[k].i - gains[k - 1].i));
+    expect(steepest).toBeLessThan(0.03);
+  });
+});
+
 describe('Osc 2, Noise and the Mixer', () => {
   const A2 = 45; // 110 Hz
   const clean = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
