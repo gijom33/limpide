@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay, wholeDemoCard } from './helpers';
+import { openDisplay, steady, wholeDemoCard } from './helpers';
 
 const demo = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Demo' });
 const patchName = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Patch:/ });
@@ -464,7 +464,7 @@ test('where the page fits its window, the Demo’s card adds no scroll bar: it s
   expect(await scrolls()).toBe(false); // the page fits, before the Demo
   await demo(page).click();
   await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
-  await page.waitForTimeout(300);
+  await steady(page, page.getByRole('region', { name: 'Demo' }));
   expect(await scrolls()).toBe(false);
 });
 
@@ -582,8 +582,7 @@ test('each part is a segment as wide as it is long, the playing one filling over
       return fill / track;
     });
   const early = await filled();
-  await page.waitForTimeout(1500);
-  expect(await filled()).toBeGreaterThan(early + 0.1); // 1.5 s of a 7.5 s part
+  await expect.poll(filled).toBeGreaterThan(early + 0.1); // a tenth more of the 7.5 s part: it fills as it plays
   await card.getByRole('button', { name: 'Play from part 3, Poly Pluck' }).click();
   await expect(card.getByRole('group', { name: 'Part 3 of 15' })).toBeVisible();
   expect(await filled()).toBeLessThan(0.2); // a jump starts the segment's fill again

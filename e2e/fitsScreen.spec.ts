@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { steady } from './helpers';
 
 // Full-screen browser viewports on MacBooks (points): this Mac (1710×1107, less the ~37 pt notch band, with a
 // margin), and the common 1440×900.
@@ -220,11 +221,13 @@ test('the Timeline plot is as tall as its controls, whatever size the window was
   const fresh = await measure();
   expect(fresh.plot).toBe(fresh.controls);
   expect(fresh.keyOnTitleLine).toBe(true);
-  // A narrower window, then back: the plot's own pixel size must not have grown the row.
+  // A narrower window, then back: the plot's own pixel size must not have grown the row. Each read once the canvases
+  // have taken their new size.
+  const measured = ['.timeline-plot canvas', '.timeline-controls', 'canvas.scope'].map((s) => page.locator(s).first());
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.waitForTimeout(300);
+  await steady(page, ...measured);
   await page.setViewportSize({ width: 1900, height: 1140 });
-  await page.waitForTimeout(300);
+  await steady(page, ...measured);
   const again = await measure();
   expect(again.plot).toBe(fresh.plot);
   expect(again.viewer).toBe(fresh.viewer);

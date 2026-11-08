@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { steady } from './helpers';
 
 // Issue 43: from 1920 px wide, the four sections side by side, LFO & Envelopes a fourth column beside the stages;
 // the height its row took goes to the Viewers. A stage is never wider than three across gave it at 1920 px: the page
@@ -62,11 +63,10 @@ test('the Viewers take the height the LFO & Envelopes row took below them', asyn
 test('the column keeps its size after the window was narrower: the canvases never grow their rows', async ({ page }) => {
   await page.setViewportSize({ width: 2560, height: 1440 });
   await page.goto('/');
+  const measured = ['.timeline-plot canvas', 'canvas.scope', 'section[aria-label="LFO & Envelopes"]'];
   const heights = async () => {
-    await page.waitForTimeout(300);
-    return page.evaluate(() =>
-      ['.timeline-plot canvas', 'canvas.scope', 'section[aria-label="LFO & Envelopes"]'].map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().height)),
-    );
+    await steady(page, ...measured.map((s) => page.locator(s).first())); // the canvases at their new size
+    return page.evaluate((measured) => measured.map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().height)), measured);
   };
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   const fresh = await heights();

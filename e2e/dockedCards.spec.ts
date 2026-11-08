@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { TRACK } from '../src/demo/track';
+import { steady } from './helpers';
 
 // Issue 59, the owner's decisions (2026-10-27): the Demo's and a Tutorial's cards fold to their top row (the fold
 // remembered for each kind of card, but for the Demo's, which opens folded three and four across: issue 230), and from
@@ -163,7 +164,7 @@ for (const [layout, width, height] of CORNERED) {
     await startDemo(page);
     const card = demoCard(page);
     await expect(card.getByRole('button', { name: 'Unfold the card' })).toBeVisible();
-    await page.waitForTimeout(300);
+    await steady(page, card);
     const small = await box(page);
     const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
     expect(Math.round(clientWidth - small.x - small.width), 'from the right edge').toBe(12);
@@ -193,7 +194,7 @@ test('in three across the small card unfolds to the whole card, inside the windo
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await startDemo(page);
-  await page.waitForTimeout(300);
+  await steady(page, demoCard(page));
   const small = await box(page);
   await demoCard(page).getByRole('button', { name: 'Unfold the card' }).click();
   await expect(demoCard(page).locator('.demo-bar-caption')).toBeVisible();
@@ -207,7 +208,7 @@ test('in three across the small card unfolds to the whole card, inside the windo
   expect(whole.x).toBeGreaterThanOrEqual(0);
   expect(whole.y).toBeGreaterThanOrEqual(0);
   await demoCard(page).getByRole('button', { name: 'Fold the card' }).click();
-  await page.waitForTimeout(300);
+  await steady(page, demoCard(page));
   const back = await box(page);
   expect([back.x, back.y, back.width, back.height].map(Math.round)).toEqual([small.x, small.y, small.width, small.height].map(Math.round));
 });
@@ -271,7 +272,7 @@ const cards = {
 
 /** How far the page scrolls, once the layout has settled. */
 async function scrollRange(page: Page) {
-  await page.waitForTimeout(300);
+  await steady(page, page.locator('main'));
   return page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
 }
 
@@ -281,7 +282,7 @@ async function expectRoomFor(page: Page, size: { width: number; height: number }
   await page.goto('/');
   const card = await open(page);
   await expect(card).toBeVisible();
-  await page.waitForTimeout(300);
+  await steady(page, card);
   await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
   await expect // the card's top and the last section's bottom read together, in the page
     .poll(() => card.evaluate((c) => document.querySelector('main')!.getBoundingClientRect().bottom <= c.getBoundingClientRect().top + 1), 'the last section clear above the card')

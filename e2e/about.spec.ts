@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
+import { steady } from './helpers';
 import { BEAD_ON, holding, WELCOMED } from './startState';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -328,7 +329,7 @@ test.describe('About holds the page still (issue 209)', () => {
       await touch('touchStart', from.y);
       for (let i = 1; i <= 10; i++) await touch('touchMove', from.y - (by * i) / 10);
       await touch('touchEnd', from.y - by);
-      await page.waitForTimeout(400); // any fling done
+      await steady(page, about(page).locator('.about-credits')); // any fling done
     };
 
     test('a finger dragged on About scrolls nothing behind it; the credits scroll inside it; its × leaves the page there', async ({ page }) => {

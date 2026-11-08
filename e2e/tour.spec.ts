@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { cycleLength, TOUR } from '../src/tutorial/tour';
-import { firstChange } from './helpers';
+import { firstChange, steady } from './helpers';
 import { FIRST_VISIT } from './startState';
 
 // Issue 128: the Tour, a card for each Section while the synth turns its controls itself, on a Patch of its own.
@@ -370,7 +370,7 @@ test('the person’s own scroll stops the Tour’s scrolling for that card (issu
   await page.mouse.move(187, 300);
   await page.mouse.wheel(0, 120);
   await expect.poll(() => scrollTop(page)).not.toBe(0);
-  await page.waitForTimeout(300);
+  await steady(page); // the wheel's scroll ended
   const mine = await scrollTop(page);
   await expect(frozen(page)).toHaveCount(1, { timeout: 6000 }); // where the Tour would have gone to the Timeline
   expect(await scrollTop(page)).toBe(mine);
