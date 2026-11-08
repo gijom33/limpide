@@ -25,6 +25,10 @@ Decided by the owner (2026-11-07, "Yes to both"):
 
 1. **Pulse Width as the glossary says:** the engine's pulse is high for the share the knob sets, not the words changed to match the engine. Nothing heard changes (a 10 % and a 90 % pulse sound alike); the Scope's picture flips, and then shows what the glossary and synth manuals say. The Pulse's Geek formula, its tests and the PWM Tutorial's words are checked against the new picture.
 
+Decided by the owner (2026-11-08, "Fix first", to 1.27.0's ear stand-in):
+
+2. **Nothing heard changes, beside another Oscillator too:** the pulse keeps the saw's sign, built as before 266 from a saw less its delayed copy, but delayed by the rest of the cycle after the width, so it is still high for the width (decision 1). Piano, Honky-Tonk, Clav and PWM Strings take the width that plays their 1.26.2 wave. Turned over, a pulse beside an in-tune saw had cancelled it at the strike: Piano fell 4.7 dB on C4, Honky-Tonk 7.3 dB on C2, which nobody had chosen. This reverses Claude's call 1 below.
+
 ## Agent Brief
 
 **Category:** bug
@@ -54,6 +58,8 @@ Decided by the owner (2026-11-07, "Yes to both"):
 
 ## How it was built
 
+**Since then (2026-11-08, 1.27.0's release, decision 2):** the engine's pulse is again a saw less its delayed copy, the delay now the low part (one less the width, less each LFO's swing), so it is high for its width and its saw keeps its sign; the Ideal Reference's pulse (Ring's and FM's cycles, FM's sidebands) the same. Piano and Honky-Tonk at 0.65 (were 0.35), Clav at 0.85 and 0.85 (0.15), PWM Strings at 0.6 and 0.4 (0.4 and 0.6): each now within 0.06 dB of its 1.26.2 render on C2, C4, C6 and its chord, PWM Bass, PWM Morph, Thin Pulse, Strings and Shimmer Pad within 0.06 dB as they were (the ear stand-in's renders). A test holds the four on C2, C4 and C6 within 0.5 dB of 1.26.2; it fails on the pulse turned over. After a restart the delay holds the old cycle for the low part, most of a cycle on a narrow pulse, where it held one width: inside the Note's attack. ADR-0001's "a saw minus a delayed copy of itself" holds again.
+
 1. **The pulse, high for its width** (the Decision): the engine still builds it from a saw and a copy of the saw delayed by the width's share of a cycle, but now plays the copy less the saw, not the saw less the copy. It is high from each drop of the saw until the copy's, so a 10 % pulse is above its middle for 10 % of the cycle, at every width and under PWM (the delay moves, the sign never does, so a moving width clicks no more than before). The Harmonics' levels are exactly as before: the wave is the old one turned over. The Ideal Reference's own pulse (for Ring's and FM's cycles) turns with it. The Pulse's Geek formula now says "high for d of each cycle and low for the rest". The Pulse Width tip, the glossary, Thin Pulse's "narrow blip", PWM Morph's "needle" and the Tutorials' "how long each pulse stays up" were already worded this way up and are now true; none changed. Issues 9, 94 and 96 have a dated line.
 2. **The words**, each to what review 13 measured, and each with a test that renders it:
    - Slow Beats: "swells and fades, about once every second or two in the middle of the keyboard, faster higher up" (the dips 1.4 to 2 s apart on C4, over 0.85 s on A4, closer on C5).
@@ -71,7 +77,7 @@ Decided by the owner (2026-11-07, "Yes to both"):
 
 **Claude's calls, open to the owner:**
 
-1. **The pulse turned over, not delayed the other way:** playing the copy less the saw keeps the delay a width long. Delaying by the rest of the cycle instead would have kept the sign but made a restart hold the old cycle for most of a cycle rather than a width. One heard change follows, small: a pulse on Osc 2 swinging Osc 1 through FM now swings the other way, so its upper and lower sidebands trade levels (the Ideal Reference follows; no Preset uses a pulse there). A pulse beside a saw or a square on the other Oscillator, in tune, adds with the other sign; detuned, as every factory Preset that does it is, nothing changes on average. The Sub never shares a Harmonic with Osc 1, so PWM Bass is as it was.
+1. ~~**The pulse turned over, not delayed the other way:**~~ (reversed by decision 2, 2026-11-08) playing the copy less the saw keeps the delay a width long. Delaying by the rest of the cycle instead would have kept the sign but made a restart hold the old cycle for most of a cycle rather than a width. One heard change follows, small: a pulse on Osc 2 swinging Osc 1 through FM now swings the other way, so its upper and lower sidebands trade levels (the Ideal Reference follows; no Preset uses a pulse there). A pulse beside a saw or a square on the other Oscillator, in tune, adds with the other sign; detuned, as every factory Preset that does it is, nothing changes on average. The Sub never shares a Harmonic with Osc 1, so PWM Bass is as it was.
 2. **Ride's 808 dropped rather than sourced:** its two squares through Ring and Noise are not the 808's six squares, so a source for the 808 would not make the old words true; "a clashing metal cymbal" is a listening word, its fade tested as before.
 3. **Rolling Fifth says "nearly a major sixth"**, where the review's wording said "a minor sixth": 8.8 semitones is past a minor sixth (8).
 4. **Perfect Fifth loses "(nearly 3:2)"** to stay within five lines on a phone with the longer roll; "2 cents short of 3:2" still says it.

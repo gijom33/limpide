@@ -335,7 +335,7 @@ group('Keys & Organs', [
     filterSlope: 24, filterEnvAmount: 0.5, filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0.2, ampAttack: 0.003, ampDecay: 2, ampSustain: 0.35, ampRelease: 0.5, lfoDestination: 'volume', lfoRate: 5, lfoAmount: 0.5,
   }],
   ['Clav', 'Two thin pulses a few cents apart through a high-pass, short and velocity-sensitive: a funky, percussive key on eight Voices.', {
-    voices: 8, waveform: 'pulse', pulseWidth: 0.15, osc2Waveform: 'pulse', osc2PulseWidth: 0.15, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'highpass', cutoff: 300, resonance: 0.3, keyTrack: 0.8, velocityCutoff: 0.6,
+    voices: 8, waveform: 'pulse', pulseWidth: 0.85, osc2Waveform: 'pulse', osc2PulseWidth: 0.85, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'highpass', cutoff: 300, resonance: 0.3, keyTrack: 0.8, velocityCutoff: 0.6,
     ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0.2, ampRelease: 0.08,
   }],
   ['Organ', 'A sine, a sine an octave up and a sine Sub, like drawbars: no Envelope shape at all, just on and off, and three clean Harmonics in the Spectrum, on eight Voices.', {
@@ -358,7 +358,7 @@ group('Keys & Organs', [
 // Pianos: a strike that darkens as it decays, harder for a harder hit, on eight Voices so held Notes ring on.
 group('Pianos', [
   ['Piano', 'A pulse and a saw a few cents apart, a Filter Envelope that opens on the strike and closes as the Note decays, and eight Voices.', {
-    voices: 8, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
+    voices: 8, waveform: 'pulse', pulseWidth: 0.65, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
     cutoff: 1500, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.4,
   }],
@@ -368,7 +368,7 @@ group('Pianos', [
     ampAttack: 0.01, ampDecay: 3, ampSustain: 0.2, ampRelease: 0.8,
   }],
   ['Honky-Tonk', 'A second saw 14 cents off: the two strings of a neglected upright beat against each other, and the Scope never settles. On eight Voices.', {
-    volume: 0.8, voices: 8, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 14, mixOsc2: 0.9,
+    volume: 0.8, voices: 8, waveform: 'pulse', pulseWidth: 0.65, osc2Waveform: 'saw', osc2Detune: 14, mixOsc2: 0.9,
     cutoff: 1800, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.2, ampSustain: 0.1, ampRelease: 0.4,
   }],
@@ -485,7 +485,7 @@ group('Pads', [
 
 group('Strings, Brass & Choir', [
   ['PWM Strings', 'Two slowly modulated pulses: the Pulse Width sweep gives the chorus-like shimmer of a string machine, on eight Voices.', {
-    voices: 8, waveform: 'pulse', pulseWidth: 0.4, osc2Waveform: 'pulse', osc2PulseWidth: 0.6, osc2Detune: 7, mixOsc2: 0.8, cutoff: 3000, resonance: 0.1,
+    voices: 8, waveform: 'pulse', pulseWidth: 0.6, osc2Waveform: 'pulse', osc2PulseWidth: 0.4, osc2Detune: 7, mixOsc2: 0.8, cutoff: 3000, resonance: 0.1,
     lfoDestination: 'pulseWidth', lfoRate: 0.6, lfoAmount: 0.6, keyTrack: 0.5, ampAttack: 0.4, ampSustain: 0.9, ampRelease: 1.2,
   }],
   ['Strings', 'A string section: eight Voices of slowly modulated pulses with a soft attack. Hold a chord and watch the Pulse Width shimmer on the newest Note.', {

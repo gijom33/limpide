@@ -682,6 +682,24 @@ describe('the Presets levelled across the keyboard (issue 258)', () => {
   }, 300_000);
 });
 
+// Issue 266 and 1.27.0's ear stand-in: a pulse beside a saw or another pulse, a few cents apart, adds at the strike as
+// it did in 1.26.2. Turned over, Piano's strike fell 4.7 dB and Honky-Tonk's 7.3 on C2; the pulse kept the saw's sign,
+// and these four the width that plays 1.26.2's wave, each within 0.3 dB of it (decided by the owner, "Fix first").
+describe('the Presets with a pulse beside another Oscillator play as in 1.26.2 (issue 266)', () => {
+  // dBFS on C2, C4 and C6, as 1.26.2 played them (the ear stand-in's renders of its pulse).
+  const AS_IN_1_26_2: Record<string, [number, number, number]> = {
+    Piano: [-24.4, -24.5, -25.1],
+    'Honky-Tonk': [-24.9, -25.4, -27.7],
+    Clav: [-30.1, -29.5, -30.2],
+    'PWM Strings': [-21.5, -22.0, -21.9],
+  };
+  it.each(Object.keys(AS_IN_1_26_2))('%s plays C2, C4 and C6 within 0.5 dB of 1.26.2', async (name) => {
+    const levels = await Promise.all([C2, C4, C6].map((note) => levelOf(preset(name), note)));
+    const said = levels.map((l) => l.toFixed(2)).join(' / ');
+    levels.forEach((level, i) => expect(Math.abs(level - AS_IN_1_26_2[name][i]), said).toBeLessThanOrEqual(0.5));
+  });
+});
+
 // Issue 266: the words review 13 measured, held to what the engine plays.
 describe('the Presets’ words review 13 checked hold (issue 266)', () => {
   /** The engine after a Note `note` from NOTE on `patch`, rendered for `seconds`, to read its Modulation model. */

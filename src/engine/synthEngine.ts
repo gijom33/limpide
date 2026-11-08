@@ -492,12 +492,15 @@ const CYCLE_CURVE = Float32Array.from({ length: (2 * FOLLOWED_CENTS) / CYCLE_STE
 
 /**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
- * analogue way, as a delayed copy of a rising saw minus the saw itself: high from each drop of the saw until the
- * copy's, the delay (the width's share of a cycle) sets the Pulse Width, the share of the cycle spent high (issue 266),
- * and unlike a PeriodicWave can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a
- * restart the delay still holds the old cycle for one width: a fraction of a cycle, inside the Note's attack.
+ * analogue way, as a rising saw minus a delayed copy of itself: low from each drop of the saw until the copy's, so the
+ * delay is the share of the cycle spent low, the rest of the cycle after the Pulse Width, the share spent high (issue
+ * 266). The saw keeps its sign, so a pulse beside a saw on the other Oscillator adds as it did before 266 (1.27.0's ear
+ * stand-in: turned over, Piano's and Honky-Tonk's strikes fell 3 to 7 dB). Unlike a PeriodicWave the delay can be
+ * modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a restart the delay still holds the
+ * old cycle for the low part: a fraction of a cycle, inside the Note's attack.
  *
- * The delay is the width (the knob, and each LFO's swing of it) times the Note's period, times one cycle's length at
+ * The delay is the rest of the cycle after the width (one less the knob, less each LFO's swing of it) times the
+ * Note's period, times one cycle's length at
  * the pitch the Oscillator sounds over the Note's (issue 98): a waveshaper turns everything that moves its pitch, in
  * cents, into 2^(−cents/1200) at audio rate, so the width stays the knob's however Env Amount, an LFO, the bend or
  * its tuning moves it. A Glide moves the Note's period, which slides with the Oscillators.
@@ -505,19 +508,19 @@ const CYCLE_CURVE = Float32Array.from({ length: (2 * FOLLOWED_CENTS) / CYCLE_STE
 function createVoiceOscillator(ctx: BaseAudioContext) {
   const direct = ctx.createGain();
   const delay = ctx.createDelay(1);
-  const lagged = ctx.createGain();
+  const inverted = ctx.createGain();
   const out = ctx.createGain();
   const source: Restartable = createRestartable(ctx, A4_HZ, [direct, delay]);
-  const width = ctx.createConstantSource();
+  const width = ctx.createConstantSource(); // one less the width: the low part's share
   width.offset.value = 0.5;
-  const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → the width
+  const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → the low part, its swing of the width turned over
   const period = ctx.createGain(); // the Note's period, in seconds
   period.gain.value = 1 / A4_HZ;
   const centsIn = ctx.createGain(); // the shaper takes −1 to 1 for ±FOLLOWED_CENTS
   centsIn.gain.value = 1 / FOLLOWED_CENTS;
   const cycle = ctx.createWaveShaper();
   cycle.curve = CYCLE_CURVE;
-  const toDelay = ctx.createGain(); // the width's share of the Note's period, times the cycle's length
+  const toDelay = ctx.createGain(); // the low part's share of the Note's period, times the cycle's length
   toDelay.gain.value = 0;
   delay.delayTime.value = 0;
   source.cents.connect(centsIn).connect(cycle).connect(toDelay.gain);
@@ -529,9 +532,9 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   period.connect(toDelay).connect(delay.delayTime);
   width.start();
   direct.connect(out);
-  delay.connect(lagged).connect(out);
-  lagged.gain.value = 0;
-  return { source, out, direct, lagged, width, pwm, period };
+  delay.connect(inverted).connect(out);
+  inverted.gain.value = 0;
+  return { source, out, direct, inverted, width, pwm, period };
 }
 
 /** Every one of FM's gains: its own, then each LFO's swing of it. */
@@ -984,20 +987,20 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   };
 
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
-  // saw here, turned over, and becomes a pulse through the delayed copy: high for the width (issue 266).
+  // saw here, and becomes a pulse through the delayed, inverted copy: high for the width (issue 266).
   const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
   const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
     const o = oscillators[i];
     const pulse = waveform === 'pulse';
     // The node sounding at `t` takes the wave for the pitch then; one handed over for a later Note, that Note's.
     o.source.setWave((start) => waveOn(i, start > t ? pitches[lastAt(pitches, start)].frequency : frequencyAt(t)));
-    write(o.width.offset, width, t);
+    write(o.width.offset, 1 - width, t);
     const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
-    swings.forEach((swing, n) => write(o.pwm[n].gain, swing, t));
-    // saw(t − d·T) − saw(t) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
+    swings.forEach((swing, n) => write(o.pwm[n].gain, -swing, t));
+    // saw(t) − saw(t − (1 − d)·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
     const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
-    write(o.direct.gain, pulse ? -scale : 1, t);
-    write(o.lagged.gain, pulse ? scale : 0, t);
+    write(o.direct.gain, scale, t);
+    write(o.inverted.gain, pulse ? -scale : 0, t);
   };
 
   const frequencyAt = (t: number) => glideFrequency(pitches, t) || A4_HZ;
