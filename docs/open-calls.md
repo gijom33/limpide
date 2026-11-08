@@ -1,6 +1,6 @@
 # Calls open to the owner
 
-91 calls open to the owner, in 21 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
+93 calls open to the owner, in 21 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
 
 The owner goes through them. A call closes where it was made, its “open to the owner” becoming “accepted by the owner (YYYY-MM-DD)” or “reversed by the owner (YYYY-MM-DD, issue N)”, or, once a release has shipped it with no word on it, “let stand by the owner in X.Y.Z”; the issue tracker’s guide says how ([docs/agents/issue-tracker.md](agents/issue-tracker.md)).
 Generated from the issues, the inbox and the ADRs by `npm run issues`: close a call where it was made, not on this page.
@@ -87,7 +87,9 @@ Generated from the issues, the inbox and the ADRs by `npm run issues`: close a c
 - [Issue 267, call 3](issues/267-a-click-a-fold-back-and-a-bite.md): Zap Pluck's high Notes are quieter. Most of C6's strike lay above 5 kHz; taking it off costs C6 and C7 their loudest 100 ms, about 7 dB under C4 (C2 1.6 dB under). Its steady sine after the strike is as loud as before. That is a fall acros…
 - [Issue 267, call 4](issues/267-a-click-a-fold-back-and-a-bite.md): Ring's cut counts the LFOs, not the pitch bend, aftertouch on Pitch, or a Glide from a higher Note, which can still take a top product past the top for a moment.
 - [Issue 268, Status](issues/268-tidy-ups-after-1-27-0.md): ready-for-agent · enhancement. In v1 as polish, as 250 and 251 were; Claude's call, open to the owner (2026-11-07).
-- [Issue 269, Status](issues/269-words-and-a-level-after-1-27-0.md): ready-for-agent · bug. In v1 as polish; Claude's call, open to the owner (2026-11-08). Item 3 changes the owner's instructions to Claude, so it waits for the owner's yes.
+- [Issue 269, Status](issues/269-words-and-a-level-after-1-27-0.md): ready-for-human · bug. Built (2026-11-08) on night/2026-11-08, for the owner to try; item 3 waits for the owner's yes. In v1 as polish; Claude's call, open to the owner (2026-11-08). Item 3 changes the owner's instructions to Claude.
+- [Issue 269, call 1](issues/269-words-and-a-level-after-1-27-0.md): The words follow review 13's suggestion and borrow Detune's formula's "blur into roughness", so the Preset and the readout say the same thing. They are a sentence, which issue 156 lets wrap; they are one clause longer than before.
+- [Issue 269, call 2](issues/269-words-and-a-level-after-1-27-0.md): Key Track 0.5 for Clang, the middle of what holds: 0.3 already keeps C2 to C6 within 4.2 dB, 0.7 within 1.8. At 0.5 a low Clang keeps some of its thinning and its C7 sits 2.2 dB under its C4. Away from C4 its high-pass moves (about 300 Hz…
 - [Issue 270, Status](issues/270-bead-rides-up-to-2-5-hz.md): ready-for-agent · enhancement. In v1 as polish of 197's rides, as 264 was of 229's Glow; Claude's call, open to the owner (2026-11-08). The bound is the owner's (decided by the owner, 2026-11-08). Built after 1.27.0, for the next release.
 - [Issue 270, call 2](issues/270-bead-rides-up-to-2-5-hz.md): The same bound everywhere a ride is decided: a ride by itself, a ride on a drop, and the Demo's surf's choice of plot where it checks one.
 - [Issue 270, call 3](issues/270-bead-rides-up-to-2-5-hz.md): Nothing else of the ride changes: a Sine or a Triangle only, Depth above 0, 8 to 18 seconds, its lean and its board.
