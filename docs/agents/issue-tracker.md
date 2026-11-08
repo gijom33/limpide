@@ -8,6 +8,7 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 - **Issues:** one file each, `docs/issues/NN-<slug>.md`, numbered on from the highest (two digits until 99). Never a combined tickets file.
 - **The inbox:** [`docs/inbox.md`](../inbox.md), the `needs-triage` queue. The owner's bug or idea goes in, in the owner's words, committed alone; triage is the next commit (an issue, a line in an existing issue, done at once, or Dropped with the reason). Done at once is for what needs no issue (below).
 - **Rejected feature ideas:** [`.out-of-scope/`](../../.out-of-scope/), one file per concept.
+- **The index** ([`docs/issues.md`](../issues.md)) and **the calls open to the owner** ([`docs/open-calls.md`](../open-calls.md)): written from the files by `npm run issues`, never by hand (issue 261). The pre-commit hook fails a commit of the issues, the inbox or the ADRs while either is stale, or while a done issue has an unticked box.
 
 ## An issue's file
 
@@ -27,9 +28,10 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 1. …
 ```
 
-- **The Status line** of an open issue starts with one triage state and one category, from [`triage-labels.md`](./triage-labels.md), then any prose: `**Status:** ready-for-human · enhancement. Built, to verify on the real C16.` A finished issue's Status starts `done`, `closed` or `superseded`, with the date and what happened, and is not rewritten later.
+- **The Status line** of an open issue starts with one triage state and one category, from [`triage-labels.md`](./triage-labels.md), then any prose: `**Status:** ready-for-human · enhancement. Built, to verify on the real C16.` A finished issue's Status starts `done`, `closed` or `superseded`, with the date and what happened, and is not rewritten later. A done issue has no unticked box: each is ticked, with the evidence it was met in "How it was built" or a test, or struck through with the reason (`- [ ] ~~The criterion~~ (not checked at the time)`).
 - **A `ready-for-agent` issue** carries an `## Agent Brief` (the triage skill's AGENT-BRIEF.md): behaviour, interfaces, acceptance criteria, out of scope; no file paths or line numbers.
 - **Decisions** from a grilling go in a numbered list, each saying who decided ("decided by the owner", or "Claude's call, open to the owner").
+- **A call closes where it was made:** its "open to the owner" becomes "accepted by the owner (YYYY-MM-DD)" or "reversed by the owner (YYYY-MM-DD, issue N)" when the owner rules on it, or "let stand by the owner in X.Y.Z" once a release has shipped it with no word on it. An ADR's calls are in its Status line, the one line an accepted ADR may change. A heading of calls ("Claude's calls, open to the owner:") closes with its list. Then `npm run issues` drops it from the open calls.
 - **A decision about where something goes on screen** is measured before it is written: check it against the page at the widths it names (a quick measurement in the browser, the elements' boxes and the room around them). A place with no room is a question for the owner, not a decision.
 - **Notes added later** go under a heading of their own at the bottom (`## How it was built`, `## Comments`); file paths belong there.
 
@@ -42,7 +44,8 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 
 - What waits on the owner: `grep -l '^\*\*Status:\*\* ready-for-human' docs/issues/*.md`
 - What a fresh session can take: `grep -l '^\*\*Status:\*\* ready-for-agent' docs/issues/*.md`
-- Every open issue: `grep -L '^\*\*Status:\*\* \(done\|closed\|superseded\|ongoing\)' docs/issues/*.md`
+- Every open issue: `grep -L '^\*\*Status:\*\* \(done\|closed\|superseded\|ongoing\)' docs/issues/*.md`, or the index's Open table
+- The calls waiting on the owner: [`docs/open-calls.md`](../open-calls.md)
 
 ## When a skill says "publish to the issue tracker"
 

@@ -32,6 +32,8 @@
     "stats": "node --experimental-strip-types --no-warnings scripts/measureStatistics.ts",
     "perf": "node --experimental-strip-types --no-warnings scripts/measurePerformance.ts",
     "c16-card": "node --experimental-strip-types --no-warnings scripts/printC16Card.ts",
+    "issues": "node --experimental-strip-types --no-warnings scripts/issueRecord.ts",
+    "issues:check": "node --experimental-strip-types --no-warnings scripts/issueRecord.ts check",
     "typecheck": "tsc",
     "lint": "biome check",
     "prepare": "git config core.hooksPath .githooks || true"
