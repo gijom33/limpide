@@ -29,7 +29,7 @@ export function describeTaken(took: readonly Mapping[]): string {
     const place = known?.place(mapping.control);
     const key = known && place ? `${known.id} ${place.name} ${targetKey(mapping.target)}` : `own ${i}`;
     const group = groups.get(key) ?? { mapping, kind: place?.kind, name: place?.name, banks: [], of: known?.banks ?? 0 };
-    if (place) group.banks.push(place.bank);
+    if (place) group.banks.push(place.bankLetter);
     groups.set(key, group);
   });
   return [...groups.values()]
