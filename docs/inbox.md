@@ -4,6 +4,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-08, from the 1.28.0 code review (Standards), judgement calls, no bug: Bead's foot read under its stroll on a landing frame while it is drawn at the landing spot (one frame at most); the 2.5 Hz ride test finding the plot by its class and its svg where the release moved other lookups to roles; a unit test named for 112 whose case is 270's; a test comment's "now"; the Piano's wait written 49 times in 9 specs, and the ride's turns and slope counted twice (unit and e2e); the C16's place in two near-identical shapes, `onTheC16` named as a question, `KINDS` generic; `useDescribing` in the file about greyed-out controls; Quick Setup's `LastStep` exported from its component to the MIDI hook; the line under Bead 0 when there is no plot, and the plot's svg asserted present.
+- 2026-11-08, from the 1.28.0 code review (Spec): 270's old ride tests rewritten rather than left as they were (the plot's svg box, a 1/4 at 120 BPM now riding); 270's phone and 2 × 2 layouts tested on scripted readings only (call 3); every ride, slow ones and the Demo's included, now reads its foot this frame and inside the plot's border (call 1); 269's Fast Beats one clause longer, with "Harmonics" (call 1); 268's fourteen locators where about eleven were named, two kept (call 2); Display's panel closing at the call, a render earlier (call 4).
+
 ## Ideas
 
 ## Dropped
