@@ -71,7 +71,7 @@ test('About offers the Tour every time; the Patches panel lists no Tour (issue 1
   await expect(page.getByRole('dialog', { name: 'Patches' })).not.toContainText(/\bTour\b/);
   await page.keyboard.press('Escape');
   await startFromAbout(page);
-  await expect(progress(page)).toHaveText('1 of 6');
+  await expect(progress(page)).toHaveText('1 of 7');
 });
 
 test('the Tour stops the Demo and the Song when it starts (issue 128)', async ({ page }) => {
@@ -113,7 +113,7 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   expect((await valuesOver(() => waveform(page).getAttribute('aria-label'), 5500)).size).toBeGreaterThan(1);
 
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('2 of 6');
+  await expect(progress(page)).toHaveText('2 of 7');
   await expect(card(page)).toContainText('The Filter takes what the Oscillators make');
   expect((await valuesOver(() => slider(page, 'Cutoff').getAttribute('aria-valuetext'), 1500)).size).toBeGreaterThan(2);
   await expect(waveform(page)).toHaveAttribute('aria-label', 'Saw'); // each card starts on the Tour's own Patch
@@ -127,10 +127,10 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   await expect(card(page)).toContainText('The LFOs send no sound down the chain');
   expect((await valuesOver(() => slider(page, 'LFO 1 Depth').getAttribute('aria-valuetext'), 1500)).size).toBeGreaterThan(2);
   await playing(page);
-  await expect(progress(page)).toHaveText('4 of 6'); // what else there is to find comes after (issue 210)
+  await expect(progress(page)).toHaveText('4 of 7'); // what else there is to find comes after (issue 210)
 
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('3 of 6');
+  await expect(progress(page)).toHaveText('3 of 7');
 });
 
 test('grabbing the control being turned takes it over: it stops moving for that card (issue 128)', async ({ page }) => {
@@ -150,12 +150,12 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
   await startFromAbout(page);
   await expect(action(page, 'Next')).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(progress(page)).toHaveText('2 of 6');
+  await expect(progress(page)).toHaveText('2 of 7');
   await expect(action(page, 'Next')).toBeFocused();
   await page.keyboard.press('Shift+Tab'); // Back, before the way forward
   await expect(action(page, 'Back')).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(progress(page)).toHaveText('1 of 6');
+  await expect(progress(page)).toHaveText('1 of 7');
   await expect(action(page, 'Next')).toBeFocused(); // Back went with the second card: the way forward has the focus
   await card(page).getByRole('button', { name: 'Close the Tour' }).focus();
   await page.keyboard.press('Enter');
@@ -163,7 +163,7 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
 });
 
 // The first card, closed, and the last, done: the give-back itself is the Shows' unit tests' at any card (issue 250).
-for (const at of [1, 6]) {
+for (const at of [1, 7]) {
   test(`closed at card ${at}, the Tour gives back the Patch the person had, value for value (issue 128)`, async ({ page }) => {
     await page.goto('/');
     await patchName(page).click();
@@ -182,7 +182,7 @@ for (const at of [1, 6]) {
     await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
     for (let i = 1; i < at; i++) await action(page, 'Next').click();
     await page.waitForTimeout(500); // the synth turning its controls
-    await card(page).getByRole('button', { name: at === 6 ? 'Done' : 'Close the Tour' }).click();
+    await card(page).getByRole('button', { name: at === 7 ? 'Done' : 'Close the Tour' }).click();
     await expect(card(page)).toBeHidden();
     await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
     await expect(patchName(page)).toHaveAttribute('data-changed');
@@ -192,7 +192,7 @@ for (const at of [1, 6]) {
   });
 }
 
-test('the last card’s button starts the first Tutorial, Sub Ladder (issues 128, 233)', async ({ page }) => {
+test('the Tutorials’ card’s button starts the first Tutorial, Sub Ladder (issues 128, 233, 260)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 6; i++) await action(page, 'Next').click();
@@ -202,7 +202,7 @@ test('the last card’s button starts the first Tutorial, Sub Ladder (issues 128
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
-test('the last card’s button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
+test('the Tutorials’ card’s button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 6; i++) await action(page, 'Next').click();
@@ -459,7 +459,7 @@ test('after the Sections, a card for the Synth Geek Layer and its History, then 
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 5; i++) await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('5 of 6');
+  await expect(progress(page)).toHaveText('5 of 7');
   await expect(card(page)).toContainText('Geek toggle');
   await expect(card(page)).toContainText('History');
   const display = page.getByRole('button', { name: 'Display', exact: true });
@@ -475,20 +475,32 @@ test('after the Sections, a card for the Synth Geek Layer and its History, then 
   await expect(page.getByRole('group', { name: 'Piano' }).locator('[aria-pressed="true"]')).toHaveCount(0, { timeout: 8000 });
 
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('6 of 6');
+  await expect(progress(page)).toHaveText('6 of 7');
   await expect(card(page)).toContainText('rebuild one of the Presets yourself');
   await expect(page.getByRole('button', { name: 'Tutorial', exact: true })).toHaveAttribute('data-tutorial', '');
   await expect(page.locator('[data-tutorial]')).toHaveCount(1); // Display's ring gone with its card
-  await expect(action(page, 'Next')).toBeHidden();
+  // The first Tutorial offered beside Next, not as the way out (issue 260).
   await expect(action(page, 'Build a Sub Ladder')).toBeVisible();
+  await expect(action(page, 'Done')).toBeHidden();
+
+  // The last card, something to play: the Song ringed, its button the way out (issue 260).
+  await action(page, 'Next').click();
+  await expect(progress(page)).toHaveText('7 of 7');
+  await expect(card(page)).toContainText('Now play the piano’s keys');
+  await expect(page.getByRole('button', { name: 'Song', exact: true })).toHaveAttribute('data-tutorial', '');
+  await expect(page.locator('[data-tutorial]')).toHaveCount(1);
+  await expect(action(page, 'Next')).toBeHidden();
+  await expect(action(page, 'Play the Song')).toBeVisible();
+  await expect(action(page, 'Build a Sub Ladder')).toBeHidden();
 
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('5 of 6');
+  await expect(progress(page)).toHaveText('6 of 7');
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('4 of 6');
+  await expect(progress(page)).toHaveText('5 of 7');
+  await action(page, 'Back').click();
+  await expect(progress(page)).toHaveText('4 of 7');
   await playing(page); // the LFO card plays again
-  await action(page, 'Next').click();
-  await action(page, 'Next').click();
+  for (let i = 0; i < 3; i++) await action(page, 'Next').click();
   await action(page, 'Done').click();
   await expect(card(page)).toBeHidden();
   await expect(geekOn(page)).toHaveCount(0); // off after the Tour, as before it
@@ -507,8 +519,28 @@ for (const [layout, width, height] of [['small phone', 320, 568], ['phone', 375,
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
     await action(page, 'Next').click();
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Song', exact: true }))).toBe('shown');
   });
 }
+
+// Issue 260 (review 1, finding 2): the Tour ended on the geek extras, a newcomer leaving by Done with nothing to play.
+// Its last card's way out is the Song, on the person's own Patch, given back.
+test('the last card’s button ends the Tour and plays the Song on the person’s Patch (issue 260)', async ({ page }) => {
+  await page.goto('/');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Acid', exact: true }).first().click();
+  await page.keyboard.press('Escape');
+  await startFromAbout(page);
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
+  for (let i = 1; i < 7; i++) await action(page, 'Next').click();
+  await action(page, 'Play the Song').click();
+  await expect(card(page)).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Song', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
+  await playing(page);
+  await expect(page.locator('[data-tutorial]')).toHaveCount(0);
+});
 
 // Issue 254: on every card, at every size, the control the Tour turns stays in view, clear of the card, the whole time
 // it moves; on wide windows its Viewers with it, the card moving aside where it would cover them.

@@ -24,8 +24,10 @@ interface Props {
   pageTheirs(): boolean;
   onBack(): void;
   onNext(): void;
-  /** The last card's way on: the first Tutorial, Sub Ladder (issue 210: the Tutorials' card; issue 233). */
+  /** The Tutorials' card's offer: the first Tutorial, Sub Ladder (issues 210, 233). */
   onFirstTutorial(): void;
+  /** The last card's way out: the Song, which ends the Tour (issue 260). */
+  onSong(): void;
   onClose(): void;
 }
 
@@ -251,10 +253,10 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
  * The Tour's card (issue 128), docked where a Tutorial's card docks: one Section of the page in the signal's order,
  * where the signal comes from and goes, what the Section does and what its Viewers show, while the synth turns its
  * controls; after the Sections, what else there is to find, and where (issue 210). Back and Next move between the
- * cards; the last offers the first Tutorial. It takes the focus on its Next when the Tour starts; turning the controls
- * never takes it.
+ * cards; the Tutorials' card offers the first Tutorial beside Next, and the last card, something to play, has the Song
+ * as its way out (issue 260). It takes the focus on its Next when the Tour starts; turning the controls never takes it.
  */
-export function TourCard({ index, moving, looking, freezing, naming, pageTheirs, onBack, onNext, onFirstTutorial, onClose }: Props) {
+export function TourCard({ index, moving, looking, freezing, naming, pageTheirs, onBack, onNext, onFirstTutorial, onSong, onClose }: Props) {
   const shown = tourCardAt(index);
   const section = shown.kind === 'section' ? shown.section : undefined;
   const last = index === TOUR_LENGTH - 1;
@@ -263,9 +265,10 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
   useRing(section, moving);
   useFindShown(shown.kind === 'find' ? shown.find : undefined);
 
+  const showing = shown.kind === 'find' ? shown.find.shows : undefined;
   const primary = last ? (
-    <button type="button" className="tool tool-primary" onClick={onFirstTutorial}>
-      Build a {TUTORIALS[0].preset}
+    <button type="button" className="tool tool-primary" onClick={onSong}>
+      Play the Song
     </button>
   ) : (
     <button type="button" className="tool tool-primary" onClick={onNext}>
@@ -273,10 +276,19 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
     </button>
   );
   const actions = {
-    before: index > 0 && (
-      <button type="button" className="tool" onClick={onBack}>
-        Back
-      </button>
+    before: (
+      <>
+        {index > 0 && (
+          <button type="button" className="tool" onClick={onBack}>
+            Back
+          </button>
+        )}
+        {showing?.kind === 'header' && showing.name === 'Tutorial' && (
+          <button type="button" className="tool" onClick={onFirstTutorial}>
+            Build a {TUTORIALS[0].preset}
+          </button>
+        )}
+      </>
     ),
     after: last && (
       <button type="button" className="tool" onClick={onClose}>

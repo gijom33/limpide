@@ -862,6 +862,8 @@ export function App() {
             onNext={() => shows.moveTour(1)}
             // The Tutorial ends the Tour as it starts, the person's Patch given back before its Init.
             onFirstTutorial={() => shows.startTutorial(TUTORIALS[0])}
+            // The Song ends the Tour as it starts, the person's Patch given back for it to play on.
+            onSong={toggleSong}
             onClose={shows.endTour}
           />
         )}

@@ -412,7 +412,7 @@ test.describe('closing gives the focus back to what opened it (issue 189)', () =
     await page.getByRole('button', { name: 'Take the Tour' }).click();
     const card = page.getByRole('region', { name: 'Tour' });
     await card.getByRole('button', { name: 'Next' }).press('Enter');
-    await expect(card.locator('.card-progress')).toHaveText('2 of 6');
+    await expect(card.locator('.card-progress')).toHaveText('2 of 7');
     await page.keyboard.press('Escape');
     await expect(card).toBeHidden();
     await expect(about).toBeFocused();
