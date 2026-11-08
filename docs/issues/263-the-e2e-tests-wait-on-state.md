@@ -46,3 +46,4 @@ Built at night, 2026-11-07, full tier. Counted as review 8 counted (`waitForTime
 
 **Try:** nothing on screen changed. GitHub's branch run at the next push is the test that matters: the whole suite on its slower Linux WebKit, first try. `grep -rn waitForTimeout e2e` lists the 63 left, each with its reason.
 
+**Since then (2026-11-08, [268](./268-tidy-ups-after-1-27-0.md)):** the Envelope Timeline's spec reads inside the page, and its 60 ms wait went with it: 62 fixed waits are left.

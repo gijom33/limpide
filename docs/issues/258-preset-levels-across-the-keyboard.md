@@ -105,3 +105,5 @@ Hi-hat is unchanged (−27.2), now kept apart in the tests.
 - Play a Bass, then the Kick, then the rest of the kit: the Kick should sit near 808 Boom; listen to the Kick's and the Tom's strike on Pink Noise, and the Snare's, Ride's, Zap Tom's and Gong's balance.
 - Felt Piano soft and hard: louder, hardly brighter, as its words now say.
 - The Demo: its first bars (the Kick) and the Sweep Pad break.
+
+**Since then (2026-11-08, [269](./269-words-and-a-level-after-1-27-0.md)):** Clang is the fifteenth, at Key Track 0.5: from C2 to C6 it falls 2.9 dB where it fell 6.4, and the tests hold it with the fourteen.

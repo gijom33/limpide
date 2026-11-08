@@ -1166,8 +1166,8 @@ test('now and then it rides a slow Sine on an LFO plot, along its line, and goes
   await expect(mascot(page)).toHaveAttribute('data-board', 'on');
   await leansWithTheWave(page, 1);
   // On the real plot's line. That it keeps to it as the line rises and falls is the frame's unit tests' (issue 250).
-  // It follows the plot a frame behind, so the slower the frames the further it trails: within 2 px at about fifteen a
-  // second in WebKit on Linux, 4.4 on GitHub's slower runner (1.22.0's branch run).
+  // It reads the line under its spot each frame, so it keeps to it within a pixel or so (issue 270); the bound leaves
+  // room for GitHub's slower runner.
   const { off } = await offTheLine(page, 1);
   expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
   // Its Depth to 0 (a double-click puts it back to its 0): off with a jump home, onto the Amp's edge.

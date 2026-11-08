@@ -678,7 +678,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       pose.splash = p < 0.3 ? 'wide' : 'none';
       pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
     }
-    // Surfing in the Demo or riding a plot (issue 204): on its board along the line under it, leaning with the wave,
+    // Surfing in the Demo or riding a plot (issue 204): on its board along the line under it, as steep as 35°, leaning with the wave,
     // forward going down it and back going up; but for a funny turn, which plays there as it would anywhere.
     const onBoard = onItsLine(where.moving) && !pose.doing;
     if (onBoard) {

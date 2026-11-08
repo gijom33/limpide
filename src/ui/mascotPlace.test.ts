@@ -579,7 +579,7 @@ describe('which LFOs it may ride, now and then, outside the Demo (issue 141)', (
     expect(ridesFor([lfo({ rate: 2.6, waveform: 'triangle' }), lfo({ rate: 4 })], 120, free)).toEqual([]);
   });
 
-  it('synced, by the Hz its note value gives at the tempo (issue 112)', () => {
+  it('synced, by the Hz its note value gives at the tempo (issues 112 and 270)', () => {
     // A quarter note: 2 Hz at 120 BPM, 4 at 240; an eighth: 8 Hz at 240; a bar: 0.5 Hz at 120.
     expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4'), rate: 5 }), lfo({ sync: 'on', note: noteIndex('1 bar'), rate: 5 })], 120, free)).toEqual([1, 2]);
     expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/8'), rate: 0.1 }), lfo({ sync: 'on', note: noteIndex('1/4') })], 240, free)).toEqual([]);
