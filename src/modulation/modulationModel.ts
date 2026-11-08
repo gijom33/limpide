@@ -147,6 +147,10 @@ export function destinationSwings(patch: Patch, destination: LfoDestination, val
   return lfoSwings(patch, destination, law.perDepth, law.room?.(value));
 }
 
+/** How far both LFOs together swing a Destination each way at the top of their swings, in its knobs' unit, from a knob's `value`. */
+export const totalSwing = (patch: Patch, destination: LfoDestination, value = 0) =>
+  destinationSwings(patch, destination, value).reduce((sum, swing) => sum + swing, 0);
+
 /**
  * Where both LFOs take a Destination right now, in its knobs' unit, from a knob's `value`: each one's swing times its
  * value (`lfo`, −1 to 1 each).

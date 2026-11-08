@@ -28,6 +28,22 @@ export function harmonicSeries(waveform: Waveform, pulseWidth: number, count: nu
   return computed.get(key, () => computeSeries(waveform, pulseWidth, count));
 }
 
+/**
+ * How many Harmonics the engine's Oscillators play: enough to reach Nyquist from the lowest Notes, the browser
+ * band-limiting per pitch. The Ideal Reference scales each wave as they are scaled.
+ */
+export const ENGINE_HARMONICS = 1024;
+
+/**
+ * How much the engine and the Ideal Reference scale a saw less its copy delayed by the low part (one less `width`),
+ * so the pulse has the pulse series' level (issue 266): saw(t) − saw(t − (1 − d)·T) has |Harmonic n| = 2·|sin(πnd)|
+ * × the saw's.
+ */
+export function pulseScale(width: number): number {
+  const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];
+  return harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak);
+}
+
 function computeSeries(waveform: Waveform, pulseWidth: number, count: number): HarmonicSeries {
   const real = new Float32Array(count);
   const imag = new Float32Array(count);

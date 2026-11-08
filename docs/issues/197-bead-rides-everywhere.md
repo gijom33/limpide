@@ -77,3 +77,5 @@ Claude's calls, let stand by the owner in 1.22.0:
 **Since then (2026-11-05, [245](./245-beads-frame-read-decide-draw.md)):** the browser test of its LFO rides on a phone and in 2 × 2 left `e2e/mascot.spec.ts` for the node tests of Bead's frame, on readings of the page, as [232](./232-1-24-0-red-on-githubs-linux-webkit.md) records.
 
 **Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the drop on LFO 2's Saw, thrown home, is tested in Bead's frame's unit tests only; the browser spec keeps the ride's wiring.
+
+**Since then (2026-11-08, [270](./270-bead-rides-up-to-2-5-hz.md)):** call 5's bound is 2.5 Hz, the owner's: Bead rides a Sine or a Triangle up to 2.5 Hz (with Sync, the Hz its note value gives), by itself and on a drop.

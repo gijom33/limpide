@@ -79,7 +79,7 @@ group('Intervals', [
   ['Slow Beats', 'Two sines 4 cents apart: they drift in and out of step, so the Scope’s height swells and fades, about once every second or two in the middle of the keyboard, faster higher up.', {
     volume: 0.55, waveform: 'sine', osc2Waveform: 'sine', osc2Detune: 4, mixOsc2: 1, ...OPEN,
   }],
-  ['Fast Beats', 'Two saws 40 cents apart: the beating is so fast it becomes roughness. Compare with Slow Beats.', { osc2Detune: 40, mixOsc2: 1, cutoff: 6000, resonance: 0, ampSustain: 1 }],
+  ['Fast Beats', 'Two saws 40 cents apart: their upper Harmonics beat so fast they blur into roughness. Compare with Slow Beats.', { osc2Detune: 40, mixOsc2: 1, cutoff: 6000, resonance: 0, ampSustain: 1 }],
   ['Twelfth Bell', 'A sine an octave and a fifth above another (3:1): a pure, bell-like interval, three peaks per cycle of the lower one.', {
     waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, mixOsc2: 0.6, ...OPEN, ampSustain: 0.4, ampDecay: 1.5, ampRelease: 1.5,
   }],
@@ -540,7 +540,7 @@ group('Drums', [
   }],
   ['Clang', 'Two squares a tritone apart through Ring and a high-pass, cut short: the clank of struck metal, its partials nowhere near a ladder.', {
     waveform: 'square', osc2Waveform: 'square', osc2Semitone: 6, osc2Detune: 9, mixOsc1: 0, mixRing: 1, filterMode: 'highpass', cutoff: 600, resonance: 0.2,
-    ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.15,
+    keyTrack: 0.5, ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.15,
   }],
   ['Zap Tom', 'Osc 2, a sine the Filter Envelope throws an octave up and drops at once (Env Amount), with a breath of Pink Noise: a tom that falls in pitch as it sounds.', {
     mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 1, osc2EnvAmount: 12, mixNoise: 0.35, noiseColour: 'pink', cutoff: 4000, resonance: 0,

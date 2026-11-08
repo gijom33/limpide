@@ -1,7 +1,7 @@
-import { destinationSwings, osc2Cents, osc2EnvelopeCents } from '../modulation/modulationModel';
+import { osc2Cents, osc2EnvelopeCents, totalSwing } from '../modulation/modulationModel';
 import { fmIndex, type Patch } from '../patch/patch';
 import { createCache } from './cache';
-import { harmonicSeries } from './harmonics';
+import { ENGINE_HARMONICS, harmonicSeries, pulseScale } from './harmonics';
 
 /**
  * The level of each Harmonic (index n) that every Oscillator but Osc 2 should put at the Oscillator Tap, before the
@@ -148,8 +148,6 @@ const SAMPLES_PER_HARMONIC = 16;
  * under Osc 1 and swung hard, the cycle's highest Harmonics are left out.
  */
 const MOST_CYCLE_SAMPLES = 2 ** 15;
-// The engine's Oscillators play this many Harmonics; the Ideal scales each wave as they are scaled.
-const ENGINE_HARMONICS = 1024;
 /** How many of Ring's products and FM's cycles are kept, for the Patches asked for most recently. */
 const KEPT_CYCLES = 16;
 const products = createCache<string, Float64Array>(KEPT_CYCLES);
@@ -180,12 +178,6 @@ function ringProduct(patch: Patch, n1: number, n2: number, harmonics: number): F
   });
 }
 
-/** How much the engine scales a saw less its delayed copy, so the pulse it makes has the pulse series' level. */
-function pulseScale(width: number): number {
-  const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];
-  return harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak);
-}
-
 /**
  * The top of what the browser plays (issue 103): half its sample rate, where anything higher folds back, but never
  * above a 48 kHz device's, so FM and Ring sound the same on a faster one.
@@ -211,7 +203,7 @@ function shareAbove(index: number, osc1: number, osc2: number, top: number): num
  * frequency `osc1Hz`. The engine scales FM's depth by it on each Note, and the Ideal draws the same.
  */
 export function fmDepthKept(patch: Patch, osc1Hz: number, sampleRate: number): number {
-  const peak = fmIndex(destinationSwings(patch, 'fm', patch.crossMod).reduce((sum, swing) => sum + swing, patch.crossMod));
+  const peak = fmIndex(patch.crossMod + totalSwing(patch, 'fm', patch.crossMod));
   const osc2Hz = osc1Hz * osc2Ratio(patch);
   const top = playedTop(sampleRate);
   if (peak === 0 || shareAbove(peak, osc1Hz, osc2Hz, top) <= FOLD_SHARE) return 1;

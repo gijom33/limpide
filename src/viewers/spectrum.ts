@@ -11,7 +11,7 @@ import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPea
 import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
 import { createRest } from './rest';
 import { amplitudeToSpectrumDb } from './spectrumScale';
-import type { Hooks } from './testHooks';
+import type { TestHooks } from './testHooks';
 import type { ViewSettings } from './viewSettings';
 
 const MIN_LABEL_GAP = 22;
@@ -127,7 +127,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
    * `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). Hands back what
    * it drew as the canvas's test hooks, for the frame's write (issue 257): none at rest.
    */
-  return function draw(silent: boolean): Hooks | undefined {
+  return function draw(silent: boolean): TestHooks | undefined {
     const { overlays, viewer, glow: chosen } = view();
     const glowing = glows(chosen, 'spectrum');
     const width = canvas.clientWidth;
@@ -156,7 +156,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       overlays.harmonics, overlays.ideal, overlays.geek, showIdeal,
     ];
     if (rest(silent && !cursor, inputs)) return undefined;
-    const hooks: Hooks = {};
+    const hooks: TestHooks = {};
 
     if (!viewer.frozen) {
       analyser.getFloatFrequencyData(bins);

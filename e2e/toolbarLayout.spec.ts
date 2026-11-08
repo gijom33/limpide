@@ -126,7 +126,7 @@ for (const width of [861, 880, 1000, 1100, 1200, 1280, 1366, 1440, 1600, 1800, 1
   test(`the top row no taller with the piano in it (${width}px, issue 82)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    await page.locator('.piano button').first().waitFor();
+    await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
     expect(await page.evaluate(() => Math.round(document.querySelector('header')!.getBoundingClientRect().height))).toBeLessThanOrEqual(64);
   });
 }

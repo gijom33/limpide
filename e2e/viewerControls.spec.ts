@@ -125,7 +125,7 @@ test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', a
   await page.goto('/');
   await openDisplay(page);
   await expect(page.getByLabel('Amp Scope', { exact: true })).toBeVisible();
-  const scopes = page.locator('canvas.scope');
+  const scopes = page.getByRole('img', { name: / Scope$/ });
   await expect(scopes).toHaveCount(3);
 
   await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
@@ -140,8 +140,8 @@ test('Glow is Scopes at first: every Scope draws its last traces fading under th
   await page.goto('/');
   await openDisplay(page); // a click: the sound starts
   const glow = page.getByRole('group', { name: 'View', exact: true }).getByRole('radiogroup', { name: 'Glow' });
-  const scopes = page.locator('canvas.scope');
-  const spectrums = page.locator('canvas.spectrum');
+  const scopes = page.getByRole('img', { name: / Scope$/ });
+  const spectrums = page.getByRole('img', { name: / Spectrum$/ });
   await expect(scopes).toHaveCount(3);
   await expect(spectrums).toHaveCount(3);
   await expect(glow.getByRole('radio')).toHaveText(['Off', 'Scopes', 'All']);
@@ -171,7 +171,7 @@ test('Glow is Scopes at first: every Scope draws its last traces fading under th
 
 test('Glow reaches the Spectrums under All, not Scopes: a Filter swept by its Envelope leaves its past outlines, and frozen they stay (issues 199, 229)', async ({ page }) => {
   await page.goto('/');
-  const spectrums = page.locator('canvas.spectrum');
+  const spectrums = page.getByRole('img', { name: / Spectrum$/ });
   await expect(spectrums).toHaveCount(3);
   for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', '0');
   await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('PageUp');

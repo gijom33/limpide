@@ -42,10 +42,15 @@ interface Script {
   leaving?: boolean;
   /** The controls a guide's selector finds. */
   controls?: Readonly<Record<string, { box: Edges; section: string | null; neighbours: readonly Edges[] }>>;
+  /** The LFOs as the plots draw them, if not `ENGINE`'s. */
+  engine?: Engine;
 }
 
-/** The LFOs as the plots draw them: LFO 1 a Sine at half a hertz, half on. */
-const ENGINE = { lfoSwingAt: (t: number) => 0.5 * Math.sin(2 * Math.PI * 0.5 * t) };
+type Engine = { lfoSwingAt: (t: number) => number };
+/** The LFOs as the plots draw them: LFO 1 a Sine at `hz`, half on. */
+const sineAt = (hz: number): Engine => ({ lfoSwingAt: (t: number) => 0.5 * Math.sin(2 * Math.PI * hz * t) });
+/** LFO 1 a Sine at half a hertz, half on. */
+const ENGINE = sineAt(0.5);
 /** LFO 1 a Sine at half a hertz, half on: one to ride (issue 141). */
 const SLOW_SINE: Partial<Patch> = { lfoAmount: 0.5, lfoRate: 0.5 };
 
@@ -83,7 +88,7 @@ function scripted(layout: Script) {
         amp: 0.5,
         volume: 1,
         struck: t - 1,
-        wave: (lfo, box, x) => lineAt({ engine: ENGINE, lfo, box, x, now: t }),
+        wave: (lfo, box, x) => lineAt({ engine: script.engine ?? ENGINE, lfo, box, x, now: t }),
       },
       asked: { leaving: script.leaving ?? false, demoPart: script.demoPart ?? null, guide: script.guide ?? null },
       dialogOpen: () => false,
@@ -146,7 +151,7 @@ const ON_A_PHONE = { ...PHONE, stacked: true } satisfies Script;
 const IN_2_BY_2 = { ...TWO_BY_TWO, stacked: true } satisfies Script;
 
 /** How far its foot is over or under the line LFO 1's plot draws under its middle, at the frame's time. */
-const offTheLine = (d: Drawn, plot: Rect) => d.where.foot - (plot.top + lineAt({ engine: ENGINE, lfo: 1, box: plot, x: d.left + DROP_MIDDLE - plot.left, now: d.now }));
+const offTheLine = (d: Drawn, plot: Rect, engine = ENGINE) => d.where.foot - (plot.top + lineAt({ engine, lfo: 1, box: plot, x: d.left + DROP_MIDDLE - plot.left, now: d.now }));
 const airborne = (m: string) => m === 'falling' || m === 'flying';
 /** A section's box, as it is in the window now. */
 const edgeOf = (b: ReturnType<typeof scripted>, id: string) => b.reading().sections.find((s) => s.id === id)!.box;
@@ -175,7 +180,7 @@ describe("Bead's frame, three across", () => {
       acts.push(b.drawn.marks.act);
       if (part === 2) expect(b.drawn.marks.tail).toBe('straight'); // its tail up across it, a guitar's neck
       if (part === 5) {
-        // On its board, on the line its plot draws under its middle, a frame behind.
+        // On its board, on the line its plot draws under its middle.
         expect(b.run(5, (d) => d.marks.board === 'on').met).toBe(true);
         const along = b.run(1).drawn;
         expect(along.every((d) => d.marks.board === 'on')).toBe(true);
@@ -435,4 +440,47 @@ describe("Bead's frame, on a phone and in 2 × 2", () => {
     expect(away.at(-1)!.where.foot).toBeGreaterThan(300);
     expect(away.some((d) => d.pose.form !== 'drop')).toBe(false);
   });
+});
+
+describe("Bead's frame, riding a Sine at 2.5 Hz, the fastest it rides (issue 270)", () => {
+  /** LFO 1 a Sine at 2.5 Hz, half on. */
+  const FAST = sineAt(2.5);
+  const FAST_SINE: Partial<Patch> = { lfoAmount: 0.5, lfoRate: 2.5 };
+  for (const [size, layout, scroll] of [
+    ['three across', { ...THREE, plots: THREE_ACROSS.plots }, 0],
+    ['on a phone', { ...ON_A_PHONE, plots: PHONE.plots }, PHONE.plots[0].box[1] - 400],
+    ['in 2 × 2', { ...IN_2_BY_2, plots: TWO_BY_TWO.plots }, TWO_BY_TWO.plots[0].box[1] - 400],
+  ] as const) {
+    it(`${size}: it stays on its line, its board along it as far as it leans, and does not shake`, () => {
+      const b = scripted({ ...layout, patch: FAST_SINE, engine: FAST });
+      b.scrollTo(scroll);
+      // Its first ride due soonest, 15 seconds in.
+      expect(b.run(20, (d) => d.marks.ride === '1').met).toBe(true);
+      expect(b.run(5, (d) => d.marks.moving === 'standing').met).toBe(true);
+      const plot = b.reading().plots().find((p) => p.lfo === 1)!.box;
+      const along = b.run(2).drawn;
+      // The line's slope under its middle, in degrees, from a pixel either side.
+      const slope = (d: Drawn) => {
+        const y = (x: number) => lineAt({ engine: FAST, lfo: 1, box: plot, x, now: d.now });
+        const middle = d.left + DROP_MIDDLE - plot.left;
+        return (Math.atan2(y(middle + 1) - y(middle - 1), 2) * 180) / Math.PI;
+      };
+      for (const d of along) {
+        expect(d.marks.moving).toBe('standing');
+        expect(d.marks.board).toBe('on');
+        // Its foot on the line under where it stands this frame (a frame's stroll along so steep a wave is pixels up it).
+        expect(Math.abs(offTheLine(d, plot, FAST))).toBeLessThanOrEqual(0.5);
+        // Leaning as steep as the line, up to its steepest, 35°; past that, its steepest.
+        expect(Math.abs(d.pose.tilt - Math.max(-35, Math.min(35, slope(d))))).toBeLessThanOrEqual(4);
+      }
+      // Up and down the whole wave: the line under it rises and falls by most of its height.
+      const feet = along.map((d) => d.where.foot);
+      expect(Math.max(...feet) - Math.min(...feet)).toBeGreaterThan(0.8 * (plot.height / 2 - 5));
+      // It does not shake: its lean turns from forward to back only as the line under it does, five times a second.
+      const turns = (values: number[]) => values.filter((v, i) => i > 0 && Math.sign(v) !== Math.sign(values[i - 1]) && v !== 0).length;
+      const leans = turns(along.map((d) => d.pose.tilt));
+      expect(leans).toBeLessThanOrEqual(turns(along.map(slope)) + 1);
+      expect(leans).toBeGreaterThanOrEqual(8);
+    });
+  }
 });

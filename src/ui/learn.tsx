@@ -1,6 +1,8 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useId } from 'react';
+import type { PickupWay } from '../midi/controlSurface';
 import { targetKey } from '../midi/describe';
 import type { Target } from '../midi/mappings';
+import { useDescribing } from './inactive';
 
 /**
  * What MIDI Learn needs every learnable control to show: which targets are mapped, which is selected, and which wait
@@ -9,7 +11,7 @@ import type { Target } from '../midi/mappings';
 export const LearnContext = createContext<{
   mapped: ReadonlySet<string>;
   selected: string | null;
-  pickups: ReadonlyMap<string, 'up' | 'down'>;
+  pickups: ReadonlyMap<string, PickupWay>;
 }>({ mapped: new Set(), selected: null, pickups: new Map() });
 
 /**
@@ -26,4 +28,19 @@ export function useLearnable(target: Target | undefined) {
     'data-learn-selected': selected === key || undefined,
     'data-pickup': pickups.get(key),
   };
+}
+
+/**
+ * Pickup waiting for the Controller's knob to catch a control's value (issue 255), said first in the control's
+ * description, the way to turn it: a knob's slider and the tempo alike (issue 268). Drawn inside the control, which
+ * `controlOf` finds from it (as `useDescribing` takes it).
+ */
+export function PickupNote({ way, controlOf }: { way: PickupWay; controlOf: (note: Element) => Element | null | undefined }) {
+  const id = useId();
+  const describe = useDescribing(id, controlOf);
+  return (
+    <span id={id} ref={describe} hidden>
+      {`Pickup: turn your Controller’s knob ${way} to this value to take it over.`}
+    </span>
+  );
 }

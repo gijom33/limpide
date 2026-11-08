@@ -2,13 +2,13 @@ import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent }
 import { type BeatGrid, glideFrequency, glideTimeConstant, LFO_START, type LfoWaveform } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LOWEST_CUTOFF, type Modulation, osc2Cents, osc2EnvelopeCents, PRESSURE_GLIDE,
-  type Pressure, pressed, pressurePitch, VELOCITY_CUTOFF_OCTAVES,
+  type Pressure, pressed, pressurePitch, totalSwing, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { createCache } from '../music/cache';
-import { harmonicSeries, type Waveform } from '../music/harmonics';
+import { ENGINE_HARMONICS, harmonicSeries, pulseScale, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { A4_HZ, noteToFrequency } from '../music/pitch';
-import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
@@ -229,8 +229,6 @@ function pinkBuffer(ctx: BaseAudioContext, white: AudioBuffer): AudioBuffer {
  */
 export const NOISE_PEAK: Record<NoiseColour, number> = { white: 1, pink: 2.2 };
 
-// Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
-const WAVE_HARMONICS = 1024;
 // How many of the Oscillators' waves are kept, cut short for Ring (issue 103), for the Notes to come: each holds
 // many tables.
 const KEPT_WAVES = 32;
@@ -768,7 +766,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const sub = createRestartable(ctx, A4_HZ / 2, [mixSub]);
   const subWaves = Object.fromEntries(
     (['square', 'sine'] as const).map((w) => {
-      const { real, imag } = harmonicSeries(w, 0.5, WAVE_HARMONICS);
+      const { real, imag } = harmonicSeries(w, 0.5, ENGINE_HARMONICS);
       return [w, ctx.createPeriodicWave(real, imag, { disableNormalization: true })];
     }),
   ) as Record<SubWaveform, PeriodicWave>;
@@ -970,15 +968,14 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    */
   const harmonicsOn = (frequency: number): number[] => {
     const knobs = patch;
-    if (!knobs?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
-    /** How far both LFOs together take a Destination up, at the top of their swings. */
-    const upTo = (destination: LfoDestination) => destinationSwings(knobs, destination).reduce((sum, swing) => sum + swing, 0);
-    const cents = [upTo('pitch') * 100, upTo('pitch') * 100 + upTo('osc2Pitch') * 100 + upTo('detune')];
+    if (!knobs?.mixRing) return [ENGINE_HARMONICS, ENGINE_HARMONICS];
+    const pitch = totalSwing(knobs, 'pitch') * 100;
+    const cents = [pitch, pitch + totalSwing(knobs, 'osc2Pitch') * 100 + totalSwing(knobs, 'detune')];
     const hz = pitchOverNote.map((r, i) => frequency * r * 2 ** (cents[i] / 1200));
     const rich = [knobs.waveform, knobs.osc2Waveform].map((w) => w !== 'sine');
     const top = playedTop(ctx.sampleRate);
     const reach = (i: number) => (rich[i] ? Math.max(top / 2, hz[i]) : hz[i]);
-    return [0, 1].map((i) => (rich[i] ? Math.min(WAVE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : WAVE_HARMONICS));
+    return [0, 1].map((i) => (rich[i] ? Math.min(ENGINE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : ENGINE_HARMONICS));
   };
   /** Osc `i`'s wave on a Note of `frequency`. */
   const waveOn = (i: number, frequency: number) => {
@@ -988,7 +985,6 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
   // saw here, and becomes a pulse through the delayed, inverted copy: high for the width (issue 266).
-  const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
   const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
     const o = oscillators[i];
     const pulse = waveform === 'pulse';
@@ -997,8 +993,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     write(o.width.offset, 1 - width, t);
     const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
     swings.forEach((swing, n) => write(o.pwm[n].gain, -swing, t));
-    // saw(t) − saw(t − (1 − d)·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
-    const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
+    const scale = pulse ? pulseScale(width) : 1;
     write(o.direct.gain, scale, t);
     write(o.inverted.gain, pulse ? -scale : 0, t);
   };
@@ -1190,13 +1185,19 @@ type Voice = ReturnType<typeof createVoice>;
  * settled by the audio clock, never by a time ahead of it (issue 251): at its end (`atClock`), or by the next change
  * once the clock has passed its end, as the side faded out is then silent (1.26.1's statistics run).
  */
-function createModeFade(
-  ctx: BaseAudioContext,
-  sides: readonly [FilterSide, FilterSide],
-  voices: readonly Voice[],
-  atClock: (t: number, then: () => void) => void,
-  setSideCurves: (slope: FilterSlope, t: number) => void,
-) {
+function createModeFade({
+  ctx,
+  sides,
+  voices,
+  atClock,
+  setSideCurves,
+}: {
+  ctx: BaseAudioContext;
+  sides: readonly [FilterSide, FilterSide];
+  voices: readonly Voice[];
+  atClock: (t: number, then: () => void) => void;
+  setSideCurves: (slope: FilterSlope, t: number) => void;
+}) {
   /** The side that is not `side`. */
   const other = (side: FilterSide) => (side === sides[0] ? sides[1] : sides[0]);
   // The side heard, or faded to; when its fade began, and its share of the sound then.
@@ -1374,7 +1375,7 @@ export function createSynthEngine(
   const oscillatorWaves = createCache<string, PeriodicWave>(KEPT_WAVES);
   const oscillatorWave = (waveform: Exclude<Waveform, 'pulse'>, harmonics: number) =>
     oscillatorWaves.get(`${waveform} ${harmonics}`, () => {
-      const { real, imag } = harmonicSeries(waveform, 0.5, WAVE_HARMONICS);
+      const { real, imag } = harmonicSeries(waveform, 0.5, ENGINE_HARMONICS);
       return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
     });
   const shared: Shared = {
@@ -1696,7 +1697,7 @@ export function createSynthEngine(
     }
   };
   // The Filter's crossfade between its sides on a change of Mode (issue 248).
-  const modeFade = createModeFade(ctx, sides, voices, atClock, setSideCurves);
+  const modeFade = createModeFade({ ctx, sides, voices, atClock, setSideCurves });
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through: only those it changes, or with `whole`

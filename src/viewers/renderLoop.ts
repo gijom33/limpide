@@ -9,6 +9,20 @@ export type Write = () => void;
  */
 export type Draw = () => Write | undefined;
 
+/**
+ * Writes each of `next`'s values that differs from what `last` holds, by `write`, so a steady picture writes nothing,
+ * frame after frame (issue 257). `last` is what the page shows: a record of the last frame's values, or the page itself
+ * (a canvas's dataset).
+ */
+export function writeChanged<Values extends Record<string, string | undefined>>(
+  last: Readonly<Partial<Record<keyof Values, string>>>,
+  next: Values,
+  write: (key: keyof Values & string, value: Values[keyof Values]) => void,
+) {
+  for (const [key, value] of Object.entries(next) as [keyof Values & string, Values[keyof Values]][])
+    if (last[key] !== value) write(key, value);
+}
+
 const draws = new Set<Draw>();
 let frame = 0;
 

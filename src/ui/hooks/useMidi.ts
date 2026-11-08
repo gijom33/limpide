@@ -2,15 +2,16 @@ import { type MutableRefObject, useCallback, useEffect, useEffectEvent, useMemo,
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
 import { knownController, pluggedIn, setAside, takeLayout } from '../../midi/controller';
-import { createControlSurface, type LearnState } from '../../midi/controlSurface';
+import { createControlSurface, type LearnState, type PickupWay } from '../../midi/controlSurface';
 import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
-import { type ControllerId, createMappingStore, type Mapping, type Target } from '../../midi/mappings';
+import { type ControllerId, createMappingStore, type Learned, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
 import { bpmPosition, positionBpm, wholeBpm } from '../../music/tempo';
 import { CHOICES, type ChoiceId, knobTurns, LFO_KEYS, PARAMS, rateKnob, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
+import type { LastStep } from '../QuickSetupPanel';
 import { reveal } from '../reveal';
 import { SECTIONS, type SectionName } from '../sections';
 import { WAVEFORM_ORDER } from '../WaveformPicker';
@@ -109,10 +110,10 @@ export function useMidi(host: Host) {
   // knob crosses its value. Changed only as one starts or stops waiting, so a stream of CCs renders nothing; forgotten
   // as the Mappings change or the Patch is changed other than by a Controller (a Preset, the screen), when the way to
   // turn may have changed, and shown again at the knob's next move.
-  const [pickups, setPickups] = useState<ReadonlyMap<string, 'up' | 'down'>>(() => new Map());
+  const [pickups, setPickups] = useState<ReadonlyMap<string, PickupWay>>(() => new Map());
   const pickupsRef = useRef(pickups);
   /** One control's cue set (a way) or taken away (none); every control's taken away with `null`. */
-  const setPickup = useCallback((key: string | null, way?: 'up' | 'down') => {
+  const setPickup = useCallback((key: string | null, way?: PickupWay) => {
     if (key === null ? !pickupsRef.current.size : pickupsRef.current.get(key) === way) return;
     const next = new Map(key === null ? [] : pickupsRef.current);
     if (key !== null && way) next.set(key, way);
@@ -120,11 +121,11 @@ export function useMidi(host: Host) {
     pickupsRef.current = next;
     setPickups(next);
   }, []);
-  const onLearned = useRef((mapping: Mapping, took: readonly Mapping[]): void => void [mapping, took]);
+  const onLearned = useRef((learned: Learned): void => void learned);
   const surface = useMemo(() => {
     const flashes = new Map<string, ReturnType<typeof setTimeout>>();
     // The knob a Controller moved shows it for a moment; while Pickup has not caught it yet, it shows it waits.
-    const flash = (target: Target, state: 'moved' | 'waiting', way?: 'up' | 'down') => {
+    const flash = (target: Target, state: 'moved' | 'waiting', way?: PickupWay) => {
       const key = targetKey(target);
       setPickup(key, state === 'waiting' ? way : undefined);
       const element = document.querySelector<HTMLElement>(`[data-learn="${key}"]`);
@@ -174,7 +175,7 @@ export function useMidi(host: Host) {
       sendsPositions: (known) => setSendingPositions((ids) => (ids.includes(known.id) ? ids : [...ids, known.id])),
       learnChanged: (state) => {
         setLearn(state);
-        if (state.phase === 'armed' && state.learned) onLearned.current(state.learned, state.took ?? []);
+        if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
       },
     });
   }, [mappingStore, session, patches, viewers, pressHoldRef, setPickup]);
@@ -193,15 +194,14 @@ export function useMidi(host: Host) {
 
   // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
   const [setup, setSetup] = useState<QuickSetupState | null>(null);
-  const [setupLast, setSetupLast] = useState<{ step: number; mapping: Mapping; took: readonly Mapping[] } | null>(null);
+  const [setupLast, setSetupLast] = useState<LastStep | null>(null);
   const setupRef = useRef(setup);
-  const lastTook = useRef<readonly Mapping[]>([]); // what the step learned last took, for its card to say (issue 255)
   const updateSetup = (event: QuickSetupEvent | { type: 'start' }) => {
     const current = setupRef.current;
     const next =
       event.type === 'start' ? startQuickSetup(QUICK_SETUP, mappingStore.list()) : current && quickSetupReducer(current, event);
     if (!next || next === current) return;
-    if (event.type === 'learned' && current) setSetupLast({ step: current.index, mapping: event.mapping, took: lastTook.current });
+    if (event.type === 'learned' && current) setSetupLast({ step: current.index, ...event.learned });
     if (event.type === 'start') setSetupLast(null);
     setupRef.current = next.phase === 'cancelled' ? null : next;
     setSetup(setupRef.current);
@@ -214,10 +214,7 @@ export function useMidi(host: Host) {
     }
   };
   const finishSetup = useEffectEvent(() => updateSetup({ type: 'finish' }));
-  onLearned.current = (mapping, took) => {
-    lastTook.current = took;
-    updateSetup({ type: 'learned', mapping });
-  };
+  onLearned.current = (learned) => updateSetup({ type: 'learned', learned });
   const closeSetup = () => {
     setupRef.current = null;
     setSetup(null);

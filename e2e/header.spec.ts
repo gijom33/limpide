@@ -18,7 +18,7 @@ const SIZES = {
 
 async function header(page: Page) {
   // WebKit can run this before React has drawn the header: wait for its keys.
-  await page.locator('.piano button').first().waitFor();
+  await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
   return page.evaluate(() => {
     const box = (el: Element) => {
       const r = el.getBoundingClientRect();
@@ -134,7 +134,7 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
   test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await page.locator('.piano button').first().waitFor();
+    await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
     const stops: { name: string; left: number; right: number; top: number; bottom: number }[] = [];
     await page.keyboard.press('Tab');
     for (;;) {
@@ -212,7 +212,7 @@ for (const width of [280, 320, 340, 375]) {
   test(`at ${width} px the playing and set-up buttons sit side by side and nothing lies over anything, the page ${width < 320 ? 'laid out at 320 px, scrolling sideways' : 'as wide as the window'} (issue 157)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 700 });
     await page.goto('/');
-    await page.locator('.piano button').first().waitFor();
+    await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
     const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
     const row = page.locator('header');
     // The tempo's button is named with what it shows, "Tempo: 120 BPM" (issue 189).
@@ -257,7 +257,7 @@ for (const [width, narrowest] of [[601, 110], [700, 165], [860, 240]] as const) 
   test(`at ${width} px the header has three rows, the Patch name the width of its row, and nothing lies over anything (issue 152)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 830 });
     await page.goto('/');
-    await page.locator('.piano button').first().waitFor();
+    await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
     const h = await page.evaluate(() => {
       const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
       const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
@@ -372,7 +372,7 @@ test.describe('MIDI Learn on', () => {
     test(`at ${width} px the header's buttons and keys stay where they were, nothing over anything (issue 188)`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/');
-      await page.locator('.piano button').first().waitFor();
+      await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().waitFor();
       const placed = () =>
         page.evaluate(() =>
           [...document.querySelectorAll('header button, header [role="spinbutton"]')]

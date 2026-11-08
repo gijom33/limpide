@@ -89,7 +89,7 @@ describe('MIDI Learn', () => {
     expect(surface.learnState()).toMatchObject({
       phase: 'armed',
       target: null,
-      learned: { target: cutoff },
+      learned: { mapping: { target: cutoff } },
     });
   });
 
@@ -688,7 +688,7 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
     surface.startLearn();
     surface.select(cutoff);
     for (const value of [0, 0.25, 0.5, 0.75, 1]) surface.handle({ type: 'pitchBend', channel: 1, value });
-    expect(surface.learnState()).toMatchObject({ phase: 'armed', learned: { control: { kind: 'cc', number: 128 }, target: cutoff } });
+    expect(surface.learnState()).toMatchObject({ phase: 'armed', learned: { mapping: { control: { kind: 'cc', number: 128 }, target: cutoff } } });
     surface.stopLearn();
     surface.handle({ type: 'pitchBend', channel: 1, value: 0 }); // the wheel's centre, where the Cutoff is (Pickup)
     surface.handle({ type: 'pitchBend', channel: 1, value: 1 });
@@ -768,7 +768,7 @@ describe('MIDI Learn beside the C16 layout (issue 255)', () => {
     r.surface.select(target);
     return { ...r, hear: (...messages: MidiMessage[]) => messages.forEach((m) => r.surface.handle(m, from)) };
   };
-  const took = (state: LearnState) => (state.phase === 'armed' ? (state.took ?? []) : []);
+  const took = (state: LearnState) => (state.phase === 'armed' ? (state.learned?.took ?? []) : []);
 
   it('says what a learned Mapping took: the control’s place and the target’s, a keyboard’s mod wheel on the Cutoff taking bank A’s K1 and bank B’s', () => {
     const { surface, hear } = learning(cutoff); // heard from a keyboard, not the C16

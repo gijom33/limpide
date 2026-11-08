@@ -36,9 +36,9 @@ export function LearnBar({ state }: { state: LearnState }) {
       <span>{message}</span>
       {state.phase === 'armed' && state.learned && (
         <span className="learn-done">
-          Mapped {describeTarget(state.learned.target)} ← {describeControl(state.learned.control)}
+          Mapped {describeTarget(state.learned.mapping.target)} ← {describeControl(state.learned.mapping.control)}
           {/* What it replaced, a C16 place it took among them (issue 255). */}
-          {state.took?.length ? `; ${describeTaken(state.took)}` : null}
+          {state.learned.took.length ? `; ${describeTaken(state.learned.took)}` : null}
         </span>
       )}
       <span className="learn-exit">

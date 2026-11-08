@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useEffectEvent, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { recall, remember } from '../app/rememberedSettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
@@ -13,7 +13,7 @@ import { nextTutorial, TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
 import { BEAD_ENTRANCE_SECONDS, type BeadEvent, beadAfter, beadOnArrival } from './beadPresence';
 import { DemoBar } from './DemoBar';
-import { DisplayMenu } from './DisplayMenu';
+import { DisplayMenu, type DisplayMenuHandle } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
@@ -225,8 +225,9 @@ export function App() {
   const toggleSong = () => shows.toggleSong(() => octaveRef.current);
   // While the Song plays, a line under the sound's name invites changing it (issue 260).
   const songInvite = useSongInvite(show.playing === 'song', patch, !!tutorial);
-  // Each count closes the Display panel: a Tutorial's Display Step made on a phone, its Viewer under the panel (issue 260).
-  const [displayShut, shutDisplay] = useReducer((n: number) => n + 1, 0);
+  // Closes the Display panel: a Tutorial's Display Step made on a phone, its Viewer under the panel (issue 260).
+  const displayPanel = useRef<DisplayMenuHandle>(null);
+  const shutDisplay = useCallback(() => displayPanel.current?.shut(), []);
   // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
   const tourCard = tour?.index ?? null;
   const guide = useMemo(
@@ -389,7 +390,7 @@ export function App() {
     />
   );
   const displayMenu = (
-    <DisplayMenu key="display" active={viewer.frozen || viewer.snapshot !== null} shut={displayShut}>
+    <DisplayMenu key="display" ref={displayPanel} active={viewer.frozen || viewer.snapshot !== null}>
       <section className="toolbar" aria-label="Viewer controls">
         <div className="toolbar-groups">
           <ToolGroup title="View">

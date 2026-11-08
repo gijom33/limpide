@@ -21,7 +21,7 @@ export interface KnownController {
   /** The Section, by its place on the page, a control of its layout plays (undefined: none): the page follows its banks. */
   section(control: Control): number | undefined;
   /** A control's place on it, by its bank's letter, its kind and its own name ("B", "knob", "K1"); undefined for a control it has not. */
-  place(control: Control): { bank: string; kind: PlaceKind; name: string } | undefined;
+  place(control: Control): { bankLetter: string; kind: PlaceKind; name: string } | undefined;
   /** How many banks it has: a place taken on all of them is "every bank's". */
   banks: number;
   /** The share of a Grid step a Relative message of more than one step (a fast turn) counts for, signed. */

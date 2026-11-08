@@ -19,6 +19,23 @@ export function removeDescription(control: Element, id: string) {
 }
 
 /**
+ * A ref that adds the element `id` names, drawn inside a control, to that control's description, first, for as long
+ * as it is there. `controlOf` finds the control from it: a function made outside any render, so the description is
+ * not added again at each one.
+ */
+export function useDescribing(id: string, controlOf: (element: Element) => Element | null | undefined) {
+  return useCallback(
+    (element: HTMLElement | null) => {
+      const control = element && controlOf(element);
+      if (!control) return;
+      addDescription(control, id, 'first');
+      return () => removeDescription(control, id);
+    },
+    [id, controlOf],
+  );
+}
+
+/**
  * A control greyed out while it has no audible effect (issue 104, WCAG 1.3.1): it still turns, and a screen reader
  * hears why after its name and value, ahead of its tooltip. `why` is that sentence ("No effect while Osc 2 is silent"),
  * or false while the control acts. `props` go on the control's outer element, which the CSS dims, and `note` inside it.

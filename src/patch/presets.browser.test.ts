@@ -623,11 +623,11 @@ describe('two Presets high up (issue 226)', () => {
 // Issue 258, from reviews 14 and 15: Presets whose level swung across the keyboard, the one that passed the limiter, and
 // the Drums 9 dB under the Basses.
 describe('the Presets levelled across the keyboard (issue 258)', () => {
-  // A fixed Cutoff the Notes climb into or away from: each swung 6.5 to 18 dB from C2 to C6, where the other Presets
-  // keep within 6 dB. Key Track now moves each one's Filter with the Note.
+  // A fixed Cutoff the Notes climb into or away from: each swung 6.4 to 18 dB from C2 to C6, where the other Presets
+  // keep within 6 dB. Key Track now moves each one's Filter with the Note (Clang's, issue 269).
   const LEVELLED = [
     'Vowel', 'Breathing Pad', 'Two Speeds', 'Sweep Pad', 'High-pass Buzz', '12 vs 24', 'Resonant Ring', 'Cowbell', 'Dark Drone', 'Talking Filter', 'Wah',
-    'Deep Sweep', 'Laser', 'Clav',
+    'Deep Sweep', 'Laser', 'Clav', 'Clang',
   ];
   it.each(LEVELLED)('%s keeps within 6 dB from C2 to C6, octave by octave', async (name) => {
     const levels = await Promise.all([C2, C3, C4, C5, C6].map((note) => levelOf(preset(name), note)));
@@ -847,6 +847,48 @@ describe('the Presets’ words review 13 checked hold (issue 266)', () => {
     const resonances = await across(preset('Breathing Pad'), 'resonance', 6);
     expect(Math.min(...resonances)).toBeCloseTo(0, 1);
     expect(Math.max(...resonances)).toBeCloseTo(0.6, 1);
+  });
+});
+
+// Issue 269, from 1.27.0's checks: Fast Beats' words beside Detune's readout, which puts roughness past 20 beats a
+// second (review 13), and Clang's C4 as Key Track found it (review 14).
+describe('Fast Beats’ words and Clang’s C4 (issue 269)', () => {
+  /**
+   * How many times a second the `n`th Harmonic of `note` swells and fades: its level over 10 ms windows every 2.5 ms
+   * from `from` seconds for two seconds, and the strongest rate in that level's swing from 1 to 60 a second.
+   */
+  const beatsPerSecond = (s: Float32Array, note: number, n: number, from: number) => {
+    const [rate, size] = [400, SR / 100];
+    const level = Float32Array.from({ length: 2 * rate }, (_, i) => {
+      const a = Math.round((from + i / rate) * SR);
+      return toneAmplitude(s, SR, hz(note) * n, a, a + size);
+    });
+    const mean = level.reduce((sum, v) => sum + v, 0) / level.length;
+    const swing = level.map((v) => v - mean);
+    let best = 1;
+    for (let f = 1; f <= 60; f += 0.05) if (toneAmplitude(swing, rate, f) > toneAmplitude(swing, rate, best)) best = f;
+    return best;
+  };
+
+  it('Fast Beats: its upper Harmonics beat so fast they blur into roughness, its fundamental six times a second on C4', async () => {
+    expect(PRESETS.find((p) => p.name === 'Fast Beats')!.about).toMatch(/upper Harmonics beat so fast they blur into roughness/);
+    const s = await play(preset('Fast Beats'), [C4], 2.6, 2.7);
+    const [first, fourth, sixth] = [1, 4, 6].map((n) => beatsPerSecond(s, C4, n, NOTE + 0.3));
+    const said = `the 1st ${first.toFixed(2)}, the 4th ${fourth.toFixed(2)}, the 6th ${sixth.toFixed(2)} a second`;
+    // Detune's readout: 6.12 on C4, and each Harmonic n times that.
+    expect(first, said).toBeGreaterThan(5.5);
+    expect(first, said).toBeLessThan(6.5);
+    expect(fourth, said).toBeGreaterThan(20);
+    expect(sixth, said).toBeGreaterThan(fourth);
+  });
+
+  // Key Track, centred on C4, moves Clang's high-pass only away from it: there, 1.27.0's −20.2 dBFS and a share above
+  // 2 kHz of its first 85 ms 8.9 dB under the rest.
+  it('Clang keeps its C4: its level within 0.5 dB of 1.27.0’s, its brightness within 0.5 dB', async () => {
+    const s = await play(preset('Clang'), [C4], NOTE + 1, NOTE + 1.05);
+    const above = energyAboveDb(s, SR, 2000, Math.round(NOTE * SR), 4096);
+    expect(Math.abs(loudestDb(s) + 20.2), `${loudestDb(s).toFixed(2)} dBFS`).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(above + 8.9), `${above.toFixed(2)} dB`).toBeLessThanOrEqual(0.5);
   });
 });
 

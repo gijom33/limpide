@@ -6,7 +6,7 @@ import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useUnderHeader } from './hooks/useUnderHeader';
 import { MidiIcon } from './icons';
-import { useLearnable } from './learn';
+import { PickupNote, useLearnable } from './learn';
 import { pressed } from './paramControl';
 import { STACKED } from './sections';
 import { Tooltip } from './Tooltip';
@@ -139,6 +139,7 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
         setDragged(null);
       }}
     >
+      {learn['data-pickup'] && <PickupNote way={learn['data-pickup']} controlOf={dialOf} />}
       <span className="tempo-value">{bpm}</span>
       <span className="tempo-unit" data-clock={tempo.midi || undefined}>{unit(tempo)}</span>
       {/* Where the unit is hidden (861 to 1279 px), the MIDI clock's mark: a shape, not the edge's colour alone (issue 189). */}
@@ -150,6 +151,9 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
     </div>
   );
 }
+
+/** The BPM, from a note drawn inside it. */
+const dialOf = (note: Element) => note.closest('[role="spinbutton"]');
 
 /**
  * Tap Tempo: the BPM follows the taps (issue 112), Hold's tapped rhythm apart. "Tap" on screen; Tap Tempo to a screen

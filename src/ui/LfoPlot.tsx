@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { type LfoNumber, markedBeats } from '../patch/patch';
-import { addToRenderLoop } from '../viewers/renderLoop';
+import { addToRenderLoop, writeChanged } from '../viewers/renderLoop';
 
 // The plot draws in its own CSS pixels, whatever shape the layout gives it, so full Depth spans its whole height
 // (a fixed box scaled to fit left bands above and below in squarer plots). The line keeps clear of the edges.
@@ -62,8 +62,16 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
     });
     observer.observe(box.current!);
     const y = (value: number) => yOf(value, h).toFixed(1);
-    /** What the plot shows now, as last written. */
+    /** What the plot shows now, as last written, and how each part is written. */
     let shown = { line: '', cy: '', beats: '', count: '' };
+    const writers: Record<keyof typeof shown, (value: string) => void> = {
+      line: (d) => line.current?.setAttribute('d', d),
+      cy: (cy) => dot.current?.setAttribute('cy', cy),
+      beats: (d) => beats.current?.setAttribute('d', d),
+      count: (count) => {
+        if (box.current) box.current.dataset.beats = count;
+      },
+    };
     const stop = addToRenderLoop(() => {
       if (!w || !h) return;
       // The clock shown: through the page's pause the plot goes on moving (issue 216, the owner).
@@ -80,10 +88,7 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
       // Written once every draw of the frame has read the page (issue 221), and only what changed: a flat plot at
       // Depth 0, still moving by the clock, draws the same line every frame and writes nothing (issue 257).
       return () => {
-        if (drawn.line !== shown.line) line.current?.setAttribute('d', drawn.line);
-        if (drawn.cy !== shown.cy) dot.current?.setAttribute('cy', drawn.cy);
-        if (drawn.beats !== shown.beats) beats.current?.setAttribute('d', drawn.beats);
-        if (drawn.count !== shown.count && box.current) box.current.dataset.beats = drawn.count;
+        writeChanged(shown, drawn, (key, value) => writers[key](value));
         shown = drawn;
       };
     });

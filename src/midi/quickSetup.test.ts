@@ -8,7 +8,7 @@ const mapped = (state: QuickSetupState, number: number): Mapping => ({
   target: state.steps[state.index].target,
   mode: 'relative-twos',
 });
-const learn = (state: QuickSetupState, number: number) => quickSetupReducer(state, { type: 'learned', mapping: mapped(state, number) });
+const learn = (state: QuickSetupState, number: number) => quickSetupReducer(state, { type: 'learned', learned: { mapping: mapped(state, number), took: [] } });
 
 describe('Quick Setup steps', () => {
   it('asks for every Parameter played live, the Filter first, then in the page’s order, then the Actions', () => {
@@ -43,7 +43,7 @@ describe('Quick Setup', () => {
   it('ignores a Mapping for anything other than the current step', () => {
     const state = startQuickSetup(QUICK_SETUP, []);
     const other: Mapping = { control: { kind: 'cc', channel: 1, number: 9 }, target: { kind: 'param', id: 'mixNoise' }, mode: 'absolute' };
-    expect(quickSetupReducer(state, { type: 'learned', mapping: other })).toBe(state);
+    expect(quickSetupReducer(state, { type: 'learned', learned: { mapping: other, took: [] } })).toBe(state);
   });
 
   it('skips a step, leaving it unmapped', () => {

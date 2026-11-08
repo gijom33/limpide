@@ -1,6 +1,6 @@
 import type { ParamId, Patch } from '../patch/patch';
 import { destinationOf } from './destinations';
-import { destinationSwings, KEY_TRACK_CENTRE, VELOCITY_CUTOFF_OCTAVES } from './modulationModel';
+import { KEY_TRACK_CENTRE, totalSwing, VELOCITY_CUTOFF_OCTAVES } from './modulationModel';
 
 /** How far modulation can take a Parameter with the Patch as it is (a modulation ring): its lowest and highest values. */
 export interface Reach {
@@ -40,7 +40,7 @@ export function cutoffReach(patch: Patch): (Reach & { envelope?: [number, number
  * the knob's blue ring (issue 63).
  */
 export function lfoCutoffReach(patch: Patch): Reach | null {
-  const total = destinationSwings(patch, 'cutoff').reduce((sum, swing) => sum + swing, 0);
+  const total = totalSwing(patch, 'cutoff');
   return cutoffSpread(patch, [[-total, total]]);
 }
 
@@ -62,8 +62,8 @@ export function evenReach(patch: Patch, knob: ParamId): Reach | null {
   const destination = destinationOf(knob);
   if (!destination) return null;
   const value = patch[knob] as number;
-  const [a, b] = destinationSwings(patch, destination, value);
-  return a + b > 0 ? { lo: value - a - b, hi: value + a + b } : null;
+  const swing = totalSwing(patch, destination, value);
+  return swing > 0 ? { lo: value - swing, hi: value + swing } : null;
 }
 
 /**
@@ -71,6 +71,6 @@ export function evenReach(patch: Patch, knob: ParamId): Reach | null {
  * foot (to silence at full Depth), never above it.
  */
 export function volumeReach(patch: Patch): Reach | null {
-  const [a, b] = destinationSwings(patch, 'volume');
-  return a + b > 0 ? { lo: patch.volume * (1 - 2 * (a + b)), hi: patch.volume } : null;
+  const swing = totalSwing(patch, 'volume');
+  return swing > 0 ? { lo: patch.volume * (1 - 2 * swing), hi: patch.volume } : null;
 }
