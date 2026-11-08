@@ -1,6 +1,6 @@
 # Calls open to the owner
 
-78 calls open to the owner, in 17 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
+82 calls open to the owner, in 17 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
 
 The owner goes through them. A call closes where it was made, its “open to the owner” becoming “accepted by the owner (YYYY-MM-DD)” or “reversed by the owner (YYYY-MM-DD, issue N)”, or, once a release has shipped it with no word on it, “let stand by the owner in X.Y.Z”; the issue tracker’s guide says how ([docs/agents/issue-tracker.md](agents/issue-tracker.md)).
 Generated from the issues, the inbox and the ADRs by `npm run issues`: close a call where it was made, not on this page.
@@ -65,9 +65,13 @@ Generated from the issues, the inbox and the ADRs by `npm run issues`: close a c
 - [Issue 263, call 1](issues/263-the-e2e-tests-wait-on-state.md): The count is of waitForTimeout, as review 8 counted; a sleep inside one evaluate is timing in the page, not a fixed wait between round trips, and is not counted.
 - [Issue 263, call 2](issues/263-the-e2e-tests-wait-on-state.md): A check that nothing happens is a time claim, and keeps its sleep, unless the page handles the input as it comes: then two frames are what the old 100 to 200 ms stood for, and a change, were it to come, is drawn by then. Were one of those…
 - [Issue 263, call 3](issues/263-the-e2e-tests-wait-on-state.md): steady() gives up after five seconds without failing, so a page that never settles makes a test slower, not red, and its own checks still judge the layout. None of its waits took longer than 0.7 s tonight.
-- [Issue 264, Status](issues/264-glow-on-the-scopes-by-default.md): ready-for-agent · enhancement. In v1 as polish of 229's Glow (131), Claude's call, open to the owner (2026-11-07).
+- [Issue 264, Status](issues/264-glow-on-the-scopes-by-default.md): ready-for-human · enhancement. Built (2026-11-07) on night/2026-11-07, for the owner to try. In v1 as polish of 229's Glow (131), Claude's call, open to the owner (2026-11-07).
 - [Issue 264, call 1](issues/264-glow-on-the-scopes-by-default.md): A Glow already remembered is kept: a visitor whose browser stored a choice (Off, Scopes or All, or the old On or Off) comes back to it; only a first visit, or a browser with nothing stored, starts on Scopes.
 - [Issue 264, call 2](issues/264-glow-on-the-scopes-by-default.md): Reset to defaults, wherever the app has one, brings Glow back to Scopes.
+- [Issue 264, call 1](issues/264-glow-on-the-scopes-by-default.md): A browser that stored its Display settings with Glow Off, by choice or only because it saved another Display setting while Glow was Off by default, keeps Off: the store keeps what it holds and cannot tell the two apart (decision 1 as writt…
+- [Issue 264, call 2](issues/264-glow-on-the-scopes-by-default.md): A stored Glow the app does not know starts on Scopes, the default, as every other remembered setting does with a value it does not know; before, it started Off.
+- [Issue 264, call 3](issues/264-glow-on-the-scopes-by-default.md): The tip's how reads "With Scopes or All, add some Noise in the Mixer" rather than asking to choose Scopes, now chosen at first.
+- [Issue 264, call 4](issues/264-glow-on-the-scopes-by-default.md): The running-app statistics are left to the next release's stats run, which will measure them with the Scopes glowing.
 - [Issue 265, call 1](issues/265-words-and-comments-that-lag-1-26.md): The audit widened rather than the principle narrowed, and its two findings fixed rather than waived: the near-black words follow the precedent About's buttons set ("light ones fell to 2.9:1 on the light theme's orange"); the card's progres…
 - [Issue 265, call 2](issues/265-words-and-comments-that-lag-1-26.md): The PRD points to 131 rather than keeping its own list, so it cannot lag again.
 - [Issue 265, call 3](issues/265-words-and-comments-that-lag-1-26.md): Test names narrowed where widening meant new behaviour to pin down: the Voices test (FM only), the modulation ring (the Envelope alone), the Tour's phone lines (the first four cards), the 2 × 2 Tour test (one size), Display's remembered se…
