@@ -1,6 +1,6 @@
 # Calls open to the owner
 
-75 calls open to the owner, in 16 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
+78 calls open to the owner, in 17 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
 
 The owner goes through them. A call closes where it was made, its “open to the owner” becoming “accepted by the owner (YYYY-MM-DD)” or “reversed by the owner (YYYY-MM-DD, issue N)”, or, once a release has shipped it with no word on it, “let stand by the owner in X.Y.Z”; the issue tracker’s guide says how ([docs/agents/issue-tracker.md](agents/issue-tracker.md)).
 Generated from the issues, the inbox and the ADRs by `npm run issues`: close a call where it was made, not on this page.
@@ -62,6 +62,9 @@ Generated from the issues, the inbox and the ADRs by `npm run issues`: close a c
 - [Issue 261, call 6](issues/261-how-the-work-is-recorded-after-1-26.md): The release steps do not yet turn a release's calls into "let stand": that would be a new release rule, beyond this issue's naming of the check. Without it the list grows until someone marks the shipped calls. Recommendation: a line in ste…
 - [Issue 261, call 7](issues/261-how-the-work-is-recorded-after-1-26.md): The kept morning report is 2026-11-06's: a full night, short, no one quoted. Before merging this branch, delete the main checkout's untracked copy of docs/night/2026-11-06.md (the same file), or git refuses the merge.
 - [Issue 261, call 8](issues/261-how-the-work-is-recorded-after-1-26.md): The tdd skill asks for the seams to be agreed first; with the owner asleep, they were the script's four pure functions (the index, the calls, the boxes, the check), tested through their inputs and outputs.
+- [Issue 263, call 1](issues/263-the-e2e-tests-wait-on-state.md): The count is of waitForTimeout, as review 8 counted; a sleep inside one evaluate is timing in the page, not a fixed wait between round trips, and is not counted.
+- [Issue 263, call 2](issues/263-the-e2e-tests-wait-on-state.md): A check that nothing happens is a time claim, and keeps its sleep, unless the page handles the input as it comes: then two frames are what the old 100 to 200 ms stood for, and a change, were it to come, is drawn by then. Were one of those…
+- [Issue 263, call 3](issues/263-the-e2e-tests-wait-on-state.md): steady() gives up after five seconds without failing, so a page that never settles makes a test slower, not red, and its own checks still judge the layout. None of its waits took longer than 0.7 s tonight.
 - [Issue 264, Status](issues/264-glow-on-the-scopes-by-default.md): ready-for-agent · enhancement. In v1 as polish of 229's Glow (131), Claude's call, open to the owner (2026-11-07).
 - [Issue 264, call 1](issues/264-glow-on-the-scopes-by-default.md): A Glow already remembered is kept: a visitor whose browser stored a choice (Off, Scopes or All, or the old On or Off) comes back to it; only a first visit, or a browser with nothing stored, starts on Scopes.
 - [Issue 264, call 2](issues/264-glow-on-the-scopes-by-default.md): Reset to defaults, wherever the app has one, brings Glow back to Scopes.

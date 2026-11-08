@@ -33,7 +33,7 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 260 | [Small things for newcomers after 1.26](issues/260-small-things-for-newcomers-after-1-26.md) | ready-for-human · enhancement |
 | 261 | [How the work is recorded, after 1.26](issues/261-how-the-work-is-recorded-after-1-26.md) | ready-for-human · enhancement |
 | 262 | [v2 ideas from the 1.26.1 round](issues/262-v2-ideas-from-the-1-26-1-round.md) | needs-triage · enhancement |
-| 263 | [The e2e tests wait on state](issues/263-the-e2e-tests-wait-on-state.md) | ready-for-agent · enhancement |
+| 263 | [The e2e tests wait on state](issues/263-the-e2e-tests-wait-on-state.md) | ready-for-human · enhancement |
 | 264 | [Glow on the Scopes by default](issues/264-glow-on-the-scopes-by-default.md) | ready-for-agent · enhancement |
 | 265 | [Words and comments that lag 1.26](issues/265-words-and-comments-that-lag-1-26.md) | ready-for-human · bug |
 | 266 | [Preset and tip words that hold, and Pulse Width as the glossary says](issues/266-preset-and-tip-words-that-hold.md) | ready-for-human · bug |
