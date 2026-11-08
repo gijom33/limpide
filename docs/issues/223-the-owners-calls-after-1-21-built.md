@@ -47,7 +47,7 @@ Decided by the owner, 2026-11-03 (191's numbers):
 - [x] A momentary and a toggle button learned on LFO 1 Sync each flip it once a press (unit and browser tests)
 - [x] The tempo's keys move 1, 0.1 and 10 BPM; its tip has the steps line (browser test)
 - [x] No "Tap" for the tempo left in the glossary, the tips or the code's names; the button still reads "Tap"
-- [ ] The DX7's source cited, its grade raised, or the owner told none was found: found, not yet read (call 6)
+- [ ] ~~The DX7's source cited, its grade raised, or the owner told none was found: found, not yet read (call 6)~~ (not checked at the time)
 
 **Out of scope:**
 - The header's words (154's rule)

@@ -44,12 +44,12 @@ Claude's calls, open to the owner:
 - The LFO plot's line, as the ride reads it
 
 **Acceptance criteria:**
-- [ ] A unit test of the choice: with a visit due and an LFO to ride, the ride is chosen
-- [ ] A unit test of "near": a drop over the plot or within 44 px rides; farther, or near a fast LFO, a Saw, a Square or Depth 0, lands as now
-- [ ] e2e, on a phone's width and in 2 × 2: with a slow Sine on LFO 1 and its plot in view, Bead rides it, its foot within 4 px of the line, and goes back to its edge after
-- [ ] e2e, three across: Bead thrown and dropped on LFO 1's plot (a slow Triangle) rides it; dropped on a Saw's plot, it does not
-- [ ] No ride during the Demo or under reduced motion, a drop included
-- [ ] Bead's frame-cost test passes as before; every test passes in Linux's fonts too
+- [ ] ~~A unit test of the choice: with a visit due and an LFO to ride, the ride is chosen~~ (not checked at the time)
+- [ ] ~~A unit test of "near": a drop over the plot or within 44 px rides; farther, or near a fast LFO, a Saw, a Square or Depth 0, lands as now~~ (not checked at the time)
+- [ ] ~~e2e, on a phone's width and in 2 × 2: with a slow Sine on LFO 1 and its plot in view, Bead rides it, its foot within 4 px of the line, and goes back to its edge after~~ (not checked at the time)
+- [ ] ~~e2e, three across: Bead thrown and dropped on LFO 1's plot (a slow Triangle) rides it; dropped on a Saw's plot, it does not~~ (not checked at the time)
+- [ ] ~~No ride during the Demo or under reduced motion, a drop included~~ (not checked at the time)
+- [ ] ~~Bead's frame-cost test passes as before; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - New moves on the ride (127's tricks)

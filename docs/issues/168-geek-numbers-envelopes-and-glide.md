@@ -24,10 +24,10 @@
 - History lines ([134](./134-history-in-the-tooltips.md)); the layer's rename ([165](./165-the-synth-geek-layer.md))
 
 **Acceptance criteria:**
-- [ ] Decay and Release readouts show τ matching the engine's time constant (an engine test on the Amp Tap)
-- [ ] The tips' formulas under the hood, Attack's straight rise said
-- [ ] Glide's tip gives its curve
-- [ ] With the layer off nothing changes; every test passes in Linux's fonts too
+- [ ] ~~Decay and Release readouts show τ matching the engine's time constant (an engine test on the Amp Tap)~~ (not checked at the time)
+- [ ] ~~The tips' formulas under the hood, Attack's straight rise said~~ (not checked at the time)
+- [ ] ~~Glide's tip gives its curve~~ (not checked at the time)
+- [ ] ~~With the layer off nothing changes; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## Questions for the owner
 

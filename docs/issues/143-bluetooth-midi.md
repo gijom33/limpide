@@ -22,7 +22,7 @@ What is known before any research: the page reaches MIDI through the browser's W
 **Desired behavior:** The MIDI panel's text (and its tip) says in one line that Bluetooth Controllers work once paired in the system's MIDI settings (Audio MIDI Setup on a Mac); Safari and iOS have no Web MIDI, as the panel already says or now says.
 
 **Acceptance criteria:**
-- [ ] The MIDI panel shows the line; its spec covers it; every test passes in Linux's fonts too
+- [ ] ~~The MIDI panel shows the line; its spec covers it; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Anything for Windows, Android or ChromeOS, and latency (v2)

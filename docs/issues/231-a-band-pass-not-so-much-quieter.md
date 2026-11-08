@@ -83,12 +83,12 @@ So switching Init from low-pass to band-pass costs 10 to 15 dB at its Cutoff, mo
 - The Presets' Volume.
 
 **Acceptance criteria:**
-- [ ] On Init at A3 and Cutoff 3.5 kHz, the band-pass is within 3 dB of the low-pass, at 12 and at 24 dB.
-- [ ] From 5 % to the Resonance where the ceiling is reached, that band-pass level stays within 3 dB of its level at 5 %; past it, the make-up stays at the ceiling.
-- [ ] Each of the 7 band-pass Presets' output level is within 0.5 dB of before, measured as the engine tests measure Presets.
-- [ ] The other three Modes measure as before.
-- [ ] The Viewers' ideal for a band-pass includes the make-up, so its level matches the sound's.
-- [ ] Switching Mode and sweeping Resonance while a Note holds gives no click.
+- [ ] ~~On Init at A3 and Cutoff 3.5 kHz, the band-pass is within 3 dB of the low-pass, at 12 and at 24 dB.~~ (not checked at the time)
+- [ ] ~~From 5 % to the Resonance where the ceiling is reached, that band-pass level stays within 3 dB of its level at 5 %; past it, the make-up stays at the ceiling.~~ (not checked at the time)
+- [ ] ~~Each of the 7 band-pass Presets' output level is within 0.5 dB of before, measured as the engine tests measure Presets.~~ (not checked at the time)
+- [ ] ~~The other three Modes measure as before.~~ (not checked at the time)
+- [ ] ~~The Viewers' ideal for a band-pass includes the make-up, so its level matches the sound's.~~ (not checked at the time)
+- [ ] ~~Switching Mode and sweeping Resonance while a Note holds gives no click.~~ (not checked at the time)
 
 **Out of scope:**
 - A make-up for the high-pass or the notch (decision 1).

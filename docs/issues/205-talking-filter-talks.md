@@ -39,7 +39,7 @@ Claude's calls, open to the owner:
 - [x] No moment of the held C4 has a Q above the chosen narrow end (about 6), measured on what the engine plays
 - [x] The band moves between vowels without a flip (LFO 2 a Sine or Triangle, or a reason given)
 - [x] Loudest 100 ms on C4 within 1 dB of today's
-- [ ] Profile 15's ear check: it mumbles, no beep
+- [ ] ~~Profile 15's ear check: it mumbles, no beep~~ (not checked at the time)
 - [x] The Preset's browser test passes with the new settings
 
 **Out of scope:**

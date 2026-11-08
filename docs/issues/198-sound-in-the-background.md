@@ -38,11 +38,11 @@ Claude's calls, open to the owner:
 - The audio clock
 
 **Acceptance criteria:**
-- [ ] The reproduction recorded in this issue, per browser and per player, with and without the fix
-- [ ] A unit test: with ticks slowed to once a second, every Note of a phrase is handed over before its start, none twice, none after it
-- [ ] A unit test: a Note whose start has passed is dropped, not played late
-- [ ] An e2e test in both browsers: the Demo with the page hidden for 5 seconds starts every Note of those seconds on time (as the engine records them)
-- [ ] Stop, a Preset change and a tempo change in front are as quick as before; every test passes in Linux's fonts too
+- [ ] ~~The reproduction recorded in this issue, per browser and per player, with and without the fix~~ (not checked at the time)
+- [ ] ~~A unit test: with ticks slowed to once a second, every Note of a phrase is handed over before its start, none twice, none after it~~ (not checked at the time)
+- [ ] ~~A unit test: a Note whose start has passed is dropped, not played late~~ (not checked at the time)
+- [ ] ~~An e2e test in both browsers: the Demo with the page hidden for 5 seconds starts every Note of those seconds on time (as the engine records them)~~ (not checked at the time)
+- [ ] ~~Stop, a Preset change and a tempo change in front are as quick as before; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - A page the browser freezes or suspends (decision 5)

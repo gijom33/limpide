@@ -45,9 +45,9 @@
 **Acceptance criteria:**
 - [x] The Preset tests list the new categories and every Preset in one of them; no two Presets closer than the report's near-copy distance (0.3) unless the test names why
 - [x] Each added Preset is rendered on C2, C4 and C6 within its family's level, and its words fact-checked
-- [ ] Loading a Bass puts the keyboard at C2; loading Init brings back the default; the octave buttons work after either
-- [ ] Every Tutorial and the Demo still pass their tests
-- [ ] The owner listens to the added Presets before the release
+- [ ] ~~Loading a Bass puts the keyboard at C2; loading Init brings back the default; the octave buttons work after either~~ (not checked at the time)
+- [ ] ~~Every Tutorial and the Demo still pass their tests~~ (not checked at the time)
+- [ ] ~~The owner listens to the added Presets before the release~~ (not checked at the time)
 
 **Out of scope:**
 - The Preset reworks of 108 (built first, on the same list)

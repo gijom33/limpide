@@ -31,7 +31,7 @@ Claude's call, open to the owner:
 **Acceptance criteria:**
 - [x] At 375, 1100 and 1920 px the card reads name, caption, segments; the segments do not move from part to part
 - [x] Folded, the name and the segments show
-- [ ] The Demo spec and the design audit pass; every test passes in Linux's fonts too (both pass in Chromium on macOS; Linux's fonts are GitHub's run, at the push)
+- [ ] ~~The Demo spec and the design audit pass; every test passes in Linux's fonts too (both pass in Chromium on macOS; Linux's fonts are GitHub's run, at the push)~~ (not checked at the time)
 
 **Out of scope:**
 - The captions' words; the Tutorial's and the Tour's cards

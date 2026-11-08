@@ -39,16 +39,16 @@ Decided by the owner in a grilling, 2026-10-31 (Claude's recommendations, each a
 - The docked card's placement (for the side away from it and for "under the card")
 
 **Acceptance criteria:**
-- [ ] A Tutorial Step on a knob: Bead ends beside that knob, its tail towards it, the ring and target text uncovered
-- [ ] The next Step on another control of the same Section: Bead slides across; on another Section's: its usual move, then the slide down
-- [ ] The Tour: one control per card, the watched one or the first move's
-- [ ] A click on a control under Bead while it points reaches the control
-- [ ] A control in the Display panel or on a hidden tab: Bead looks towards it, and goes once it is shown
-- [ ] No funny turn, visit or doze while a Tour or Tutorial is open; Bead still answers a knob turned
-- [ ] A Step done: a hop; a Tutorial finished: the fountain
-- [ ] Closing the Tour or Tutorial: Bead hops back to its edge and its own life resumes
-- [ ] Bead off or away: nothing but the ring; reduced motion: only its eyes and tail turn
-- [ ] Unit tests for where Bead clings (the side chosen, nothing covered); the mascot spec covers a Tutorial and the Tour, in both browsers; Bead's frame-cost test passes as before; every test passes in Linux's fonts too
+- [ ] ~~A Tutorial Step on a knob: Bead ends beside that knob, its tail towards it, the ring and target text uncovered~~ (not checked at the time)
+- [ ] ~~The next Step on another control of the same Section: Bead slides across; on another Section's: its usual move, then the slide down~~ (not checked at the time)
+- [ ] ~~The Tour: one control per card, the watched one or the first move's~~ (not checked at the time)
+- [ ] ~~A click on a control under Bead while it points reaches the control~~ (not checked at the time)
+- [ ] ~~A control in the Display panel or on a hidden tab: Bead looks towards it, and goes once it is shown~~ (not checked at the time)
+- [ ] ~~No funny turn, visit or doze while a Tour or Tutorial is open; Bead still answers a knob turned~~ (not checked at the time)
+- [ ] ~~A Step done: a hop; a Tutorial finished: the fountain~~ (not checked at the time)
+- [ ] ~~Closing the Tour or Tutorial: Bead hops back to its edge and its own life resumes~~ (not checked at the time)
+- [ ] ~~Bead off or away: nothing but the ring; reduced motion: only its eyes and tail turn~~ (not checked at the time)
+- [ ] ~~Unit tests for where Bead clings (the side chosen, nothing covered); the mascot spec covers a Tutorial and the Tour, in both browsers; Bead's frame-cost test passes as before; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Words of Bead's own in the Tour or the Tutorials

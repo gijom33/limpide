@@ -40,7 +40,7 @@ Decided by the owner, 2026-11-02, while decision 3 was built: "Move Bead on righ
 **Acceptance criteria:**
 - [x] Bead's drawn size in About equals its size on the page
 - [x] Its foot is within 1 px of the bottom of the logo's mark (since decision 4, of the name's baseline), at a phone's width and a laptop's
-- [ ] The About and mascot specs and the design audit pass; every test passes in Linux's fonts too
+- [ ] ~~The About and mascot specs and the design audit pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## How it was built
 

@@ -31,10 +31,10 @@ Claude's call, open to the owner:
 - The design audit spec and its widths
 
 **Acceptance criteria:**
-- [ ] The Timeline's key is one line at 375, 430, 690 and 1440 px, both LFOs on and both Envelopes shown
-- [ ] Each shortened label keeps its full name for screen readers and in its tip
-- [ ] The design audit fails on a label that wraps (a test of the check itself) and passes on the app at every width
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~The Timeline's key is one line at 375, 430, 690 and 1440 px, both LFOs on and both Envelopes shown~~ (not checked at the time)
+- [ ] ~~Each shortened label keeps its full name for screen readers and in its tip~~ (not checked at the time)
+- [ ] ~~The design audit fails on a label that wraps (a test of the check itself) and passes on the app at every width~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Sentences, which wrap as text does

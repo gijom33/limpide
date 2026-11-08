@@ -26,14 +26,14 @@
 - The Presets' descriptions
 
 **Acceptance criteria:**
-- [ ] The Tour and the Tutorial cards look and behave as before (their e2e specs and the design audit pass unchanged)
-- [ ] Osc 2's Envelope term and FM's index each have one definition; the engine and model tests pass unchanged
-- [ ] "duty" is gone from the tests; the names follow CONTEXT.md
-- [ ] A visitor's stored folds and bend range load after the move
-- [ ] A test: the Tour's "Build a Bass" puts the focus on the Tutorial's Start
+- [ ] ~~The Tour and the Tutorial cards look and behave as before (their e2e specs and the design audit pass unchanged)~~ (not checked at the time)
+- [ ] ~~Osc 2's Envelope term and FM's index each have one definition; the engine and model tests pass unchanged~~ (not checked at the time)
+- [ ] ~~"duty" is gone from the tests; the names follow CONTEXT.md~~ (not checked at the time)
+- [ ] ~~A visitor's stored folds and bend range load after the move~~ (not checked at the time)
+- [ ] ~~A test: the Tour's "Build a Bass" puts the focus on the Tutorial's Start~~ (not checked at the time)
   **Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; the test is now "the last card's button puts the focus…".
-- [ ] The two descriptions pass the facts check
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~The two descriptions pass the facts check~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Any change to a sound or a layout

@@ -43,7 +43,7 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 - **One home:** the new ADR, the pointers from issues 25 and 42, and the Status lines of ADR-0006 and ADR-0013 naming their amendments (decision 4).
 
 **Acceptance criteria:**
-- [ ] A branch push runs the suite on GitHub and deploys nothing (the workflow says so; to be seen on the first release branch, since nothing was pushed tonight)
+- [ ] ~~A branch push runs the suite on GitHub and deploys nothing (the workflow says so; to be seen on the first release branch, since nothing was pushed tonight)~~ (not checked at the time)
 - [x] The release steps read in order: local suite, branch CI green, checks on words, then main
 - [x] No two documents state the code review's scope differently
 

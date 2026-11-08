@@ -29,8 +29,8 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - **Later, not now:** a shared "a player holds a setting until touched" helper (112, 130, 158), if a fourth comes.
 
 **Acceptance criteria:**
-- [ ] Each item done or answered in this issue; nothing visible changes but the plain words' shared swing (a unit test)
-- [ ] tsc, the lint, every unit and engine test; the specs touched pass; every test passes in Linux's fonts too
+- [ ] ~~Each item done or answered in this issue; nothing visible changes but the plain words' shared swing (a unit test)~~ (not checked at the time)
+- [ ] ~~tsc, the lint, every unit and engine test; the specs touched pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Bead's frame logic (issue 184)

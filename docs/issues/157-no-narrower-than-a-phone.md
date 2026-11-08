@@ -32,7 +32,7 @@ Claude's call, open to the owner:
 - [x] At 280 px the page lays out at 320 px and scrolls sideways; nothing overlaps
 - [x] At 320, 340 and 375 px no two header buttons overlap, and every button keeps a 44 px target or its waiver
 - [x] The design audit runs at 320 px too and passes; a check fails on two controls overlapping
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Layouts above 375 px

@@ -33,11 +33,11 @@ The idea is the owner's (decided by the owner, 2026-10-31); how it is done is Cl
 - The design audit's widths
 
 **Acceptance criteria:**
-- [ ] At 601, 700 and 860 px: three header rows, the Patch name wider than today's
-- [ ] Scrolling down hides the top two rows; scrolling up brings them back; nothing below moves
-- [ ] A Tutorial Step, the Tour and the Demo bring their control into view under the collapsed or the full header
-- [ ] The phone (up to 600 px) and three across (from 861 px) unchanged
-- [ ] The design audit passes at every width; every test passes in Linux's fonts too
+- [ ] ~~At 601, 700 and 860 px: three header rows, the Patch name wider than today's~~ (not checked at the time)
+- [ ] ~~Scrolling down hides the top two rows; scrolling up brings them back; nothing below moves~~ (not checked at the time)
+- [ ] ~~A Tutorial Step, the Tour and the Demo bring their control into view under the collapsed or the full header~~ (not checked at the time)
+- [ ] ~~The phone (up to 600 px) and three across (from 861 px) unchanged~~ (not checked at the time)
+- [ ] ~~The design audit passes at every width; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - A section strip in 2 × 2

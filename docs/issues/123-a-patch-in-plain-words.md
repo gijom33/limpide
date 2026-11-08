@@ -20,7 +20,7 @@
 - The Patch, the line under the Patch name
 
 **Acceptance criteria:**
-- [ ] Unit tests give the phrase for Init and for a dozen Presets, each read and accepted as true by the fact-check before the push
+- [ ] ~~Unit tests give the phrase for Init and for a dozen Presets, each read and accepted as true by the fact-check before the push~~ (not checked at the time)
 - [x] Turning a knob changes the line within a moment; a Preset shows its own about line until a knob is turned
 - [x] At every layout the line fits or is cut with an ellipsis, never pushing the header
 

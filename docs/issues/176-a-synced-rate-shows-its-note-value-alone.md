@@ -31,7 +31,7 @@ Claude's call, open to the owner:
 **Acceptance criteria:**
 - [x] Sync on: the Rate reads "1/4", never with Hz
 - [x] Turning the Rate through every note value, and switching Sync, moves no neighbouring control (a layout check in the LFO spec)
-- [ ] The LFO spec updated; every test passes in Linux's fonts too
+- [ ] ~~The LFO spec updated; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## How it was built
 

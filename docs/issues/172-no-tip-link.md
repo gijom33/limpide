@@ -32,7 +32,7 @@ Claude's call, open to the owner:
 **Acceptance criteria:**
 - [x] A search of the repository finds no "buymeacoffee" outside issue 146, this issue, the inbox and .out-of-scope
 - [x] About shows the share-or-star line with the repository's link; the README too
-- [ ] The About spec covers it; every test passes in Linux's fonts too (covered, and it passes in Chromium on the Mac; Linux's fonts are GitHub's run)
+- [ ] ~~The About spec covers it; every test passes in Linux's fonts too (covered, and it passes in Chromium on the Mac; Linux's fonts are GitHub's run)~~ (not checked at the time)
 
 **Out of scope:**
 - Any other way of receiving money

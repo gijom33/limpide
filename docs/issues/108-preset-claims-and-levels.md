@@ -33,8 +33,8 @@
 **Acceptance criteria:**
 - [x] Each of review 13's nine false claims, rendered again, is true
 - [x] A test (or a recorded offline render) lists each changed Preset's level against its group, all within 3 dB
-- [ ] Each changed Preset still has a Tutorial or Demo part that uses it working, where it has one
-- [ ] The owner listens to the changed Presets before the release
+- [ ] ~~Each changed Preset still has a Tutorial or Demo part that uses it working, where it has one~~ (not checked at the time)
+- [ ] ~~The owner listens to the changed Presets before the release~~ (not checked at the time)
 
 **Out of scope:**
 - FM's and Ring's fold-back at the top and FM's DC offset ([103](./103-fm-and-ring-fold-back-at-the-top.md))

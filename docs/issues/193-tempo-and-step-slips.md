@@ -27,8 +27,8 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The Rate's readout
 
 **Acceptance criteria:**
-- [ ] Unit tests for each of the six
-- [ ] The midiLearn, c16 and tutorial specs pass; every test passes in Linux's fonts too
+- [ ] ~~Unit tests for each of the six~~ (not checked at the time)
+- [ ] ~~The midiLearn, c16 and tutorial specs pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The BPM's keyboard steps (issue 191, question 11)

@@ -34,8 +34,8 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The issue files' "Since then" lines
 
 **Acceptance criteria:**
-- [ ] Each item fixed, rendered where it is about sound, with the fact-checker's method
-- [ ] The tips', Presets' and word tests pass; every test passes in Linux's fonts too
+- [ ] ~~Each item fixed, rendered where it is about sound, with the fact-checker's method~~ (not checked at the time)
+- [ ] ~~The tips', Presets' and word tests pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - New words beyond what the items need

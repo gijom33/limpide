@@ -32,11 +32,11 @@ From 182:
 - What counts as a Viewer's silence and its change
 
 **Acceptance criteria:**
-- [ ] Idle main-thread cost measured well under today's at 1×, and idle at 60 fps at 4× (review 18's method), with an LFO on and with none, the figures in the issue
-- [ ] The Demo's frame rate at 4× no lower than today
-- [ ] The LFO plots scroll in silence as before
-- [ ] A Note, a knob turn, a Display switch and a theme change each show on the next frame (browser tests)
-- [ ] Every Viewer test and the design audit pass, one edited: `patchesAtTheEdges`' draw-time test draws its Viewers as if sounding, since a silent one would rest (worded as it was by [238](./238-tidy-ups-after-1-24.md))
+- [ ] ~~Idle main-thread cost measured well under today's at 1×, and idle at 60 fps at 4× (review 18's method), with an LFO on and with none, the figures in the issue~~ (not checked at the time)
+- [ ] ~~The Demo's frame rate at 4× no lower than today~~ (not checked at the time)
+- [ ] ~~The LFO plots scroll in silence as before~~ (not checked at the time)
+- [ ] ~~A Note, a knob turn, a Display switch and a theme change each show on the next frame (browser tests)~~ (not checked at the time)
+- [ ] ~~Every Viewer test and the design audit pass, one edited: `patchesAtTheEdges`' draw-time test draws its Viewers as if sounding, since a silent one would rest (worded as it was by [238](./238-tidy-ups-after-1-24.md))~~ (not checked at the time)
 
 **Out of scope:**
 - What the Viewers show

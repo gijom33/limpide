@@ -24,10 +24,10 @@
 - History lines ([134](./134-history-in-the-tooltips.md)); the layer's rename ([165](./165-the-synth-geek-layer.md))
 
 **Acceptance criteria:**
-- [ ] A4 played: each Scope's corner reads 2.27 ms · 440 Hz
-- [ ] Hovering the 3rd Harmonic the readout adds n = 3
-- [ ] Noise up and pink: the corner reads pink: −3 dB/oct
-- [ ] With the layer off nothing changes; every test passes in Linux's fonts too
+- [ ] ~~A4 played: each Scope's corner reads 2.27 ms · 440 Hz~~ (not checked at the time)
+- [ ] ~~Hovering the 3rd Harmonic the readout adds n = 3~~ (not checked at the time)
+- [ ] ~~Noise up and pink: the corner reads pink: −3 dB/oct~~ (not checked at the time)
+- [ ] ~~With the layer off nothing changes; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## How it was built
 

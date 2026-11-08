@@ -30,7 +30,7 @@ From 182 (Claude's calls, open to the owner, 2026-11-02):
 **Acceptance criteria:**
 - [x] The Timeline's cost a frame measured in the Demo and on a held chord, before and after, the figures in the issue, well under today's
 - [x] Its look unchanged: its tests and the design audit pass; a held Note, a released one and a knob turned mid-Note draw as before
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The other Viewers ([213](./213-viewer-colours-read-once-and-a-silent-scope-skipped.md), [214](./214-the-silent-viewers-rest.md))

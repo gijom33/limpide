@@ -33,7 +33,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **Acceptance criteria:**
 - [x] An e2e test: an end card's Next button starts the next Tutorial, on a phone too
 - [x] An e2e test: Next before a Step shows its line once
-- [ ] The word tests pass; each Tutorial's end Patch still equals its Preset; every test passes in Linux's fonts too
+- [ ] ~~The word tests pass; each Tutorial's end Patch still equals its Preset; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - New Tutorials

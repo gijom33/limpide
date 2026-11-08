@@ -34,13 +34,13 @@ Decided by the owner in a grilling, 2026-10-31 (Claude's recommendations, each a
 - The Tour's existing rule for a control the person grabs (the Tour lets go of it)
 
 **Acceptance criteria:**
-- [ ] The Amp card shows the Envelope Timeline with the Amp Scope and Spectrum, at every width the Tour supports (from 2 × 2 up; on a phone, the Timeline alone: see How it was built)
+- [ ] ~~The Amp card shows the Envelope Timeline with the Amp Scope and Spectrum, at every width the Tour supports (from 2 × 2 up; on a phone, the Timeline alone: see How it was built)~~ (not checked at the time)
 - [x] Each of the four stages is changed before a Note plays, and that Note's shape on the Timeline shows the change
 - [x] After each changed Note fades, every Viewer freezes for about three seconds while the sound plays on, and the card names the stage; after the last, all four
 - [x] Space during the card freezes or unfreezes as always, and the Tour freezes no more on that card
 - [x] Leaving the card or the Tour lets go of the Tour's Freeze; a Freeze the person set is left as it is
 - [x] The card's words pass the fact-checker (profile 13): no claim the engine does not make true
-- [ ] The Tour's e2e spec covers the freeze and the person's own; every test passes in Linux's fonts too (covered, and passing in Chromium and WebKit here; Linux's fonts are GitHub's run)
+- [ ] ~~The Tour's e2e spec covers the freeze and the person's own; every test passes in Linux's fonts too (covered, and passing in Chromium and WebKit here; Linux's fonts are GitHub's run)~~ (not checked at the time)
 
 **Out of scope:**
 - A Snapshot trick, or a fifth card

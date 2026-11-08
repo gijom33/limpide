@@ -31,7 +31,7 @@ Claude's call, open to the owner:
 **Acceptance criteria:**
 - [x] At 1440 and 1920 px the four share one row; on a 375 px phone they wrap two and two at most
 - [x] Tab order and every control's accessible name as before
-- [ ] The Display panel specs and the design audit pass; every test passes in Linux's fonts too (pass in Chromium on macOS; Linux's fonts are GitHub's run, after a push)
+- [ ] ~~The Display panel specs and the design audit pass; every test passes in Linux's fonts too (pass in Chromium on macOS; Linux's fonts are GitHub's run, after a push)~~ (not checked at the time)
 
 **Out of scope:**
 - The panel's other groups, or what any setting does

@@ -28,9 +28,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The MIDI panel's Mapping list
 
 **Acceptance criteria:**
-- [ ] Unit tests: an accelerated encoder's stream learns as Relative; a fader nudged from 0 learns as Absolute
-- [ ] An e2e test changes a Mapping's mode in the panel and the knob then answers
-- [ ] The C16 layout's Mappings unchanged; every test passes in Linux's fonts too
+- [ ] ~~Unit tests: an accelerated encoder's stream learns as Relative; a fader nudged from 0 learns as Absolute~~ (not checked at the time)
+- [ ] ~~An e2e test changes a Mapping's mode in the panel and the knob then answers~~ (not checked at the time)
+- [ ] ~~The C16 layout's Mappings unchanged; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Buttons learned on Switches (inbox, the owner's call)

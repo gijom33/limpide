@@ -35,12 +35,12 @@ Claude's calls, open to the owner:
 - The room between Bead and the header's bottom edge (the header's height less what has slid away)
 
 **Acceptance criteria:**
-- [ ] At 375 px and in 2 × 2, Bead on the edge just under the header plays the fountain in full, below the header
-- [ ] The same with the header slid away (scrolled down) and back
-- [ ] Each other trick that rises above Bead, the same
-- [ ] On a wide window, a trick played at the screen's top edge is seen whole
-- [ ] Lower in the page, the tricks look and time as before; reduced motion as before
-- [ ] A browser test at a phone's width checks the fountain's top against the header's bottom
+- [ ] ~~At 375 px and in 2 × 2, Bead on the edge just under the header plays the fountain in full, below the header~~ (not checked at the time)
+- [ ] ~~The same with the header slid away (scrolled down) and back~~ (not checked at the time)
+- [ ] ~~Each other trick that rises above Bead, the same~~ (not checked at the time)
+- [ ] ~~On a wide window, a trick played at the screen's top edge is seen whole~~ (not checked at the time)
+- [ ] ~~Lower in the page, the tricks look and time as before; reduced motion as before~~ (not checked at the time)
+- [ ] ~~A browser test at a phone's width checks the fountain's top against the header's bottom~~ (not checked at the time)
 
 **Out of scope:**
 - Where Bead rests or hovers (181, 142)

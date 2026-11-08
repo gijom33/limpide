@@ -33,7 +33,7 @@ Claude's call, open to the owner, 2026-10-31, from profile 17's review:
 **Acceptance criteria:**
 - [x] Learn on an Action, press-and-release (127 then 0 within the window): the Mapping is momentary and fires once a press
 - [x] Learn on an Action, one 127 and nothing for the window: the Mapping is a toggle and fires on each of the next 0, 127, 0
-- [ ] Learn on an Action from a 0: a toggle, at once
+- [ ] ~~Learn on an Action from a 0: a toggle, at once~~ (not checked at the time)
 - [x] The release while learning fires no Action and does not move Quick Setup on twice
 - [x] Learn on an Action from a note: momentary, as before
 - [x] The MIDI panel shows "Toggle" or "Momentary" to match

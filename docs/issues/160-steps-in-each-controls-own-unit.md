@@ -54,7 +54,7 @@ Claude's calls, accepted by the owner with the summary ("It matches what I had i
 - [x] Detune from MIDI CC 64 is exactly 0 cents; CC 0 and 127 its ends
 - [x] A C16 tick (65) moves one grid step; a fast 66 a third of one; a wheel notch one step
 - [x] Each knob's and fader's tip names its steps on a computer, not on a phone
-- [ ] Unit tests for each grid and for snapping; the knob, fader, keyboard-access and MIDI specs updated; every test passes in Linux's fonts too (all but the last part: Linux's fonts are GitHub's run, after a push; the fader spec needed no change, the faders' steps are in the keyboard-access spec)
+- [ ] ~~Unit tests for each grid and for snapping; the knob, fader, keyboard-access and MIDI specs updated; every test passes in Linux's fonts too (all but the last part: Linux's fonts are GitHub's run, after a push; the fader spec needed no change, the faders' steps are in the keyboard-access spec)~~ (not checked at the time)
 
 **Out of scope:**
 - Any change to a Parameter's range

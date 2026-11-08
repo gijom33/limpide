@@ -30,7 +30,7 @@
 - [x] The print script and the card's spec share the margin and page count
 - [x] `c16Connected` is gone; the 'detect' mode carries its comment
 - [x] The tips name the bank "LFO & Envelopes" and point at the "Print C16 card" button
-- [ ] The C16, MIDI and mascot specs and the design audit pass unchanged; every test passes in Linux's fonts too (they pass in Chromium and WebKit on macOS, the specs touched only to share the card's print constants, check the foot and name Bead's height; Linux's fonts are GitHub's run, after a push)
+- [ ] ~~The C16, MIDI and mascot specs and the design audit pass unchanged; every test passes in Linux's fonts too (they pass in Chromium and WebKit on macOS, the specs touched only to share the card's print constants, check the foot and name Bead's height; Linux's fonts are GitHub's run, after a push)~~ (not checked at the time)
 
 **Out of scope:**
 - One seam for what a Controller is ([149](./149-one-seam-for-a-controller.md))

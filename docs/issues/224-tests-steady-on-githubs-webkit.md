@@ -39,7 +39,7 @@ Claude's calls, open to the owner (2026-11-03, triage):
 
 **Acceptance criteria:**
 - [x] The cause of each failure written in the issue
-- [ ] Three branch runs in a row green on GitHub with no WebKit retries for these tests (waits for the owner's push)
+- [ ] ~~Three branch runs in a row green on GitHub with no WebKit retries for these tests (waits for the owner's push)~~ (not checked at the time)
 - [x] The two WebKit skips removed, or kept with their cause written
 - [x] No timing step in the mascot spec done in round trips with waits
 

@@ -42,7 +42,7 @@ Claude's call, open to the owner:
 - [x] With Bead Off, no Bead in About
 - [x] Reduced motion: Bead still in About
 - [x] On a 393 × 659 phone the Demo and Tour buttons are still on the first screen
-- [ ] The About and mascot specs cover it; the design audit passes; every test passes in Linux's fonts too
+- [ ] ~~The About and mascot specs cover it; the design audit passes; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Bead's behaviour on the page

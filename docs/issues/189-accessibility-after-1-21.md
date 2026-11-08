@@ -34,9 +34,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The knobs' descriptions with the Geek Layer on
 
 **Acceptance criteria:**
-- [ ] The keyboard access spec covers each close returning focus, Shift+Tab never under the header (phone and 200 %), the Tutorial card's way to the control and back, and the BPM announced
-- [ ] The design audit's contrast check passes in the light theme
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~The keyboard access spec covers each close returning focus, Shift+Tab never under the header (phone and 200 %), the Tutorial card's way to the control and back, and the BPM announced~~ (not checked at the time)
+- [ ] ~~The design audit's contrast check passes in the light theme~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - A real screen reader's run (a human check, later)

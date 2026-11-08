@@ -31,7 +31,7 @@
 - [x] A Patch without the field loads with Legato off; a Share link carries it
 - [x] With 2 or more Voices the switch is greyed out and described
 - [x] The C16's R2 on bank C switches Legato, and the C16 card shows it
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Legato with several Voices

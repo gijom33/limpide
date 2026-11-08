@@ -45,7 +45,7 @@ Claude's call, open to the owner, from profile 16's review (2026-10-31):
 - [x] No synth word in a Step or card that its Tutorial has not explained first (a unit test over the Tutorials' text against a list of the words that need explaining)
 - [x] Each Tutorial has its own first card; its end card names the next
 - [x] The Tutorial and Tour specs pass; a Step's target and a Tutorial's sound do not change
-- [ ] The owner reads the words before the release (decision 5)
+- [ ] ~~The owner reads the words before the release (decision 5)~~ (not checked at the time)
 
 **Out of scope:**
 - The tips, the Presets' descriptions, About

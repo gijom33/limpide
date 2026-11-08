@@ -34,11 +34,11 @@ Claude's calls, open to the owner:
 - Osc 2's Tuning row, and the other rows of narrow knobs
 
 **Acceptance criteria:**
-- [ ] At 700 px, Geek on, Detune turned to its top: its value and "Env Amount" do not touch or overlap
-- [ ] The same at 320, 375, 601 and 860 px
-- [ ] Every control's longest value, Geek on and off, checked against its neighbours at those widths
-- [ ] No knob moves as its value changes
-- [ ] A browser test measures the gap between Detune's value and Env Amount's name
+- [ ] ~~At 700 px, Geek on, Detune turned to its top: its value and "Env Amount" do not touch or overlap~~ (not checked at the time)
+- [ ] ~~The same at 320, 375, 601 and 860 px~~ (not checked at the time)
+- [ ] ~~Every control's longest value, Geek on and off, checked against its neighbours at those widths~~ (not checked at the time)
+- [ ] ~~No knob moves as its value changes~~ (not checked at the time)
+- [ ] ~~A browser test measures the gap between Detune's value and Env Amount's name~~ (not checked at the time)
 
 **Out of scope:**
 - What the values say (the Synth Geek Layer's review will look at that)

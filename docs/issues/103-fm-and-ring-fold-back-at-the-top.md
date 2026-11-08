@@ -48,7 +48,7 @@ Each change would be checked by rendering the Presets offline before and after, 
 - [x] Ring Octave between its Harmonics is under −60 dB on C4 and C6
 - [x] Every Preset rendered on C4 changes by under 0.5 dB (above 20 Hz; see How it was built)
 - [x] The Ideal's tests still match the sound within their tolerances
-- [ ] The owner listens to the FM and Ring Presets high up before the release
+- [ ] ~~The owner listens to the FM and Ring Presets high up before the release~~ (not checked at the time)
 
 **Out of scope:**
 - The Presets' levels and words ([108](./108-preset-claims-and-levels.md))

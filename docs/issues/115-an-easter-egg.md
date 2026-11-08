@@ -55,7 +55,7 @@
 - [x] It reaches the section of the last control turned, on the phone, 2 × 2, laptop and wide layouts, covering no control (the design audit run with it shown). Since decision 10: it stands on the Amp's top edge at all four, covering no control
 - [x] With it shown, the Viewers' frame time stays within the draw-cost test's budget
 - [x] No sound changes: an offline render with it shown matches one without
-- [ ] The owner sees the drawing and its moves before the release
+- [ ] ~~The owner sees the drawing and its moves before the release~~ (not checked at the time)
 
 **Out of scope:**
 - Any sound of its own

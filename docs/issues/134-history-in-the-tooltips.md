@@ -47,13 +47,13 @@ Claude's recommendations, each accepted ("ok", "OK with all"), on the research's
 - CONTEXT.md, if History needs an entry
 
 **Acceptance criteria:**
-- [ ] With the Synth Geek Layer on, each control the research drafts a well-sourced line for shows History last in its tip; off, nothing changes
-- [ ] Every line is one sentence of at most about 160 characters, with no "first" unless quoted, and FM's line as decision 9 says
-- [ ] A unit test: every History line names a source graded A or B in the research file
-- [ ] About links "History's sources"
-- [ ] On a 375 px phone a History line shows whole in the touch-and-hold tip
-- [ ] The tooltip specs cover it; the fact-checker's pass before the release; the owner reads the lines
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~With the Synth Geek Layer on, each control the research drafts a well-sourced line for shows History last in its tip; off, nothing changes~~ (not checked at the time)
+- [ ] ~~Every line is one sentence of at most about 160 characters, with no "first" unless quoted, and FM's line as decision 9 says~~ (not checked at the time)
+- [ ] ~~A unit test: every History line names a source graded A or B in the research file~~ (not checked at the time)
+- [ ] ~~About links "History's sources"~~ (not checked at the time)
+- [ ] ~~On a 375 px phone a History line shows whole in the touch-and-hold tip~~ (not checked at the time)
+- [ ] ~~The tooltip specs cover it; the fact-checker's pass before the release; the owner reads the lines~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Under the hood's formulas ([133](./133-the-maths-layer-complete.md))

@@ -33,9 +33,9 @@ Claude's calls, open to the owner (2026-11-03):
 - Bead's frame and each Viewer's draw
 
 **Acceptance criteria:**
-- [ ] One style recalculation a frame with Bead out, measured by the script, before and after, the figures in the issue
-- [ ] The Demo's frame rate at 4× no lower than today
-- [ ] The mascot spec, every Viewer test and the design audit pass unchanged
+- [ ] ~~One style recalculation a frame with Bead out, measured by the script, before and after, the figures in the issue~~ (not checked at the time)
+- [ ] ~~The Demo's frame rate at 4× no lower than today~~ (not checked at the time)
+- [ ] ~~The mascot spec, every Viewer test and the design audit pass unchanged~~ (not checked at the time)
 
 **Out of scope:**
 - What Bead or the Viewers show

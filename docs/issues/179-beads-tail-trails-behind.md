@@ -30,10 +30,10 @@ Claude's call, open to the owner:
 - Its drawing (the twin, props, jets)
 
 **Acceptance criteria:**
-- [ ] Strolling right: tail on its left; strolling left: on its right; standing still: on its right (unit tests on the pose; a mascot spec check in one browser)
-- [ ] A dance step to a Note does not turn it; a funny turn keeps its own turning
-- [ ] Its twin stays on Detune's side whichever way it faces
-- [ ] The mascot spec and Bead's frame-cost test pass as before
+- [ ] ~~Strolling right: tail on its left; strolling left: on its right; standing still: on its right (unit tests on the pose; a mascot spec check in one browser)~~ (not checked at the time)
+- [ ] ~~A dance step to a Note does not turn it; a funny turn keeps its own turning~~ (not checked at the time)
+- [ ] ~~Its twin stays on Detune's side whichever way it faces~~ (not checked at the time)
+- [ ] ~~The mascot spec and Bead's frame-cost test pass as before~~ (not checked at the time)
 
 ## How it was built
 

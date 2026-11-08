@@ -32,7 +32,7 @@ Decided by the owner, 2026-10-31 (Claude's recommendations, accepted: "OK with o
 **Acceptance criteria:**
 - [x] Display shows "Geek" with a glasses icon; turning it on shows what the Maths Layer showed
 - [x] No open doc, tip, Step or card says "Maths Layer"; CONTEXT.md lists it under Avoid
-- [ ] The overlay and tooltip specs updated; every test passes in Linux's fonts too
+- [ ] ~~The overlay and tooltip specs updated; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - What the layer shows ([133](./133-the-maths-layer-complete.md), [134](./134-history-in-the-tooltips.md))

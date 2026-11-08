@@ -31,9 +31,9 @@ Decided by the owner, 2026-10-31 (Claude's recommendations, accepted):
 
 **Acceptance criteria:**
 - [x] The sweep passes with the three faults' marks removed
-- [ ] Talking Filter keeps its vowels (profile 15's check), and the owner has heard it
+- [ ] ~~Talking Filter keeps its vowels (profile 15's check), and the owner has heard it~~ (not checked at the time)
 - [x] The engine and model tests pass; the Spectrum's draw-cost test passes under heavy FM
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Other Presets' sounds

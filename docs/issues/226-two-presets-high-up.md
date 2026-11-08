@@ -35,7 +35,7 @@ Claude's calls, open to the owner (2026-11-03, triage):
 - [x] Talking Filter measured on C3, C4 and C5 against the rule above; C3 and C4 within 1 dB of now
 - [x] Riser measured on C2, C4, C6 and C7 held through its Attack: never silent before its release on C6
 - [x] Their descriptions still true; the Preset tests pass
-- [ ] Tried by the owner by ear
+- [ ] ~~Tried by the owner by ear~~ (not checked at the time)
 
 **Out of scope:**
 - Other Presets; the Filter's answer at the top (issue 195)

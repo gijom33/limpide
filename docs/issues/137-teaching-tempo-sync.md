@@ -29,8 +29,8 @@
 - [x] The Synth Geek Layer's conversion shows the right Hz for a straight, a dotted and a triplet value
 - [x] The Tutorial Step passes when Sync is on, and its test plays through
 - [x] The Presets chosen keep their sound at 120 BPM (their level and RMS checks pass)
-- [ ] The words pass the facts check before a push
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~The words pass the facts check before a push~~ (not checked at the time)
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - History in the tooltips ([134](./134-history-in-the-tooltips.md))

@@ -32,7 +32,7 @@ Claude's call, open to the owner:
 - [x] Hover LFO 2's Destination until its tip shows, click: the tip is gone and every choice can be seen and picked (an e2e test, red before the fix)
 - [x] The same for LFO 1, the Patch picker, Display and MIDI
 - [x] Tips show again on the next hover after the menu closes
-- [ ] The tooltip specs pass; every test passes in Linux's fonts too
+- [ ] ~~The tooltip specs pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 ## How it was built
 

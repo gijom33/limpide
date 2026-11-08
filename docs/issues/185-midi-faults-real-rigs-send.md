@@ -25,9 +25,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - The clock follower and the tempo store
 
 **Acceptance criteria:**
-- [ ] Unit tests for each: CC 120, 121 and 123; two ports of one C16; a lost and a doubled tick; a 120 → 90 jump
-- [ ] An engine or unit test that a clock's beat is placed by the output timestamp
-- [ ] The midiKeyboard, midiLearn and midiClock specs pass; every test passes in Linux's fonts too
+- [ ] ~~Unit tests for each: CC 120, 121 and 123; two ports of one C16; a lost and a doubled tick; a 120 → 90 jump~~ (not checked at the time)
+- [ ] ~~An engine or unit test that a clock's beat is placed by the output timestamp~~ (not checked at the time)
+- [ ] ~~The midiKeyboard, midiLearn and midiClock specs pass; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Song Position Pointer (issue 187)

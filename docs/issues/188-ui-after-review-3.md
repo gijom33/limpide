@@ -31,7 +31,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **Acceptance criteria:**
 - [x] The header spec checks no overlap with MIDI Learn on at 320–1920 px
 - [x] The design audit checks each header panel opens under the header, and the formulas clear of the bars
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The header's order (issue 154)

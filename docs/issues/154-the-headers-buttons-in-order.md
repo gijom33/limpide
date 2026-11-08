@@ -48,10 +48,10 @@ Claude's call, open to the owner:
 - The prototype skill's throwaway pages
 
 **Acceptance criteria:**
-- [ ] Step 1: a prototype page with two or three arrangements at four widths, and a question for the owner with Claude's recommendation
-- [ ] Step 2: the chosen arrangement at every width from 861 px, buttons on a shared grid, Tab order matching what is seen
-- [ ] At 1440 and 1920 px the keyboard has more keys than today where the room allows; a key beyond the letter keys plays by pointer and lights for a MIDI Note
-- [ ] The phone and 2 × 2 unchanged; the design audit passes; every test passes in Linux's fonts too
+- [ ] ~~Step 1: a prototype page with two or three arrangements at four widths, and a question for the owner with Claude's recommendation~~ (not checked at the time)
+- [ ] ~~Step 2: the chosen arrangement at every width from 861 px, buttons on a shared grid, Tab order matching what is seen~~ (not checked at the time)
+- [ ] ~~At 1440 and 1920 px the keyboard has more keys than today where the room allows; a key beyond the letter keys plays by pointer and lights for a MIDI Note~~ (not checked at the time)
+- [ ] ~~The phone and 2 × 2 unchanged; the design audit passes; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The header below 861 px ([152](./152-the-phones-header-rows-in-2x2.md))

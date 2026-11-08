@@ -35,7 +35,7 @@ Claude's call, open to the owner, 2026-10-31, taking up the owner's "maybe stack
 - [x] Moving the cursor along the Harmonics, the box keeps its size and each line's units stay put (a unit test on the layout: the widest and narrowest values give the same box)
 - [x] Near the right edge the box flips left once, and does not jump as values change
 - [x] The readout data a test reads is as before; the Spectrum e2e specs pass unchanged, or are updated only for the box's new place
-- [ ] Every Spectrum (the Oscillators', the Filter's, the Amp's) behaves the same; every test passes in Linux's fonts too
+- [ ] ~~Every Spectrum (the Oscillators', the Filter's, the Amp's) behaves the same; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - What the readout says, or how it snaps to a peak

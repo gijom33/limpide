@@ -38,7 +38,7 @@ Claude's call, open to the owner:
 - [x] Osc 1 and Osc 2 at full, Resonance at 0: the Oscillator and Filter Scopes' traces inside their Guides (an engine or viewer test, with the overshoot's allowance)
 - [x] The same with Resonance up: the Filter Scope's trace beyond them
 - [x] The Guides capped at full scale; never at zero
-- [ ] The tip and CONTEXT.md updated; every test passes in Linux's fonts too (the words updated; Linux's fonts are for GitHub's run, not run here)
+- [ ] ~~The tip and CONTEXT.md updated; every test passes in Linux's fonts too (the words updated; Linux's fonts are for GitHub's run, not run here)~~ (not checked at the time)
 
 **Out of scope:**
 - Any change to a sound or the Mixer's levels

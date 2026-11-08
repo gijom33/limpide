@@ -46,7 +46,7 @@ Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making
 - [x] The other end-to-end specs pass unchanged, Bead kept out of their way; the mascot spec covers the default
 - [x] Bead's frame-cost test passes as before
 - [x] The README's line and bead.md's opening say so
-- [ ] Every test passes in Linux's fonts too
+- [ ] ~~Every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - New tricks ([127](./127-more-tricks-for-bead.md)) or Bead riding the LFOs ([141](./141-bead-rides-the-lfos.md))

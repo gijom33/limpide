@@ -29,10 +29,10 @@ From 182 (Claude's calls, open to the owner, 2026-11-02):
 - Cycle Lock's run per Scope per frame
 
 **Acceptance criteria:**
-- [ ] Idle main-thread cost measured lower than before, at 1× and 4× (review 18's method), the figures written in the issue
-- [ ] A theme change, light to dark and back, redraws every Viewer in its new colours at once
-- [ ] A Note after silence is locked on the Scope as before, from its first cycles
-- [ ] Every Viewer test and the design audit pass unchanged
+- [ ] ~~Idle main-thread cost measured lower than before, at 1× and 4× (review 18's method), the figures written in the issue~~ (not checked at the time)
+- [ ] ~~A theme change, light to dark and back, redraws every Viewer in its new colours at once~~ (not checked at the time)
+- [ ] ~~A Note after silence is locked on the Scope as before, from its first cycles~~ (not checked at the time)
+- [ ] ~~Every Viewer test and the design audit pass unchanged~~ (not checked at the time)
 
 **Out of scope:**
 - The render loop at rest ([214](./214-the-silent-viewers-rest.md)), the Timeline ([215](./215-the-envelope-timeline-draws-only-new-columns.md)), the audio engine's pause ([216](./216-the-sound-engine-pauses-in-a-long-silence.md))

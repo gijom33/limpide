@@ -31,10 +31,10 @@ From 184 (Claude's calls, open to the owner, 2026-11-02):
 - Bead's frame
 
 **Acceptance criteria:**
-- [ ] Bead's frame cost measured idle and in the Demo, before and after, on a quiet machine, the figures in the issue; under 0.3 ms idle
-- [ ] A panel, a tip or a card opening moves Bead off what it covers as before (the mascot spec, unchanged, in both browsers)
-- [ ] Bead's frame-cost test passes on a quiet machine
-- [ ] A panel opened over Bead's resting text moves it within a frame or two, not half a second (a browser test)
+- [ ] ~~Bead's frame cost measured idle and in the Demo, before and after, on a quiet machine, the figures in the issue; under 0.3 ms idle~~ (not checked at the time)
+- [ ] ~~A panel, a tip or a card opening moves Bead off what it covers as before (the mascot spec, unchanged, in both browsers)~~ (not checked at the time)
+- [ ] ~~Bead's frame-cost test passes on a quiet machine~~ (not checked at the time)
+- [ ] ~~A panel opened over Bead's resting text moves it within a frame or two, not half a second (a browser test)~~ (not checked at the time)
 
 **Out of scope:**
 - The render loop's order of reads and writes ([221](./221-the-frame-reads-the-page-before-it-writes.md))

@@ -33,7 +33,7 @@ Claude's call, open to the owner:
 - [x] Display shows Harmonics, Ideal, Filter, Guides, Maths; the Filter toggle draws the Response Curve as before
 - [x] A visitor's stored Curve setting still loads
 - [x] No Step, card or tip says "Curve" for the toggle
-- [ ] The overlay, tooltip and viewer-control specs updated; every test passes in Linux's fonts too
+- [ ] ~~The overlay, tooltip and viewer-control specs updated; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Renaming the Response Curve itself

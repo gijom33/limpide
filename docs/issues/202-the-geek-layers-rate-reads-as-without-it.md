@@ -37,11 +37,11 @@ Claude's calls, open to the owner:
 - The Synth Geek Layer's entry in the glossary
 
 **Acceptance criteria:**
-- [ ] Geek on, a free Rate at 2 Hz reads "2.00 Hz", as with Geek off
-- [ ] Geek on, synced 1/4 at 120 BPM reads "1/4", as with Geek off, and does not change with the tempo
-- [ ] Geek on, the Rate's tip still gives the period and its formula, following the tempo when synced
-- [ ] Depth and Key Track read as 169 set
-- [ ] The engine tests of the period still pass, against the tip's numbers
+- [ ] ~~Geek on, a free Rate at 2 Hz reads "2.00 Hz", as with Geek off~~ (not checked at the time)
+- [ ] ~~Geek on, synced 1/4 at 120 BPM reads "1/4", as with Geek off, and does not change with the tempo~~ (not checked at the time)
+- [ ] ~~Geek on, the Rate's tip still gives the period and its formula, following the tempo when synced~~ (not checked at the time)
+- [ ] ~~Depth and Key Track read as 169 set~~ (not checked at the time)
+- [ ] ~~The engine tests of the period still pass, against the tip's numbers~~ (not checked at the time)
 
 **Out of scope:**
 - The other Synth Geek Layer readouts (167, 168, 170)

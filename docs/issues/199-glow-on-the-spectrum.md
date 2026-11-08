@@ -38,10 +38,10 @@ Claude's calls, open to the owner:
 - Glow's tip and the glossary's entry
 
 **Acceptance criteria:**
-- [ ] A test: with Glow on, a Spectrum keeps at most a quarter of a second of outlines, each faded by its age; off, it keeps none
-- [ ] An e2e test: with Glow on and a sweeping Filter, a Spectrum's canvas holds past outlines; frozen, it keeps them
-- [ ] The design audit's "Glow on" state covers a Spectrum
-- [ ] The Viewers' frame cost stays within its bound; every test passes in Linux's fonts too
+- [ ] ~~A test: with Glow on, a Spectrum keeps at most a quarter of a second of outlines, each faded by its age; off, it keeps none~~ (not checked at the time)
+- [ ] ~~An e2e test: with Glow on and a sweeping Filter, a Spectrum's canvas holds past outlines; frozen, it keeps them~~ (not checked at the time)
+- [ ] ~~The design audit's "Glow on" state covers a Spectrum~~ (not checked at the time)
+- [ ] ~~The Viewers' frame cost stays within its bound; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The Envelope Timeline

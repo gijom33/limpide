@@ -22,10 +22,10 @@
 - Snapshot in the Display state
 
 **Acceptance criteria:**
-- [ ] On the Tour's LFO card, at 1440 × 900 and 375 × 812, the Cutoff knob is on screen
+- [ ] ~~On the Tour's LFO card, at 1440 × 900 and 375 × 812, the Cutoff knob is on screen~~ (not checked at the time)
 - [x] Bass Step 4 with the Ideal already on: the Step is not done until the person turns it on
 - [x] After Acid ends or is left, no Snapshot shows unless the person took one
-- [ ] E2e tests for each, red before the fix; every test passes in Linux's fonts too
+- [ ] ~~E2e tests for each, red before the fix; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - The words of the cards and Steps ([129](./129-words-fun-to-read.md))

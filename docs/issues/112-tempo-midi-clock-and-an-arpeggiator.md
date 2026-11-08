@@ -44,7 +44,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 - [x] While the Demo plays, the BPM shows the track's; after it stops, the owner's comes back; the Demo sounds as it did
 - [x] The beat lines show on the LFO plot and the Timeline only while Sync is on
 - [x] The C16's R2 and R4 on bank D switch Sync, and the C16 card shows them
-- [ ] The design audit and the fit tests pass at every width; every test passes in Linux's fonts too
+- [ ] ~~The design audit and the fit tests pass at every width; every test passes in Linux's fonts too~~ (not checked at the time)
 
 **Out of scope:**
 - Following a MIDI clock ([136](./136-following-midi-clock.md))
