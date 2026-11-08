@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { midiButton, midiPanel, openMidi, withFakeController } from './fakeMidi';
-import { openDisplay, wholeDemoCard } from './helpers';
+import { frames, openDisplay, wholeDemoCard } from './helpers';
 import { FIRST_VISIT } from './startState';
 
 // Issue 51: a sound made and changed without the mouse, and every control named for a screen reader.
@@ -253,12 +253,12 @@ test('the letter keys can be turned off in Display, and stay off', async ({ page
   await page.getByRole('radio', { name: 'Letter keys off' }).click();
   await page.keyboard.press('Escape');
   await page.keyboard.down('a');
-  await page.waitForTimeout(200);
+  await frames(page); // a key handled, and drawn, as it comes
   await expect(piano.locator('[aria-pressed="true"]')).toHaveCount(0);
   await page.keyboard.up('a');
   await page.reload();
   await page.keyboard.down('a');
-  await page.waitForTimeout(200);
+  await frames(page); // a key handled, and drawn, as it comes
   await expect(piano.locator('[aria-pressed="true"]')).toHaveCount(0);
   await page.keyboard.up('a');
   await openDisplay(page);

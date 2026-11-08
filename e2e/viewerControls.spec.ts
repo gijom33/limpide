@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 // A missing reading (the Tap hasn't drawn yet) must not count as loud: Number(null) would be 0 dB.
 const level = (page: import('@playwright/test').Page) =>
@@ -105,7 +105,8 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
         return hash;
       }),
     );
-  await page.waitForTimeout(200);
+  await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
+  await frames(page); // the frozen frame drawn
   const frozen = await pixels();
 
   await page.keyboard.up('KeyA');
@@ -183,7 +184,7 @@ test('Glow reaches the Spectrums under All, not Scopes: a Filter swept by its En
   for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
   await page.keyboard.press('Space');
   await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
-  await page.waitForTimeout(100); // the first frozen frame drawn
+  await frames(page); // the first frozen frame drawn
   const frozen = await filter.getAttribute('data-glow');
   await page.keyboard.up('KeyA');
   await page.waitForTimeout(500); // twice the Glow's length: frozen, nothing fades or goes

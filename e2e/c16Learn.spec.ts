@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { cc, midiPanel, openMidi, play, playOn, times, withFakeController } from './fakeMidi';
+import { frames } from './helpers';
 
 // MIDI Learn beside the C16 layout, and a C16 left in its factory settings (issue 255).
 
@@ -41,7 +42,7 @@ test('Learn says which C16 place it took, and a C16 knob it took turns nothing t
   });
   const before = await positions();
   await playOn(page, C16, ...times(3, cc(1, 65)), cc(1, 0), cc(1, 127), ...times(3, cc(9, 65)), ...times(3, cc(10, 65)), ...times(2, cc(58, 127)));
-  await page.waitForTimeout(200);
+  await frames(page); // the messages handled, and drawn, as they come
   expect(await positions()).toEqual(before);
   await expect(page.getByRole('button', { name: 'Hold', exact: true })).toHaveAttribute('aria-pressed', 'false');
 

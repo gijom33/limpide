@@ -246,7 +246,8 @@ test('an edit marks the Patch as changed, and the sound comes back after a reloa
   await nudge(page);
   const value = await cutoff(page).getAttribute('aria-valuetext');
   await expect(patchName(page)).toHaveAttribute('data-changed', 'true');
-  await page.waitForTimeout(500); // autosave settles
+  // Autosaved: the Cutoff nudged down from Init's 2 kHz.
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('limpide.current') ?? '{}').cutoff)).toBeLessThan(2000);
   await page.reload();
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', value!);
 });

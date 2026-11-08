@@ -26,12 +26,12 @@ test('the Envelope Timeline draws the Envelopes as they happen', async ({ page }
   await ready(page);
   const timeline = page.getByLabel('Envelope Timeline', { exact: true }); // the plot's canvas
   await page.keyboard.down('KeyA');
-  await page.waitForTimeout(400);
-  const inked = await timeline.evaluate((c: HTMLCanvasElement) => {
-    const { data } = c.getContext('2d')!.getImageData(Math.floor(c.width * 0.9), 0, Math.floor(c.width * 0.1), c.height);
-    return data.filter((v, i) => i % 4 === 3 && v > 0).length;
-  });
-  expect(inked).toBeGreaterThan(100);
+  const inked = () =>
+    timeline.evaluate((c: HTMLCanvasElement) => {
+      const { data } = c.getContext('2d')!.getImageData(Math.floor(c.width * 0.9), 0, Math.floor(c.width * 0.1), c.height);
+      return data.filter((v, i) => i % 4 === 3 && v > 0).length;
+    });
+  await expect.poll(inked).toBeGreaterThan(100); // drawn as the Note plays
   await page.keyboard.up('KeyA');
 });
 
@@ -107,7 +107,7 @@ test('a moved knob’s line alone, without a line for its own setting, its LFO 1
       seen.push({ alpha: g.globalAlpha, dash: g.getLineDash() });
       stroke(...args);
     };
-    await new Promise((done) => setTimeout(done, 300));
+    for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame);
     return seen;
   });
   // Issue 71's faint line for the knob's own setting is gone: every stroke is drawn at full strength.

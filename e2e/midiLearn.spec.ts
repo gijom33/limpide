@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { cc, midiButton, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
 const learnBar = (page: Page) => page.getByRole('status', { name: 'MIDI Learn' });
@@ -58,7 +58,7 @@ test('a Mapping learned with the wrong mode is changed in the MIDI panel, and th
   const mode = midiPanel(page).getByRole('radiogroup', { name: 'Cutoff mode' });
   await expect(mode.getByRole('radio', { name: 'Absolute, with Pickup' })).toHaveAttribute('aria-checked', 'true');
   await play(page, ...times(10, cc(74, 1)));
-  await page.waitForTimeout(200);
+  await frames(page); // the messages handled, and drawn, as they come
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '2.00 kHz'); // Absolute at 1 of 127: Pickup waits
   await mode.getByRole('radio', { name: 'Relative' }).click();
   await expect(mode.getByRole('radio', { name: 'Relative' })).toHaveAttribute('aria-checked', 'true');
@@ -80,7 +80,7 @@ test('a removed Mapping stops driving its Parameter', async ({ page }) => {
   await expect(midiPanel(page).getByRole('list', { name: 'Mappings' })).toHaveCount(0);
   const before = await cutoff(page).getAttribute('aria-valuenow');
   await play(page, ...times(5, cc(74, 1)));
-  await page.waitForTimeout(200);
+  await frames(page); // the messages handled, and drawn, as they come
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', before!);
 });
 

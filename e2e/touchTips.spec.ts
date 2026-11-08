@@ -23,10 +23,10 @@ test('holding a control shows what it does; it stays after lifting; the next tou
   const finger = await touch(page);
   const cutoff = page.getByRole('slider', { name: /^Cutoff/ });
   await cutoff.scrollIntoViewIfNeeded();
-  await finger.down(cutoff);
-  await page.waitForTimeout(800);
-  await finger.up();
   const tip = page.getByRole('tooltip').filter({ hasText: 'Where the Filter starts to take Harmonics away' });
+  await finger.down(cutoff);
+  await expect(tip).toBeVisible(); // held until it shows
+  await finger.up();
   await expect(tip).toBeVisible();
   await expect(tip.locator('.tooltip-keys')).toBeHidden(); // no keys on a phone: no steps for them (issue 160)
   await finger.down(page.getByRole('heading', { name: 'Filter', level: 2 }));
@@ -38,10 +38,11 @@ test('a long press on Hold explains it without switching it; a tap still switche
   await page.goto('/');
   const finger = await touch(page);
   const hold = page.getByRole('button', { name: 'Hold' });
+  const tip = page.getByRole('tooltip').filter({ hasText: 'Hold' }).first();
   await finger.down(hold);
-  await page.waitForTimeout(800);
+  await expect(tip).toBeVisible(); // held until it shows
   await finger.up();
-  await expect(page.getByRole('tooltip').filter({ hasText: 'Hold' }).first()).toBeVisible();
+  await expect(tip).toBeVisible();
   await expect(hold).toHaveAttribute('aria-pressed', 'false');
   await hold.tap();
   await expect(hold).toHaveAttribute('aria-pressed', 'true');
@@ -52,7 +53,7 @@ test('holding a piano key plays it and shows no explanation', async ({ page }) =
   const finger = await touch(page);
   const key = page.getByRole('group', { name: 'Piano' }).getByRole('button', { name: 'E4' });
   await finger.down(key);
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(800); // a time: longer than a hold takes to show a tip, so none shows
   await expect(key).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('tooltip').filter({ hasText: 'Your computer keyboard is a piano' })).toBeHidden();
   await finger.up();
@@ -71,7 +72,7 @@ test.describe('on a 375 px phone', () => {
       const control = page.getByRole('slider', { name, exact: true });
       await control.scrollIntoViewIfNeeded();
       await finger.down(control);
-      await page.waitForTimeout(800);
+      await expect(page.getByRole('tooltip').locator('visible=true'), name).toBeVisible(); // held until it shows
       await finger.up();
       const history = page.getByRole('tooltip').locator('visible=true').locator('.tooltip-history');
       await expect(history, name).toContainText(words);
@@ -94,10 +95,10 @@ test.describe('on a 375 px phone', () => {
     const finger = await touch(page);
     const decay = page.getByRole('slider', { name: 'Amp Decay', exact: true });
     await decay.scrollIntoViewIfNeeded();
-    await finger.down(decay);
-    await page.waitForTimeout(800);
-    await finger.up();
     const tip = page.getByRole('tooltip').locator('visible=true');
+    await finger.down(decay);
+    await expect(tip).toBeVisible(); // held until it shows
+    await finger.up();
     await expect(tip.locator('.tooltip-hood')).toContainText('τ = Decay ÷ 4 = 75.0 ms now');
     const box = (await tip.boundingBox())!;
     expect(box.x).toBeGreaterThanOrEqual(0);

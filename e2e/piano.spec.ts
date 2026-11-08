@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { midiPermission, play, withFakeController } from './fakeMidi';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 const ready = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
@@ -380,7 +380,7 @@ test.describe('on a touch screen', () => {
     await fingers({ 1: 'C4', 2: "C4'" });
     await expect.poll(() => lit(page)).toEqual(['C4']);
     await fingers({ 2: "C4'" });
-    await page.waitForTimeout(100);
+    await frames(page); // the lift handled, and drawn, as it comes
     expect(await lit(page)).toEqual(['C4']);
     await fingers({});
     await expect.poll(() => lit(page)).toEqual([]);

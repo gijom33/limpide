@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { frames, openDisplay } from './helpers';
 
 test('the display controls hide behind a Display button, leaving the space to the synth', async ({ page }) => {
   await page.goto('/');
@@ -123,7 +123,7 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await page.keyboard.press('Shift'); // the keyboard in use, so focus shows as it would from Tab
   for (const control of [cutoff, page.getByRole('button', { name: 'Demo', exact: true })]) {
     await control.focus();
-    await page.waitForTimeout(200);
+    await frames(page); // a focus's tip opens at once, were it on
     await expect(open).toHaveCount(0);
   }
   await expect(cutoff).toHaveAccessibleDescription(/Cutoff/);
@@ -189,6 +189,6 @@ test('switching Tooltips off with the arrow keys leaves no tooltip open, the swi
   await on.focus();
   await page.keyboard.press('ArrowRight'); // to Off
   await expect(page.getByRole('radiogroup', { name: 'Tooltips' }).getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
-  await page.waitForTimeout(200);
+  await frames(page); // a focus's tip opens at once, were it on
   await expect(page.getByRole('tooltip')).toHaveCount(0);
 });
