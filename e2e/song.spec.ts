@@ -62,3 +62,58 @@ test('the Demo and the Song take turns: starting one stops the other', async ({ 
   await song(page).click();
   await expect(song(page)).toHaveAttribute('aria-pressed', 'false');
 });
+
+// Issue 260 (review 1, finding 1): once started, the Song said nothing, though flipping the Presets over it is the most
+// fun a newcomer finds. While it plays, a line under the sound's name invites it, on one line at every width (issue
+// 156's rule), until the person changes the sound.
+const invite = (page: Page) => page.locator('.song-invite');
+
+/** Whether the line's words sit on one line, inside its box and the window. */
+const oneLine = (page: Page) =>
+  invite(page).evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const tops = new Set<number>();
+    let inside = box.right <= innerWidth + 0.5 && box.left >= -0.5;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) {
+        if (!r.width) continue;
+        tops.add(Math.round(r.top));
+        if (r.right > box.right + 0.5) inside = false;
+      }
+    }
+    return tops.size === 1 && inside;
+  });
+
+for (const [width, height] of [[320, 568], [375, 812], [390, 844], [768, 1024], [1440, 900]] as const) {
+  test(`at ${width} px, while the Song plays a line invites flipping the Presets with › or turning a knob, on one line (issue 260)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await expect(invite(page)).toHaveCount(0);
+    await song(page).click();
+    await expect(invite(page)).toBeVisible();
+    await expect(invite(page)).toContainText('›');
+    await expect(invite(page)).toContainText('knob');
+    expect(await oneLine(page)).toBe(true);
+    await page.getByRole('button', { name: 'Next Preset' }).click();
+    await expect(invite(page)).toHaveCount(0); // followed: it has done its work
+    await expect(song(page)).toHaveAttribute('aria-pressed', 'true');
+  });
+}
+
+test('the Song’s line goes once a knob is turned, or the Song stops (issue 260)', async ({ page }) => {
+  await page.goto('/');
+  await song(page).click();
+  await expect(invite(page)).toBeVisible();
+  const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+  await cutoff.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(invite(page)).toHaveCount(0);
+  await song(page).click();
+  await song(page).click();
+  await expect(invite(page)).toBeVisible(); // started again, it invites again
+  await song(page).click();
+  await expect(invite(page)).toHaveCount(0);
+});

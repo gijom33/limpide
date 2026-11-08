@@ -26,6 +26,7 @@ import { usePianoFit } from './hooks/usePianoFit';
 import { usePresetAbout } from './hooks/usePresetAbout';
 import { useRememberedSetting } from './hooks/useRememberedSetting';
 import { useShows } from './hooks/useShows';
+import { useSongInvite } from './hooks/useSongInvite';
 import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
@@ -222,6 +223,8 @@ export function App() {
     midi.setBankFollow(null);
   };
   const toggleSong = () => shows.toggleSong(() => octaveRef.current);
+  // While the Song plays, a line under the sound's name invites changing it (issue 260).
+  const songInvite = useSongInvite(show.playing === 'song', patch, !!tutorial);
   // Each count closes the Display panel: a Tutorial's Display Step made on a phone, its Viewer under the panel (issue 260).
   const [displayShut, shutDisplay] = useReducer((n: number) => n + 1, 0);
   // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
@@ -313,6 +316,7 @@ export function App() {
           onCloseAbout={presetAbout.hide}
           tutorials={tutorialList}
           onTutorial={startTutorial}
+          songInvite={songInvite}
         />
       </div>
     </div>

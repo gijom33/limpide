@@ -1141,6 +1141,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
    Osc tabs. */
 @media (max-width: 374px) { .patch-about { font-size: var(--text-sm); line-height: 1.2; } }
 @media (prefers-reduced-motion: reduce) { .patch-about { animation: none; } }
+/* The Song's line (issue 260), in the about line's place and dress: one line, its words shortened where they would not
+   fit (oneLine.tsx). */
+.song-invite { white-space: nowrap; padding-right: 10px; }
 /* The Patch in plain words (issue 123), once it is not a Preset as loaded: one line where a Preset's about line shows,
    its words where the about line's words start, as wide as the Oscillators and the Filter, in the room between the
    header and the Sections (41 px from 861 px wide: the line takes 20). Cut with an ellipsis where it runs out of room;

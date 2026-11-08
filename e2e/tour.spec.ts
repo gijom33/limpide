@@ -540,6 +540,7 @@ test('the last card’s button ends the Tour and plays the Song on the person’
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
   await playing(page);
   await expect(page.locator('[data-tutorial]')).toHaveCount(0);
+  await expect(page.locator('.song-invite')).toBeVisible(); // the Patch given back is the one it invites to change
 });
 
 // Issue 254: on every card, at every size, the control the Tour turns stays in view, clear of the card, the whole time
