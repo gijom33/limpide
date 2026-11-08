@@ -4,13 +4,12 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-08, from the 1.28.0 code review (Standards), judgement calls, no bug: Bead's foot read under its stroll on a landing frame while it is drawn at the landing spot (one frame at most); the 2.5 Hz ride test finding the plot by its class and its svg where the release moved other lookups to roles; a unit test named for 112 whose case is 270's; a test comment's "now"; the Piano's wait written 49 times in 9 specs, and the ride's turns and slope counted twice (unit and e2e); the C16's place in two near-identical shapes, `onTheC16` named as a question, `KINDS` generic; `useDescribing` in the file about greyed-out controls; Quick Setup's `LastStep` exported from its component to the MIDI hook; the line under Bead 0 when there is no plot, and the plot's svg asserted present.
-- 2026-11-08, from the 1.28.0 code review (Spec): 270's old ride tests rewritten rather than left as they were (the plot's svg box, a 1/4 at 120 BPM now riding); 270's phone and 2 × 2 layouts tested on scripted readings only (call 3); every ride, slow ones and the Demo's included, now reads its foot this frame and inside the plot's border (call 1); 269's Fast Beats one clause longer, with "Harmonics" (call 1); 268's fourteen locators where about eleven were named, two kept (call 2); Display's panel closing at the call, a render earlier (call 4).
-
 ## Ideas
 
 ## Dropped
 
+- 2026-11-08, from the 1.28.0 code review (Standards), the judgement calls: into [271](./issues/271-tidy-ups-after-1-28-0.md), but the unit test named for 112 alone and the test comment's "now", fixed in the release. Claude's call, open to the owner.
+- 2026-11-08, from the 1.28.0 code review (Spec): dropped, each a builder's call already open to the owner in its issue (268's calls 2 and 4, 269's call 1, 270's calls 1 and 3).
 - 2026-11-08, the owner's idea of Bead surfing up to 2.5 Hz: into [270](./issues/270-bead-rides-up-to-2-5-hz.md), its bound decided by the owner, in v1 as polish of 197's rides, Claude's call, open to the owner. Built after 1.27.0.
 - 2026-11-08, from 1.27.0's word checks: Fast Beats' roughness, Clang's fall to C2 and CLAUDE.md's lines on the hook into [269](./issues/269-words-and-a-level-after-1-27-0.md); Zap Pluck's words on C6 and C7, its fall and its top octave into [267](./issues/267-a-click-a-fold-back-and-a-bite.md)'s check by ear, its words to follow its sound. Dropped: Vowel, within 258's bound; Kick's and Tom's sharper strikes, their strike by design; Felt Piano over the Pianos, measured beside a Piano since put back to its 1.26.2 level (266's decision 2). Claude's call, open to the owner.
 - 2026-11-07, from the 1.27.0 code review (Standards), the judgement calls: into [268](./issues/268-tidy-ups-after-1-27-0.md), but the tips' window listeners and the Safari Tab fix watching added buttons only, dropped: no button in the app turns its tabindex on and off, and the listeners live as long as the page. Claude's call, open to the owner.

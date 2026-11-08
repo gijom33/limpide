@@ -3,7 +3,7 @@
 Every issue in [docs/issues](issues), with its Status’s first words; the issue tracker’s guide is [docs/agents/issue-tracker.md](agents/issue-tracker.md).
 Generated from the issue files by `npm run issues`: edit an issue, not this page.
 
-## Open (19)
+## Open (20)
 
 | # | Issue | Status |
 | --: | --- | --- |
@@ -26,6 +26,7 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 262 | [v2 ideas from the 1.26.1 round](issues/262-v2-ideas-from-the-1-26-1-round.md) | needs-triage · enhancement |
 | 267 | [A click, a fold-back and a bite](issues/267-a-click-a-fold-back-and-a-bite.md) | ready-for-human · bug |
 | 269 | [words and a level after 1.27.0](issues/269-words-and-a-level-after-1-27-0.md) | ready-for-human · bug |
+| 271 | [tidy-ups after 1.28.0](issues/271-tidy-ups-after-1-28-0.md) | ready-for-agent · enhancement |
 
 ## Done, closed, superseded or ongoing (251)
 

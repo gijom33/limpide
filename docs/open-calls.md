@@ -1,6 +1,6 @@
 # Calls open to the owner
 
-102 calls open to the owner, in 21 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
+106 calls open to the owner, in 22 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
 
 The owner goes through them. A call closes where it was made, its “open to the owner” becoming “accepted by the owner (YYYY-MM-DD)” or “reversed by the owner (YYYY-MM-DD, issue N)”, or, once a release has shipped it with no word on it, “let stand by the owner in X.Y.Z”; the issue tracker’s guide says how ([docs/agents/issue-tracker.md](agents/issue-tracker.md)).
 Generated from the issues, the inbox and the ADRs by `npm run issues`: close a call where it was made, not on this page.
@@ -102,7 +102,11 @@ Generated from the issues, the inbox and the ADRs by `npm run issues`: close a c
 - [Issue 270, call 2](issues/270-bead-rides-up-to-2-5-hz.md): The 35° lean kept (decision 3), though a 2.5 Hz line is up to 70° steep: the board is along the line on its gentle parts and at 35° on its steep ones. A steeper lean is the owner's to ask for.
 - [Issue 270, call 3](issues/270-bead-rides-up-to-2-5-hz.md): Phone and 2 × 2 measured in Bead's frame's tests, not the browser's, as 245 moved them there; the browser test is three across.
 - [Issue 270, call 4](issues/270-bead-rides-up-to-2-5-hz.md): The browser test's bound: a frame in twenty may be more than 3 px off, none more than 8. On a 70° line a few milliseconds between the clock Bead reads and the one its plot reads, in the same frame, is pixels. GitHub's WebKit on Linux, at a…
+- [Issue 271, Status](issues/271-tidy-ups-after-1-28-0.md): ready-for-agent · enhancement. In v1 as polish, as 268 was; Claude's call, open to the owner (2026-11-08).
+- [Issue 271](issues/271-tidy-ups-after-1-28-0.md): Out of scope: the Spec review's points, each a builder's call already open to the owner in its issue (268's calls 2 and 4, 269's call 1, 270's calls 1 and 3).
 - [ADR-0017, Status](adr/0017-the-c16-layout-strip-by-strip.md): accepted; its "two steps when turned fast" corrected by issue 145, decision 17: a fast turn sends a burst of eight 66s, which reach the page split and merged, each now counted a third of a step; its "Mappings made by MIDI Learn … answer an…
+- [Inbox, 2026-11-08](inbox.md): 2026-11-08, from the 1.28.0 code review (Standards), the judgement calls: into 271, but the unit test named for 112 alone and the test comment's "now", fixed in the release. Claude's call, open to the owner.
+- [Inbox, 2026-11-08](inbox.md): 2026-11-08, from the 1.28.0 code review (Spec): dropped, each a builder's call already open to the owner in its issue (268's calls 2 and 4, 269's call 1, 270's calls 1 and 3).
 - [Inbox, 2026-11-08](inbox.md): 2026-11-08, the owner's idea of Bead surfing up to 2.5 Hz: into 270, its bound decided by the owner, in v1 as polish of 197's rides, Claude's call, open to the owner. Built after 1.27.0.
 - [Inbox, 2026-11-08](inbox.md): 2026-11-08, from 1.27.0's word checks: Fast Beats' roughness, Clang's fall to C2 and CLAUDE.md's lines on the hook into 269; Zap Pluck's words on C6 and C7, its fall and its top octave into 267's check by ear, its words to follow its sound…
 - [Inbox, 2026-11-07](inbox.md): 2026-11-07, from the 1.27.0 code review (Standards), the judgement calls: into 268, but the tips' window listeners and the Safari Tab fix watching added buttons only, dropped: no button in the app turns its tabindex on and off, and the lis…
