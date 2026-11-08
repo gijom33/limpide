@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { SlidersIcon } from './icons';
 import { Tooltip } from './Tooltip';
@@ -6,11 +6,18 @@ import { Tooltip } from './Tooltip';
 /**
  * The display settings (Freeze, Snapshot, axes, overlays) behind one button, so they take no room while you
  * play. The panel stays open while you change several things; Escape, a click elsewhere or Tab out of it closes it. A dot on
- * the button shows when something is held (Freeze or a Snapshot), so a hidden setting is never a mystery.
+ * the button shows when something is held (Freeze or a Snapshot), so a hidden setting is never a mystery. Each new
+ * `shut` closes it from outside (a Tutorial's Display Step made on a phone, issue 260), the focus on an option going
+ * back to its button, as Escape takes it.
  */
-export function DisplayMenu({ active, children }: { active: boolean; children: ReactNode }) {
+export function DisplayMenu({ active, shut = 0, children }: { active: boolean; shut?: number; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { wrapper, button } = useHeaderPanel(open, setOpen);
+  useEffect(() => {
+    if (!shut) return;
+    if (wrapper.current?.contains(document.activeElement)) button.current?.focus();
+    setOpen(false);
+  }, [shut, wrapper, button]);
 
   return (
     <div className="display-menu" ref={wrapper}>

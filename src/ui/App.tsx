@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import { recall, remember } from '../app/rememberedSettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
@@ -222,6 +222,8 @@ export function App() {
     midi.setBankFollow(null);
   };
   const toggleSong = () => shows.toggleSong(() => octaveRef.current);
+  // Each count closes the Display panel: a Tutorial's Display Step made on a phone, its Viewer under the panel (issue 260).
+  const [displayShut, shutDisplay] = useReducer((n: number) => n + 1, 0);
   // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
   const tourCard = tour?.index ?? null;
   const guide = useMemo(
@@ -383,7 +385,7 @@ export function App() {
     />
   );
   const displayMenu = (
-    <DisplayMenu key="display" active={viewer.frozen || viewer.snapshot !== null}>
+    <DisplayMenu key="display" active={viewer.frozen || viewer.snapshot !== null} shut={displayShut}>
       <section className="toolbar" aria-label="Viewer controls">
         <div className="toolbar-groups">
           <ToolGroup title="View">
@@ -878,6 +880,7 @@ export function App() {
             onMatch={shows.matchPreset}
             onStartNext={shows.startTutorial}
             onQuit={shows.quitTutorial}
+            onShutDisplay={shutDisplay}
           />
         )}
         {bead.presence !== 'away' && (

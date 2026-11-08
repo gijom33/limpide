@@ -579,6 +579,48 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await expect(card(page)).toContainText('a faint trace of this bright saw');
 });
 
+// Issue 260 (review 16, finding 3): on a phone the Display panel covers the page, so a Display Step made by hand left
+// it over the circles or the trace its note speaks of, until Next. Made, the Step closes it, and its Viewer is in view.
+for (const [preset, before, option, note] of [
+  ['Bass', 3, 'Ideal', 'Circles mark where'],
+  ['Acid', 1, 'Snapshot', 'a faint trace'],
+] as const) {
+  test(`on a phone, ${option} turned on by hand in ${preset} closes Display, the Step's Viewer in view (issue 260)`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await open(page, preset);
+    await action(page, 'Start').click();
+    for (let i = 0; i < before; i++) await makeStep(page);
+    const display = page.getByRole('button', { name: 'Display', exact: true });
+    await display.click();
+    await expect(display).toHaveAttribute('aria-expanded', 'true');
+    await page.getByRole('button', { name: option, exact: true }).click();
+    await expect(card(page)).toContainText(note);
+    await expect(display).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('.display-panel')).toHaveCount(0);
+    // Its Viewer between the header and the card, and nothing over it.
+    await expect.poll(() => standing(page, '[data-tutorial-viewer]')).toBe('clear');
+    const viewer = page.locator('[data-tutorial-viewer]');
+    expect(await viewer.evaluate((v) => {
+      const box = v.getBoundingClientRect();
+      return v.contains(document.elementFromPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2));
+    })).toBe(true);
+    await expect(action(page, 'Next')).toBeEnabled();
+  });
+}
+
+test('on a laptop, a Display Step made by hand leaves the panel open beside the Viewers (issue 260)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, 'Acid');
+  await action(page, 'Start').click();
+  await makeStep(page);
+  const display = page.getByRole('button', { name: 'Display', exact: true });
+  await display.click();
+  await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+  await expect(card(page)).toContainText('a faint trace');
+  await expect(display).toHaveAttribute('aria-expanded', 'true');
+});
+
 // Issue 158 (profile 16's review of 1.19.0): Acid's Snapshot stayed on the Viewers through Pluck, Wobble and FM Ladder.
 test.describe('a Snapshot a Tutorial took (issue 158)', () => {
   const snapshotShown = async (page: Page) => {

@@ -3,6 +3,7 @@ import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
+import { pinned } from './cardPlacement';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear } from './docked';
 import { scrollBehavior } from './glide';
@@ -28,6 +29,8 @@ interface Props {
   onMatch(): void;
   onStartNext(next: Tutorial): void;
   onQuit(): void;
+  /** Closes the Display panel. */
+  onShutDisplay(): void;
 }
 
 /** What Next before the Step is made says, the first time in a Tutorial (issue 190, decision 2). */
@@ -196,12 +199,17 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
  * "Do it for me", Next, Listen and Quit. Picked, it takes the focus on its Start; the Steps never take it from the
  * control being turned. Each new text is announced.
  */
-export function TutorialCard({ tutorial, index, done, differs, next, listening, onListen, onBack, onNext, onDoIt, onMatch, onStartNext, onQuit }: Props) {
+export function TutorialCard({ tutorial, index, done, differs, next, listening, onListen, onBack, onNext, onDoIt, onMatch, onStartNext, onQuit, onShutDisplay }: Props) {
   const steps = tutorial.steps;
   const step = index >= 0 ? steps[index] : undefined;
   const made = step ? done[index] : false;
   const card = useRef<HTMLElement>(null);
   useRing(step, made, card);
+  // On a phone the Display panel covers the page: a Display Step made closes it, so the circles or the trace its note
+  // speaks of are in view (issue 260). Wider, the panel leaves the Viewers beside it, open for the next change.
+  useEffect(() => {
+    if (step && made && inDisplay(step) && pinned(card.current)) onShutDisplay();
+  }, [step, made, onShutDisplay]);
   const goToControl = useWayToControl(step, card);
 
   // Until the Step is made, Next says it is unavailable but keeps the focus, so pressing it leaves the keyboard there.
