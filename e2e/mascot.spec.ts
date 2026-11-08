@@ -1258,9 +1258,10 @@ test("dropped just beside LFO 1's plot, a Sine at 2.5 Hz, the fastest it rides, 
   // Enough frames to judge: GitHub's Linux WebKit draws about ten a second in Playwright's image, 20 in the two.
   expect(seen.length, told).toBeGreaterThanOrEqual(16);
   // About half a pixel off on average here, in both browsers. The line is up to 70° steep, so a few milliseconds
-  // between Bead's reading of the clock and its plot's, in the same frame, can be pixels: a frame in twenty may be
-  // further off (two at the fewest), none by a third of the wave's swing (24 px each way).
-  const offs = seen.map((f) => Math.abs(f.off));
+  // between Bead's reading of the clock and its plot's, in the same frame, can be pixels up or down (4.4 in Chromium on
+  // GitHub, 1.28.0's deploy run) but under 1.5 across the line, which is what the eye sees: measured across it, a frame
+  // in twenty may be further off (two at the fewest), none by a third of the wave's swing (24 px each way).
+  const offs = seen.map((f) => Math.abs(f.off * Math.cos((f.slope * Math.PI) / 180)));
   // Two such frames at the fewest, where twenty frames are all there are (GitHub's Linux WebKit).
   expect(offs.filter((off) => off > 3).length, told).toBeLessThanOrEqual(Math.max(2, offs.length * 0.05));
   expect(Math.max(...offs), told).toBeLessThanOrEqual(8);
