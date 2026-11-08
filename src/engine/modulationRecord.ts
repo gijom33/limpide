@@ -86,9 +86,15 @@ export function createGateHistory() {
   };
 }
 
+/** A slide of the newest Note's pitch, in Hz or in semitones: where it goes, and where it starts from. */
+interface Slide {
+  to: number;
+  from: number;
+}
+
 export function createModulationRecord(start: number) {
-  // The newest Note's pitches, each keeping where its slide starts from (frequency and Note).
-  const pitches: { time: number; frequency: number; note: number; glide: number; from: number; fromNote: number }[] = [];
+  // The newest Note's pitches, each a slide in Hz (`frequency`) and in semitones (`note`).
+  const pitches: { time: number; glide: number; frequency: Slide; note: Slide }[] = [];
   // Patches in force over time, so past moments use the Cutoff and Amount of their time.
   const patches: { time: number; patch: Patch }[] = [];
   const amp = createGateHistory();
@@ -117,16 +123,16 @@ export function createModulationRecord(start: number) {
    * Where the newest Note's slide has reached at `t`, through its Glide, in Hz (`frequency`) or in semitones (`note`):
    * before the first Note, the first Note's; with none, `none`.
    */
-  const slideAt = (t: number, [to, from]: readonly ['frequency', 'from'] | readonly ['note', 'fromNote'], none: number) => {
+  const slideAt = (t: number, unit: 'frequency' | 'note', none: number) => {
     const i = lastAt(pitches, t);
-    if (i < 0) return pitches[0]?.[to] ?? none;
-    const p = pitches[i];
-    return glideFrom(p[from], p[to], p.glide, t - p.time);
+    if (i < 0) return pitches[0]?.[unit].to ?? none;
+    const { [unit]: slide, glide, time } = pitches[i];
+    return glideFrom(slide.from, slide.to, glide, t - time);
   };
   /** The newest Note's frequency at `t`, through its Glide (none: 0). */
-  const glidingAt = (t: number) => slideAt(t, ['frequency', 'from'], 0);
+  const glidingAt = (t: number) => slideAt(t, 'frequency', 0);
   /** The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones (none: A4). */
-  const trackedNoteAt = (t: number) => slideAt(t, ['note', 'fromNote'], A4_MIDI);
+  const trackedNoteAt = (t: number) => slideAt(t, 'note', A4_MIDI);
   /** The Patch in force at `t` (before the first, the first). */
   const patchAt = (t: number) => (patches.length ? patches[Math.max(0, lastAt(patches, t))].patch : undefined);
   /** Both LFOs' values at `t`, under the Patch then in force. */
@@ -170,13 +176,11 @@ export function createModulationRecord(start: number) {
     hasPitch: () => pitches.length > 0,
     /** The newest Note moves to `note` at `t`, over `glide` seconds (0: at once) from where the last slide has reached. */
     recordPitch(t: number, note: number, glide: number) {
-      const entry = { time: t, frequency: noteToFrequency(note), note, glide, from: noteToFrequency(note), fromNote: note };
+      const entry = { time: t, glide, frequency: { to: noteToFrequency(note), from: noteToFrequency(note) }, note: { to: note, from: note } };
       append(pitches, entry);
       const previous = pitches[pitches.length - 2];
-      if (previous) {
-        entry.from = glideFrom(previous.from, previous.frequency, previous.glide, t - previous.time);
-        entry.fromNote = glideFrom(previous.fromNote, previous.note, previous.glide, t - previous.time);
-      }
+      if (previous)
+        for (const unit of ['frequency', 'note'] as const) entry[unit].from = glideFrom(previous[unit].from, previous[unit].to, previous.glide, t - previous.time);
       trim(pitches, t);
     },
     /** The bend wheel at `cents` from `t`. */
@@ -238,7 +242,7 @@ export function createModulationRecord(start: number) {
       const { latest, opened } = amp.at(t);
       const velocity = opened?.peak ?? 0;
       const latestPitch = lastAt(pitches, t);
-      const note = latestPitch >= 0 ? pitches[latestPitch].note : A4_MIDI;
+      const note = latestPitch >= 0 ? pitches[latestPitch].note.to : A4_MIDI;
       const gliding = frequencyToNote(glidingAt(t) || A4_HZ);
       const vibrato = then ? soundingPitch(then, gliding, lfo) - gliding : 0;
       const resonance = then ? effectiveResonance(then, lfo) : 0;
