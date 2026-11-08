@@ -368,6 +368,25 @@ describe('Waveforms match their Ideal Reference', () => {
       }
     });
   }
+
+  // Issue 266: the share of each cycle above its middle is the Pulse Width, as the glossary and the synths' manuals
+  // say; the engine's pulse was the other way up (review 13).
+  const highShare = (s: Float32Array, from: number, periods: number, hz: number) => {
+    const w = s.subarray(Math.round(from * SR), Math.round(from * SR + (periods * SR) / hz));
+    const middle = (Math.max(...w) + Math.min(...w)) / 2;
+    return w.filter((x) => x > middle).length / w.length;
+  };
+  for (const pulseWidth of [0.1, 0.25, 0.75]) {
+    it(`plays a ${pulseWidth * 100} % pulse high for ${pulseWidth * 100} % of each cycle (issue 266)`, async () => {
+      const s = await render(1, { ...open, waveform: 'pulse', pulseWidth }, (e) => e.noteOn(A2, 1, 0));
+      expect(highShare(s, 0.5, 40, F)).toBeCloseTo(pulseWidth, 1);
+    });
+  }
+  it('keeps a pulse high for its width as an LFO sweeps it: 90 % at the LFO’s top, 10 % at its bottom (issue 266)', async () => {
+    const s = await render(1.7, { ...open, waveform: 'pulse', pulseWidth: 0.5, lfoAmount: 1, lfoRate: 0.5, lfoDestination: 'pulseWidth' }, (e) => e.noteOn(57, 1, 0));
+    expect(highShare(s, 0.49, 4, 220)).toBeCloseTo(0.9, 1);
+    expect(highShare(s, 1.49, 4, 220)).toBeCloseTo(0.1, 1);
+  });
 });
 
 describe('Spectrum calibration', () => {

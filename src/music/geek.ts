@@ -68,12 +68,12 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
       const percent = Math.round(pulseWidth * 100);
       const every = 100 / gcd(percent, 100);
       const gaps = every <= PULSE_GAPS_SAID ? `: every ${ordinal(every)} Harmonic missing` : '';
-      // The one played keeps no offset and is low for d of a cycle, its series scaled to a peak of 1 as every wave's
-      // (fact-checked for 1.26.0).
+      // The one played keeps no offset and is high for d of a cycle (issue 266), its series scaled to a peak of 1 as
+      // every wave's.
       return {
         says: 'A Pulse’s Harmonics follow its width: one is missing wherever a whole number of its cycles fits the high part exactly. At 50 % it is a Square.',
         formula: 'aₙ = 4 sin(π n d) / (π n)',
-        where: `${N_IS}; aₙ: its amplitude for a Pulse 2 from its low to its high; the one played is low for d of each cycle and high for the rest, centred on 0 and scaled so its peak is 1, so its Harmonics are smaller by one factor, in the same pattern; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
+        where: `${N_IS}; aₙ: its amplitude for a Pulse 2 from its low to its high; the one played is high for d of each cycle and low for the rest, centred on 0 and scaled so its peak is 1, so its Harmonics are smaller by one factor, in the same pattern; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
       };
     }
   }
