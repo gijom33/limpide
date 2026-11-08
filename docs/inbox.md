@@ -4,6 +4,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-08, from 1.27.0's fact-checker, two loose claims: Zap Pluck's "every strike starts at full FM, a bright metallic zap" holds on C4 and C5 (88 % and 83 % of the strike off the carrier) but 267's 2.5 kHz Filter leaves 19 % on C6 and 0.13 % on C7, a pure sine; Fast Beats' unchanged "becomes roughness" sits beside Detune's new readout, 6.12 Hz beats on C4, where the formula calls it roughness only past 20 a second.
+- 2026-11-08, from 1.27.0's ear stand-in: Zap Pluck falls 6.5 dB from C2 to C6 and 8.2 from C4, down to −40 dBFS on E6, with steps of 3.7 dB between neighbours in its top octave, and no Filter or Key Track setting tried kept its level without its bite (a lower FM untried); Vowel swings +6.0 dB from C2 to C6 on a 1.2 s hold, +5.2 over a whole LFO cycle; Clang drops 6.4 dB from C4 down to C2 (Key Track about 0.5 untried); Kick's and Tom's strikes sharper (bends of 0.008 and 0.006); Felt Piano 3.2 dB over the Pianos, measured beside the quieter Piano.
+- 2026-11-08, from 1.27.0's ripple hunter, finding 10: CLAUDE.md's "Every commit" line leaves out the issues' record check 261 added to the hook, nothing there says to run `npm run issues` after editing an issue, and its "Before a push" leaves out `npm run issues:check`, which the release steps run.
 ## Ideas
 
 ## Dropped
