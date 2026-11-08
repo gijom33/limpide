@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { frames } from './helpers';
 import { FIRST_VISIT } from './startState';
 
 // A brand-new browser: not even the welcome the other tests start past.
@@ -89,7 +90,6 @@ test.describe('on a short phone', () => {
 // the keyboard's own move (Tab) opens one, not a press, Enter or Escape.
 test.describe('the welcome closed leaves no tip open on the Demo button (issue 252)', () => {
   const demoTip = (page: Page) => page.getByRole('tooltip').filter({ hasText: 'Turn a knob or flip a switch while it plays' });
-  const settled = (page: Page) => page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
   for (const close of ['Play the Demo', 'Enter on Play the Demo', 'Escape'] as const) {
     test(`closed by ${close}`, async ({ page }) => {
       await page.goto('/');
@@ -101,7 +101,7 @@ test.describe('the welcome closed leaves no tip open on the Demo button (issue 2
       } else await about(page).getByRole('button', { name: 'Play the Demo', exact: true }).click();
       await expect(about(page)).toBeHidden();
       await expect(demo(page)).toBeFocused();
-      await settled(page);
+      await frames(page); // a tip the focus opened would be open by then
       // None on the Demo button (WebKit may show a hover tip under the pointer where the welcome was).
       await expect(demoTip(page)).toHaveCount(0);
       // The keyboard's own move still shows it: Tab on, and Shift+Tab back.

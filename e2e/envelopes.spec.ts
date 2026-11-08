@@ -73,15 +73,24 @@ test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, rev
   await lfo.getByRole('button', { name: /Destination:/ }).click();
   await lfo.getByRole('menuitemradio', { name: 'Volume' }).click();
   await lfo.getByRole('slider', { name: 'LFO 1 Depth' }).press('End');
-  const level = () => page.getByRole('region', { name: 'LFO & Envelopes' }).locator('canvas').getAttribute('data-amp-level').then(Number);
+  const timeline = page.getByRole('region', { name: 'LFO & Envelopes' }).locator('canvas');
+  const level = () => timeline.getAttribute('data-amp-level').then(Number);
   await page.getByRole('button', { name: 'Hold' }).click();
   await page.keyboard.down('KeyA');
   await expect.poll(level, { timeout: 5000 }).toBeCloseTo(0.7, 2); // Init's Amp Sustain
-  const seen: number[] = [];
-  for (let i = 0; i < 12; i++) {
-    seen.push(await level());
-    await page.waitForTimeout(60); // a time: twelve reads 60 ms apart span the LFO's dips
-  }
+  // Read inside the page, frame by frame for 720 ms, which spans the LFO's dips.
+  const seen = await timeline.evaluate(
+    (canvas) =>
+      new Promise<number[]>((done) => {
+        const [seen, end] = [[] as number[], performance.now() + 720];
+        const frame = (now: number) => {
+          seen.push(Number(canvas.getAttribute('data-amp-level')));
+          if (now >= end) done(seen);
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
   await page.keyboard.up('KeyA');
   // At full Depth the LFO (2 Hz) dips the sound to silence and back, twice a second; the Envelope drawn stays at its
   // Sustain.

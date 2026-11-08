@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
-import { steady } from './helpers';
+import { frames, steady } from './helpers';
 import { BEAD_ON, holding, WELCOMED } from './startState';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -391,7 +391,7 @@ test('About’s Play the Demo, clicked, leaves no tip open (issue 252)', async (
   await page.getByRole('button', { name: 'About', exact: true }).click();
   await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Play the Demo', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
+  await frames(page); // a tip the focus opened would be open by then
   // None on the Demo button (WebKit may show a hover tip under the pointer where About was).
   await expect(page.getByRole('tooltip').filter({ hasText: 'Turn a knob or flip a switch while it plays' })).toHaveCount(0);
 });
