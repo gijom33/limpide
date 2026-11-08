@@ -609,6 +609,10 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     );
     // Run off: on a large screen, to another section.
     if (pose.escaped && !stacked) nextVisit = now;
+    // Standing on its line, its foot on the line under its spot this frame, not under the last frame's: a fast wave is
+    // steep, and a frame's stroll along it would leave it pixels over or under the line (issue 270).
+    if (plot && perch.id === `surf ${plot.lfo}` && (moving === 'standing' || moving === 'landing'))
+      perch = { ...perch, foot: plot.box.top + reading.sound.wave(plot.lfo, plot.box, pose.x + DROP_MIDDLE - plot.box.left) };
     const where = place.frame(perch, span, now, still, pose.x);
     if (where.landedAt !== null) motion.place(where.landedAt);
     // Its leap across, or its hover, for its facing from the next frame (issue 179).
@@ -678,7 +682,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     // forward going down it and back going up; but for a funny turn, which plays there as it would anywhere.
     const onBoard = !!plot && perch.id === `surf ${plot.lfo}` && !pose.doing && (where.moving === 'standing' || where.moving === 'landing');
     if (onBoard) {
-      const middle = drawnAt.left + DROP_MIDDLE - plot.box.left;
+      const middle = acrossOf(where, pose.x) + DROP_MIDDLE - plot.box.left;
       const lineAtX = (x: number) => sound.wave(plot.lfo, plot.box, x);
       pose.tilt = surfLean(lineAtX(middle - SURF_SPAN / 2), lineAtX(middle + SURF_SPAN / 2), SURF_SPAN);
       pose.legs = 'tuck';

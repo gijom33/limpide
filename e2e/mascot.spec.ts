@@ -1093,23 +1093,28 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
     .toBe(true);
 });
 
-/** Its lean and the slope of LFO `lfo`'s line under its middle, in degrees, each frame for `ms` that it is on its board. */
+/**
+ * Its lean and the slope of LFO `lfo`'s line under its middle, in degrees, and how far its foot is over or under that
+ * line, in pixels, each frame for `ms` that it is on its board.
+ */
 const onTheBoard = (page: Page, lfo: number, ms: number) =>
   page.evaluate(
     ([n, ms]) =>
-      new Promise<{ lean: number; slope: number }[]>((done) => {
-        const out: { lean: number; slope: number }[] = [];
+      new Promise<{ lean: number; slope: number; off: number }[]>((done) => {
+        const out: { lean: number; slope: number; off: number }[] = [];
         const start = performance.now();
         const frame = (now: number) => {
           const bead = document.querySelector<HTMLElement>('.mascot');
           if (bead?.dataset.board === 'on') {
             const lean = Number(/rotate\((\S+)deg\)/.exec(bead.querySelector<HTMLElement>('.mascot-drop')!.style.transform)?.[1] ?? 0);
             const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
-            const middle = bead.getBoundingClientRect().left + 9 - plot.getBoundingClientRect().left; // the drop's middle, DROP_MIDDLE in Bead's cling
+            const drawing = plot.querySelector('svg')!.getBoundingClientRect(); // inside the plot's border, in the line's own pixels
+            const middle = bead.getBoundingClientRect().left + 9 - drawing.left; // the drop's middle, DROP_MIDDLE in Bead's cling
             const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
             const near = (x: number) => points.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
             const [a, b] = [near(middle - 4), near(middle + 4)]; // SURF_SPAN across, in Bead's frame
-            if (b.x > a.x) out.push({ lean, slope: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
+            const off = bead.getBoundingClientRect().bottom - drawing.top - near(middle).y; // its box's bottom is its foot
+            if (b.x > a.x) out.push({ lean, slope: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI, off });
           }
           if (now - start < ms) requestAnimationFrame(frame);
           else done(out);
@@ -1135,7 +1140,7 @@ const offTheLine = (page: Page, lfo: number) =>
   mascot(page).evaluate((el, lfo) => {
     const box = el.getBoundingClientRect(); // its box's bottom is its foot
     const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
-    const at = plot.getBoundingClientRect();
+    const at = plot.querySelector('svg')!.getBoundingClientRect(); // inside the plot's border, in the line's own pixels
     const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
     const middle = box.left + 9 - at.left; // the drop's middle, DROP_MIDDLE in Bead's cling
     const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
@@ -1231,6 +1236,40 @@ test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it (issue
   await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
   const { off } = await offTheLine(page, 1);
   expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
+});
+
+test("dropped just beside LFO 1's plot, a Sine at 2.5 Hz, the fastest it rides, it rides along its line (issue 270)", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // LFO 1 a Sine at 2.5 Hz, half on.
+  await page.goto(slowLfo({ lfoRate: 2.5 }));
+  await listening(page);
+  await bringBead(page);
+  // Up on the Amp's edge: a visit elsewhere can keep it away 8 to 18 s.
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1, { timeout: 20_000 }).toBe(true);
+  const one = (await page.locator('.lfo-plot[data-lfo="1"]').boundingBox())!;
+  // Its middle a little left of the plot's left edge: its box within its own width of it.
+  await dropAt(page, { x: one.x - 12, y: one.y + one.height / 2 });
+  await page.mouse.move(2, 894); // off every control, so no tip comes over the plot
+  await expect(mascot(page)).toHaveAttribute('data-ride', '1');
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  // Two seconds of the ride, five rises and five falls, frame by frame: on its board, its foot on the line.
+  const seen = await onTheBoard(page, 1, 2000);
+  const told = JSON.stringify(seen.slice(0, 40).map((f) => ({ ...f, off: Math.round(f.off * 10) / 10 })));
+  expect(seen.length, told).toBeGreaterThan(20);
+  // About half a pixel off on average here, in both browsers. The line is up to 70° steep, so a few milliseconds
+  // between Bead's reading of the clock and its plot's, in the same frame, can be pixels: a frame in twenty may be
+  // further off, none by a third of the wave's swing (24 px each way).
+  const offs = seen.map((f) => Math.abs(f.off));
+  expect(offs.filter((off) => off > 3).length / offs.length, told).toBeLessThanOrEqual(0.05);
+  expect(Math.max(...offs), told).toBeLessThanOrEqual(8);
+  // Leaning with the wave, forward going down it and back going up, as steep as it leans, 35°, where the line is steeper.
+  const steep = seen.filter((f) => Math.abs(f.slope) > 20);
+  expect(steep.length, told).toBeGreaterThan(10);
+  expect(steep.filter((f) => Math.sign(f.lean) === Math.sign(f.slope)).length / steep.length, told).toBeGreaterThan(0.8);
+  expect(steep.filter((f) => Math.abs(f.slope) > 40 && Math.abs(f.lean) > 30).length, told).toBeGreaterThan(0);
+  // Not shaking: its lean turns from forward to back no more often than the line under it does.
+  const turns = (values: number[]) => values.filter((v, i) => i > 0 && Math.sign(v) !== Math.sign(values[i - 1]) && v !== 0).length;
+  expect(turns(seen.map((f) => f.lean)), told).toBeLessThanOrEqual(turns(seen.map((f) => f.slope)) + 2);
 });
 
 /**

@@ -554,17 +554,17 @@ export function rideOnDrop(bead: Cover, plots: readonly { lfo: LfoNumber; box: C
   return near[0]?.lfo ?? null;
 }
 
-/** The fastest LFO it rides, in Hz (issue 141): slower, its plot draws a swell it can stand on. */
-const RIDE_HZ = 1;
+/** The fastest LFO it rides, in Hz (issues 141, 270): slower, its plot draws a swell it can stand on. */
+const RIDE_HZ = 2.5;
 
 /**
  * The LFOs it may ride now and then, outside the Demo (issue 141), as `lfos` are at `bpm`: those that are on (their Depth
- * above 0), a Sine or a Triangle (a Saw's or a Square's cliff would throw it off), at 1 Hz or slower, or synced, the Hz
+ * above 0), a Sine or a Triangle (a Saw's or a Square's cliff would throw it off), at `RIDE_HZ` or slower, or synced, the Hz
  * their note value gives (issue 112). None while the Demo plays (its acts rule there), nor with reduced motion.
  */
 export function ridesFor(lfos: readonly Lfo[], bpm: number, { demo, reduced }: { demo: boolean; reduced: boolean }): LfoNumber[] {
   if (demo || reduced) return [];
-  // A hair over 1 Hz still counts: a synced note value's Hz is worked out in floating point (a 1/4 at 60 BPM).
+  // A hair over the bound still counts: a synced note value's Hz is worked out in floating point (a 1/4 T at 100 BPM).
   return lfos.flatMap((lfo, i) =>
     lfo.amount > 0 && (lfo.waveform === 'sine' || lfo.waveform === 'triangle') && lfoHz(lfo, bpm) <= RIDE_HZ + 1e-9 ? [(i + 1) as LfoNumber] : [],
   );

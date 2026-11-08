@@ -133,10 +133,11 @@ export function pageReader({ engine, patch, covering, holder, asked }: {
       dialogOpen: () => !!document.querySelector('.display-panel, [role=dialog]'),
       plots: () =>
         // The LFO plots drawing an LFO that is on, in the window, each with its own tip: shown, it is over the plot while
-        // the pointer is, as after a drop there, so it never keeps Bead off its line (issue 197).
+        // the pointer is, as after a drop there, so it never keeps Bead off its line (issue 197). Each the box of its
+        // drawing, inside its border, where its line is drawn: on a steep line a pixel across is pixels up (issue 270).
         [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)].map((el) => ({
           lfo: Number(el.dataset.lfo) as 1 | 2,
-          box: el.getBoundingClientRect(),
+          box: (el.querySelector('svg') ?? el).getBoundingClientRect(),
           tips: (el.getAttribute('aria-describedby') ?? '').split(' ').flatMap((id): Element[] => {
             const tip = id ? document.getElementById(id) : null;
             return tip ? [tip] : [];

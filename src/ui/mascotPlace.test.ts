@@ -564,8 +564,9 @@ describe('which LFOs it may ride, now and then, outside the Demo (issue 141)', (
   });
   const free = { demo: false, reduced: false };
 
-  it('a Sine or a Triangle at 1 Hz or slower, with its Depth above 0', () => {
+  it('a Sine or a Triangle at 2.5 Hz or slower, with its Depth above 0 (issue 270)', () => {
     expect(ridesFor([lfo(), lfo({ waveform: 'triangle', rate: 1 })], 120, free)).toEqual([1, 2]);
+    expect(ridesFor([lfo({ rate: 2.5 }), lfo({ waveform: 'triangle', rate: 2.5 })], 120, free)).toEqual([1, 2]);
     expect(ridesFor([lfo({ rate: 0.05, amount: 0.01 }), lfo({ waveform: 'triangle', rate: 0.2 })], 120, free)).toEqual([1, 2]);
   });
 
@@ -573,14 +574,18 @@ describe('which LFOs it may ride, now and then, outside the Demo (issue 141)', (
     for (const waveform of ['saw', 'sawDown', 'square'] as const) expect(ridesFor([lfo({ waveform }), lfo()], 120, free)).toEqual([2]);
   });
 
-  it('not over 1 Hz, nor at a Depth of 0', () => {
-    expect(ridesFor([lfo({ rate: 1.05 }), lfo({ amount: 0 })], 120, free)).toEqual([]);
+  it('not over 2.5 Hz, nor at a Depth of 0', () => {
+    expect(ridesFor([lfo({ rate: 2.6 }), lfo({ amount: 0 })], 120, free)).toEqual([]);
+    expect(ridesFor([lfo({ rate: 2.6, waveform: 'triangle' }), lfo({ rate: 4 })], 120, free)).toEqual([]);
   });
 
   it('synced, by the Hz its note value gives at the tempo (issue 112)', () => {
-    // A quarter note: 2 Hz at 120 BPM, 1 Hz at 60; a bar: 0.5 Hz at 120.
-    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4'), rate: 0.1 }), lfo({ sync: 'on', note: noteIndex('1 bar'), rate: 5 })], 120, free)).toEqual([2]);
-    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4') }), lfo({ sync: 'on', note: noteIndex('1/8') })], 60, free)).toEqual([1]);
+    // A quarter note: 2 Hz at 120 BPM, 4 at 240; an eighth: 4 Hz at 120; a bar: 0.5 Hz at 120.
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4'), rate: 5 }), lfo({ sync: 'on', note: noteIndex('1 bar'), rate: 5 })], 120, free)).toEqual([1, 2]);
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/8'), rate: 0.1 }), lfo({ sync: 'on', note: noteIndex('1/4') })], 240, free)).toEqual([]);
+    // A quarter-note triplet: 2.5 Hz at 100 BPM, worked out a hair over it in floating point (issue 270); 2.6 at 104.
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4 T') }), lfo({ sync: 'on', note: noteIndex('1/4 T') })], 100, free)).toEqual([1, 2]);
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4 T') })], 104, free)).toEqual([]);
   });
 
   it('never while the Demo plays, nor under reduced motion', () => {
