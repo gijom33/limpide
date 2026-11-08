@@ -223,7 +223,7 @@ test('the Timeline plot is as tall as its controls, whatever size the window was
   expect(fresh.keyOnTitleLine).toBe(true);
   // A narrower window, then back: the plot's own pixel size must not have grown the row. Each read once the canvases
   // have taken their new size.
-  const measured = ['.timeline-plot canvas', '.timeline-controls', 'canvas.scope'].map((s) => page.locator(s).first());
+  const measured = [page.getByLabel('Envelope Timeline', { exact: true }), page.locator('.timeline-controls'), page.getByLabel('Oscillator Scope', { exact: true })];
   await page.setViewportSize({ width: 1440, height: 900 });
   await steady(page, ...measured);
   await page.setViewportSize({ width: 1900, height: 1140 });

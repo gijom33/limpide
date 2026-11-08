@@ -65,7 +65,8 @@ test('the column keeps its size after the window was narrower: the canvases neve
   await page.goto('/');
   const measured = ['.timeline-plot canvas', 'canvas.scope', 'section[aria-label="LFO & Envelopes"]'];
   const heights = async () => {
-    await steady(page, ...measured.map((s) => page.locator(s).first())); // the canvases at their new size
+    // The canvases at their new size.
+    await steady(page, page.getByLabel('Envelope Timeline', { exact: true }), page.getByLabel('Oscillator Scope', { exact: true }), page.getByRole('region', { name: 'LFO & Envelopes' }));
     return page.evaluate((measured) => measured.map((s) => Math.round(document.querySelector(s)!.getBoundingClientRect().height)), measured);
   };
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);

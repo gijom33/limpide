@@ -1274,7 +1274,7 @@ test.describe('never under a card (issue 164)', () => {
     const panel = page.getByRole('region', { name: 'Viewer controls' });
     await expect(panel).toBeVisible();
     await page.mouse.move(2, 894); // off every control, so no tip opens
-    await page.waitForTimeout(300); // a time: for it to set off from under the panel before it is read settled
+    await page.waitForTimeout(300); // a time: it may set off from under the panel or stay, so no state says it has seen it; read settled after
     await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
     const under = await page.evaluate(() => {
       const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
@@ -1301,7 +1301,7 @@ test.describe('never under a card (issue 164)', () => {
       const tops = [...Array.from({ length: Math.floor(height / 200) + 1 }, (_, i) => i * 200), height];
       for (const top of [...tops, ...[...tops].reverse()]) {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top);
-        await page.waitForTimeout(300); // a time: for it to set off for the new scroll before it is read settled
+        await page.waitForTimeout(300); // a time: it may set off for the new scroll or stay, so no state says it has seen it; read settled after
         // Once it has fallen or flown there and landed: standing, or hovering under the header; or, the Tour pointing
         // the way to its card's control, clinging beside it (issue 151).
         await settles(page, /^(standing|hovering|clinging)$/);

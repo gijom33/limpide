@@ -272,7 +272,7 @@ const cards = {
 
 /** How far the page scrolls, once the layout has settled. */
 async function scrollRange(page: Page) {
-  await steady(page, page.locator('main'));
+  await steady(page); // the page's scroll size settled
   return page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
 }
 
