@@ -1,4 +1,4 @@
-import { destinationSwings, osc2Cents, osc2EnvelopeCents } from '../modulation/modulationModel';
+import { osc2Cents, osc2EnvelopeCents, totalSwing } from '../modulation/modulationModel';
 import { fmIndex, type Patch } from '../patch/patch';
 import { createCache } from './cache';
 import { ENGINE_HARMONICS, harmonicSeries, pulseScale } from './harmonics';
@@ -203,7 +203,7 @@ function shareAbove(index: number, osc1: number, osc2: number, top: number): num
  * frequency `osc1Hz`. The engine scales FM's depth by it on each Note, and the Ideal draws the same.
  */
 export function fmDepthKept(patch: Patch, osc1Hz: number, sampleRate: number): number {
-  const peak = fmIndex(destinationSwings(patch, 'fm', patch.crossMod).reduce((sum, swing) => sum + swing, patch.crossMod));
+  const peak = fmIndex(patch.crossMod + totalSwing(patch, 'fm', patch.crossMod));
   const osc2Hz = osc1Hz * osc2Ratio(patch);
   const top = playedTop(sampleRate);
   if (peak === 0 || shareAbove(peak, osc1Hz, osc2Hz, top) <= FOLD_SHARE) return 1;

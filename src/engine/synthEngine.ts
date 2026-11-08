@@ -2,7 +2,7 @@ import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent }
 import { type BeatGrid, glideFrequency, glideTimeConstant, LFO_START, type LfoWaveform } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LOWEST_CUTOFF, type Modulation, osc2Cents, osc2EnvelopeCents, PRESSURE_GLIDE,
-  type Pressure, pressed, pressurePitch, VELOCITY_CUTOFF_OCTAVES,
+  type Pressure, pressed, pressurePitch, totalSwing, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { createCache } from '../music/cache';
 import { ENGINE_HARMONICS, harmonicSeries, pulseScale, type Waveform } from '../music/harmonics';
@@ -969,8 +969,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const harmonicsOn = (frequency: number): number[] => {
     const knobs = patch;
     if (!knobs?.mixRing) return [ENGINE_HARMONICS, ENGINE_HARMONICS];
-    /** How far both LFOs together take a Destination up, at the top of their swings. */
-    const upTo = (destination: LfoDestination) => destinationSwings(knobs, destination).reduce((sum, swing) => sum + swing, 0);
+    const upTo = (destination: LfoDestination) => totalSwing(knobs, destination);
     const cents = [upTo('pitch') * 100, upTo('pitch') * 100 + upTo('osc2Pitch') * 100 + upTo('detune')];
     const hz = pitchOverNote.map((r, i) => frequency * r * 2 ** (cents[i] / 1200));
     const rich = [knobs.waveform, knobs.osc2Waveform].map((w) => w !== 'sine');
