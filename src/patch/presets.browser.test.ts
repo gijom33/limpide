@@ -15,7 +15,7 @@ import { PRESET_GROUPS, PRESETS } from './presets';
 // what their words promise.
 
 const SR = 48000;
-const [C2, C3, C4, C5, C6, C7] = [36, 48, 60, 72, 84, 96];
+const [C2, C3, C4, A4, C5, C6, C7] = [36, 48, 60, 69, 72, 84, 96];
 const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
 const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
 /** When the Note starts: a little after 0, as a player's would. */
@@ -189,7 +189,6 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
   };
 
   it('Zap Pluck starts at full FM and melts to a pure sine as it decays; the falling saw’s next zap comes 45 dB down', async () => {
-    const A4 = 69;
     const s = await play(preset('Zap Pluck'), [A4], 1.2, 1.3);
     expect(offCarrier(s, A4, 0)).toBeGreaterThan(0.7);
     expect(offCarrier(s, A4, 0.4)).toBeLessThan(0.1);
@@ -683,9 +682,8 @@ describe('the Presets levelled across the keyboard (issue 258)', () => {
   }, 300_000);
 });
 
-// Issue 266: review 13's measures of the words it found false or loose, now worded to hold.
+// Issue 266: the words review 13 measured, held to what the engine plays.
 describe('the Presets’ words review 13 checked hold (issue 266)', () => {
-  const A4 = 69;
   /** The engine after a Note `note` from NOTE on `patch`, rendered for `seconds`, to read its Modulation model. */
   const modelled = async (patch: Patch, seconds: number, note = C4) => {
     const ctx = new OfflineAudioContext(1, SR * seconds, SR);
@@ -729,7 +727,7 @@ describe('the Presets’ words review 13 checked hold (issue 266)', () => {
     expect(onC5).toBeLessThan(onA4);
   });
 
-  it('Rolling Fifth: Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a sixth', async () => {
+  it('Rolling Fifth: Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a major sixth', async () => {
     const s = await play({ ...preset('Rolling Fifth'), mixOsc1: 0 }, [C4], 10.6, 10.7);
     const heard = Array.from({ length: 41 }, (_, i) => 12 * Math.log2(frequencyAround(s, SR, NOTE + 0.3 + i / 4, 0.05) / hz(C4)));
     expect(Math.max(...heard)).toBeGreaterThan(8.5);
@@ -763,10 +761,10 @@ describe('the Presets’ words review 13 checked hold (issue 266)', () => {
    * from `from` seconds against the same span each two cycles later, the first best match once it has dissolved.
    */
   const rollSeconds = (s: Float32Array, note: number, from: number) => {
-    const two = (2 * SR) / hz(note);
-    const n = Math.round(two);
-    const at = (x: number) => s[Math.floor(x)] + (s[Math.floor(x) + 1] - s[Math.floor(x)]) * (x - Math.floor(x));
-    const shape = (k: number) => Array.from({ length: n }, (_, j) => at(from * SR + k * two + (j * two) / n));
+    const twoCycles = (2 * SR) / hz(note); // in samples
+    const n = Math.round(twoCycles);
+    const sampleAt = (x: number) => s[Math.floor(x)] + (s[Math.floor(x) + 1] - s[Math.floor(x)]) * (x - Math.floor(x));
+    const shape = (k: number) => Array.from({ length: n }, (_, j) => sampleAt(from * SR + k * twoCycles + (j * twoCycles) / n));
     const first = shape(0);
     const norm = (w: number[]) => Math.sqrt(w.reduce((sum, v) => sum + v * v, 0));
     const likeness = (k: number) => {
@@ -777,7 +775,7 @@ describe('the Presets’ words review 13 checked hold (issue 266)', () => {
     while (likeness(k) > 0.5) k++;
     while (likeness(k) < 0.95) k++;
     while (likeness(k + 1) > likeness(k)) k++;
-    return (k * two) / SR;
+    return (k * twoCycles) / SR;
   };
   it('Perfect Fifth rolls about every two seconds on C4, faster higher up', async () => {
     const [c4, c5] = await Promise.all([C4, C5].map((note) => play(preset('Perfect Fifth'), [note], 3.6, 3.7)));
@@ -799,27 +797,31 @@ describe('the Presets’ words review 13 checked hold (issue 266)', () => {
   it('Clang Alarm hops between a pure sine and a full metal clang and back two and a half times a second', async () => {
     const s = await play(preset('Clang Alarm'), [C4], 1.3, 1.4);
     /** The share of 20 ms of power off the Note's own frequency, centred on `t` seconds. */
-    const off = (t: number) => {
+    const offShare = (t: number) => {
       const [a, b] = [Math.round((t - 0.01) * SR), Math.round((t + 0.01) * SR)];
       let sum = 0;
       for (let i = a; i < b; i++) sum += s[i] * s[i];
       return 1 - toneAmplitude(s, SR, hz(C4), a, b) ** 2 / 2 / (sum / (b - a));
     };
     // The free LFO runs from the engine's start, its upper half (full FM) first: the middle of each fifth of a second.
-    const heard = Array.from({ length: 6 }, (_, i) => off(0.1 + i / 5));
+    const heard = Array.from({ length: 6 }, (_, i) => offShare(0.1 + i / 5));
+    const said = heard.map((h) => h.toFixed(2)).join(' ');
     for (const [i, share] of heard.entries()) {
-      if (i % 2) expect(share, heard.map((h) => h.toFixed(2)).join(' ')).toBeLessThan(0.1);
-      else expect(share, heard.map((h) => h.toFixed(2)).join(' ')).toBeGreaterThan(0.5);
+      if (i % 2) expect(share, said).toBeLessThan(0.1);
+      else expect(share, said).toBeGreaterThan(0.5);
     }
   });
 
   it('Rave Stab: a triad a stab of its Notes, their fifths and the Sub under them', async () => {
-    const s = await play(preset('Rave Stab'), [C4, 64, 67], 1, 1.1);
-    const at = (semitones: number) => partialDb(s, C4, 2 ** (semitones / 12), 0.03, 0.12);
+    const patch = preset('Rave Stab');
+    const s = await play(patch, [C4, 64, 67], 1, 1.1);
+    /** The partial `semitones` from C4, against C4. */
+    const levelAt = (semitones: number) => partialDb(s, C4, 2 ** (semitones / 12), 0.03, 0.12);
+    const fifth = patch.osc2Semitone + patch.osc2Detune / 100;
     for (const note of [0, 4, 7]) {
-      expect(at(note), `the Note ${note}`).toBeGreaterThan(-20);
-      expect(at(note + 7 + 0.06), `its fifth ${note + 7}`).toBeGreaterThan(-20);
-      expect(at(note - 12), `the Sub ${note - 12}`).toBeGreaterThan(-20);
+      expect(levelAt(note), `the Note ${note}`).toBeGreaterThan(-20);
+      expect(levelAt(note + fifth), `its fifth ${note + 7}`).toBeGreaterThan(-20);
+      expect(levelAt(note - 12), `the Sub ${note - 12}`).toBeGreaterThan(-20);
     }
   });
 

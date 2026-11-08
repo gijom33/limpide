@@ -41,6 +41,7 @@
 
 - **The index** `FM_INDEX` (4) now lives with the Ideal (`src/music/idealReference.ts`) and the engine imports it, so the two cannot drift.
 - **Osc 2 a Sine** (`fmPartials`): each Harmonic n of Osc 1 (its engine level; a pulse as the engine builds it, a swung saw less its copy one width behind) gives n × Osc 1 + k × Osc 2 at |J_k(n × index)|, a negative frequency folded back. `besselJ` is Miller's backward recurrence, normalised; unit-tested against tabled values.
+  **Since then (2026-11-07, [266](./266-preset-and-tip-words-that-hold.md)):** the pulse is the delayed copy less the saw, so it is high for its Pulse Width, as the glossary says; its Harmonics are the same.
 - **Whole octaves** (`fmCycle`): Osc 1's phase is its own plus the running sum of Osc 2's wave times the index, one cycle sampled as `ringProduct` samples Ring's, and Fourier-transformed.
 - **The tip** for FM says where the circles fan out and where they stay plain; the glossary's Ideal Reference says the same.
 - Tests: "FM’s sidebands in the Ideal (issue 96)" in the engine's browser tests, "FM in the Ideal (issue 96)" in the Ideal's unit tests.

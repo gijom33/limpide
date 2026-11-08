@@ -23,7 +23,7 @@ const LFO_DESTINATION_WORDS: Record<LfoDestination, string> = {
   pulseWidth: 'each Oscillator’s (PWM; only heard on a Pulse).',
   fm: 'up to its whole range, but only as far each way as the FM knob leaves room: none at 0, so raise FM first (its partials growing and fading).',
   cutoff: 'two octaves each way (wah).',
-  resonance: 'across its range, but only as far each way as its knob leaves room (a vocal, whistling sweep).',
+  resonance: 'up to its whole range, but only as far each way as its knob leaves room (a vocal, whistling sweep).',
   volume: 'down from the Amp Envelope’s level to silence (tremolo).',
 };
 

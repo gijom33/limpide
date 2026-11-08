@@ -180,7 +180,7 @@ group('LFO', [
   ['Resonance Swell', 'The LFO moves the Resonance, not the Cutoff: the peak at the Cutoff swells and fades where it stands. The ring on Resonance shows how far.', {
     volume: 0.9, cutoff: 1200, resonance: 0.5, keyTrack: 1, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'resonance', lfoRate: 0.5, lfoAmount: 0.9,
   }],
-  ['Rolling Fifth', 'The LFO on Osc 2 Pitch alone: Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a sixth, so intervals drift past, and the Scope’s pattern dissolves and locks again.', {
+  ['Rolling Fifth', 'The LFO on Osc 2 Pitch alone: Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a major sixth, so intervals drift past, and the Scope’s pattern dissolves and locks again.', {
     volume: 0.7, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, mixOsc2: 0.8, ...OPEN, lfoDestination: 'osc2Pitch', lfoRate: 0.1, lfoAmount: 0.15,
   }],
   ['Chorus Drift', 'The LFO on Detune: Osc 2 drifts in and out of tune with Osc 1, and the beating speeds up and slows down with it.', {
